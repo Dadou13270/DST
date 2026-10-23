@@ -1,0 +1,350 @@
+<title>Simulateur SOIEC</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Mise en page : bandeau rouge opérationnel, contenu en fiches sobres, poste de commandement en deux colonnes (photo | échanges, SOIEC, message). */
+:root{
+  --bg:#eef0f2; --card:#ffffff; --ink:#1b2127; --mut:#667079; --line:#d8dde1;
+  --red:#c42a1c; --red-d:#9d2015; --on-red:#ffffff; --ok:#16794a; --warn-bg:#fdf1d6; --soft:#f5f6f7;
+  --me:#c42a1c; --me-ink:#ffffff;
+  --f-d:"Barlow Condensed","Arial Narrow",sans-serif; --f-b:"Barlow",system-ui,sans-serif; --f-m:"IBM Plex Mono",ui-monospace,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#14181c; --card:#1e2429; --ink:#eceff1; --mut:#97a2ab; --line:#333c43; --red:#e0483a; --red-d:#c42a1c; --ok:#4cc38a; --warn-bg:#3b3014; --soft:#262d33; --me:#b8281b; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#14181c; --card:#1e2429; --ink:#eceff1; --mut:#97a2ab; --line:#333c43; --red:#e0483a; --red-d:#c42a1c; --ok:#4cc38a; --warn-bg:#3b3014; --soft:#262d33; --me:#b8281b; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:15px/1.5 var(--f-b);padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 32px}
+h1,h2,h3{font-family:var(--f-d);letter-spacing:.02em;margin:0;text-wrap:balance;line-height:1.1}
+h1{font-size:2rem}h2{font-size:1.45rem}h3{font-size:1.15rem;margin-top:14px}
+.bar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;background:var(--red);color:var(--on-red);margin:0 calc(-1*max(16px,env(safe-area-inset-left,0px))) 18px;padding:10px max(16px,env(safe-area-inset-right,0px)) 10px max(16px,env(safe-area-inset-left,0px))}
+.brand{font-family:var(--f-d);font-size:1.4rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+.bar nav{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.bar button{background:transparent;color:var(--on-red);border:1px solid rgba(255,255,255,.45);padding:5px 12px;border-radius:6px;font:inherit;cursor:pointer}
+.bar button.on{background:#fff;color:var(--red-d)}
+.timer{font-family:var(--f-m);background:rgba(0,0,0,.25);padding:3px 10px;border-radius:6px}.timer.late{background:#f5b82e;color:#000}
+main{max-width:1180px;margin:0 auto}
+.muted{color:var(--mut)}.pre{white-space:pre-wrap}.err{color:#d6382a}.okt{color:var(--ok)}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.between{justify-content:space-between}.end{justify-content:flex-end}
+.grow{flex:1;min-width:0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px;margin:10px 0;min-width:0}
+.card.warn{background:var(--warn-bg)}
+.btn{border:1px solid var(--line);background:var(--card);color:var(--ink);padding:7px 13px;border-radius:7px;font:inherit;cursor:pointer}
+.btn:hover{border-color:var(--red)}.btn.pri{background:var(--red);border-color:var(--red);color:#fff}.btn.pri:hover{background:var(--red-d)}
+.btn.dng{color:#d6382a}.btn.big{padding:11px 22px;font-size:1.05rem;margin-top:10px}
+:focus-visible{outline:2px solid var(--red);outline-offset:2px}
+.tag{display:inline-block;background:var(--soft);border:1px solid var(--line);border-radius:99px;padding:1px 10px;font-size:.78rem}.tag.ok{color:var(--ok);border-color:var(--ok)}
+input,textarea,select{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:7px;background:var(--card);color:var(--ink);font:inherit}
+select{width:auto;max-width:100%}textarea{resize:vertical}input[type=checkbox]{width:auto}
+.form label{display:block;margin:12px 0 4px;font-weight:600;font-size:.9rem}.form label.ck{display:flex;gap:8px;align-items:center;font-weight:500}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px}
+.scn{padding:0;overflow:hidden;cursor:pointer;text-align:left;font:inherit;color:inherit;display:flex;flex-direction:column;justify-content:flex-start;align-items:stretch;width:100%;margin:0}.scn img,.scn .ph{flex:none}.scn:hover{border-color:var(--red)}
+.scn img,.scn .ph{width:100%;height:150px;object-fit:cover;display:block}.scn .b{padding:12px}
+.ph{background:var(--soft);color:var(--mut);display:grid;place-items:center}.ph.tall{height:200px;border-radius:8px}
+.thumb{width:64px;height:48px;object-fit:cover;border-radius:6px;background:var(--soft)}
+.tabs{display:flex;gap:2px;border-bottom:2px solid var(--line);margin:10px 0;flex-wrap:wrap}
+.tabs button{background:none;border:0;border-bottom:3px solid transparent;margin-bottom:-2px;padding:8px 14px;font:inherit;color:var(--mut);cursor:pointer}
+.tabs button.on{color:var(--red);border-color:var(--red);font-weight:600}
+.play{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;align-items:start}
+.photo{width:100%;max-height:380px;object-fit:contain;background:#000;border-radius:8px;cursor:zoom-in;display:block}.photo.z{max-height:none;cursor:zoom-out}
+.photo.prev{max-height:200px;width:auto}
+.consigne{font-style:italic}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.chip{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:99px;padding:4px 12px;cursor:pointer;font:inherit}.chip.on{background:var(--red);border-color:var(--red);color:#fff}
+.chat{height:330px;overflow-y:auto;border:1px solid var(--line);border-radius:8px;padding:10px;background:var(--soft)}
+.bub{max-width:88%;padding:7px 12px;border-radius:12px;margin:6px 0;white-space:pre-wrap;overflow-wrap:anywhere}.bub small{display:block;opacity:.7;font-size:.72rem}
+.bub.me{background:var(--me);color:var(--me-ink);margin-left:auto}.bub.th{background:var(--card);border:1px solid var(--line)}
+.ask{display:flex;gap:8px;margin-top:8px}
+.note label{display:block;font-size:.9rem;margin:8px 0 3px}
+.sc{overflow-x:auto}.cmp{width:100%;border-collapse:collapse;min-width:520px}.cmp th,.cmp td{border:1px solid var(--line);padding:8px;vertical-align:top;text-align:left;white-space:pre-wrap}.cmp thead th,.cmp tbody th{background:var(--soft)}.cmp tbody th{width:130px}
+.checks{list-style:none;padding:0;margin:0}.checks .y{color:var(--ok)}.checks .n{color:#d6382a}
+.stick{position:sticky;top:0;background:var(--bg);padding:6px 0;z-index:5}
+.toast{position:fixed;left:50%;bottom:calc(16px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 16px;border-radius:8px;z-index:20;max-width:90%}
+.rub{font-size:1.3rem;margin:22px 0 8px;padding-bottom:4px;border-bottom:2px solid var(--line)}.rub .muted{font-size:.9rem;font-family:var(--f-b)}
+.intro{max-width:620px;margin:24px auto;text-align:center}
+@media(max-width:800px){.play,.cols{grid-template-columns:1fr}}
+</style>
+
+<div id="app"></div>
+<div id="toast" class="toast" hidden></div>
+
+<script>
+const SOIEC=[
+ {k:"S",t:"Situation",a:"Que se passe-t-il ? Où ? Qui est menacé ? Risques et évolution probable ?"},
+ {k:"O",t:"Objectifs",a:"Ce qu'il faut obtenir, par priorité (sauvetages, mise en sécurité, protection, extinction…)."},
+ {k:"I",t:"Idée de manœuvre",a:"Comment atteindre les objectifs : actions, enchaînement, moyens d'action."},
+ {k:"E",t:"Exécution",a:"Mission de chaque engin / équipe / secteur."},
+ {k:"C",t:"Commandement",a:"PC, liaisons, transmissions, renforts, sécurité, logistique."}];
+const TOUS="tous", MSG_TRAME="ICI [indicatif], MESSAGE D'AMBIANCE\nArrivé sur les lieux de : \nSituation : \nActions en cours : \nJe demande : \n";
+const uid=()=>Math.random().toString(36).slice(2,9);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const $=s=>document.querySelector(s);
+const rubsCount=p=>{const n=new Set(p.map(x=>x.rubrique||"")).size;return n+" rubrique"+(n>1?"s":"")};
+const RUBRIQUES=["Incendie","Secours à personne","Secours routier","Opérations diverses"];let newRub=false;
+const allRub=()=>{const x=[...RUBRIQUES];list.forEach(s=>{if(s.rubrique&&!x.includes(s.rubrique))x.push(s.rubrique)});return x};
+const newScn=()=>({titre:"",description:"",rubrique:"",duree:0,publie:false,afficherCorrection:true,vignette:null,photo:null,
+ situation:{contexte:"",consigne:"Vous arrivez sur les lieux en tant que chef d'agrès. Observez la photo, interrogez les personnes présentes, puis rédigez votre SOIEC et votre message."},
+ interlocuteurs:[{id:uid(),nom:"Requérant",role:"Personne ayant appelé les secours",reponseDefaut:"Je ne sais pas, je n'ai pas vu ça."}],
+ qa:[],correction:{S:"",O:"",I:"",E:"",C:"",message:"",commentaire:""}});
+const merge=d=>{const b=newScn();return{...b,...d,situation:{...b.situation,...(d.situation||{})},correction:{...b.correction,...(d.correction||{})},interlocuteurs:d.interlocuteurs||[],qa:d.qa||[]}};
+
+/* ---- reconnaissance des questions ---- */
+const norm=s=>(s||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^a-z0-9\s]/g," ").replace(/\s+/g," ").trim();
+const stem=w=>w.length>3?w.replace(/[sx]$/,""):w;
+const same=(a,b)=>{a=stem(a);b=stem(b);if(a===b)return true;if(Math.min(a.length,b.length)<4)return false;return a.startsWith(b)||b.startsWith(a)};
+const kws=s=>(s||"").split(/[,;\n]/).map(norm).filter(Boolean);
+function findAnswer(q,qas,who){const tk=norm(q).split(" ").filter(Boolean);let best=null,bs=0;
+ for(const x of qas){if(x.interlocuteurId!==who&&x.interlocuteurId!==TOUS)continue;let s=0;
+  for(const k of kws(x.motsCles)){const w=k.split(" ");if(w.every(a=>tk.some(t=>same(t,a))))s+=w.length}
+  if(s>bs){bs=s;best=x}}
+ return best}
+
+/* ---- état ---- */
+let db=null,canAdmin=false,list=[],loaded=false,route="home",ed=null,edId=null,edTab="general",edDirty=false,edPhoto0=null;
+let P=null,tmr=null,confirmKey=null;
+let uopen=null,myId=null,me=null,meLoaded=false,users=[],mods={},uq="",uf="tous",regBusy=false;
+const dt=t=>t?new Date(t).toLocaleString("fr-FR",{dateStyle:"short",timeStyle:"short"}):"—";
+function gate(){
+ if(canAdmin||!db||!myId||!meLoaded)return null;
+ const out=x=>`<div class="bar"><span class="brand">Simulateur SOIEC</span></div><main>${x}</main>`;
+ if(mods[myId]&&mods[myId].statut==="suspendu")return out(`<div class="card warn intro"><h2>Compte suspendu</h2><p>Ton accès a été suspendu par un administrateur.</p></div>`);
+ if(!me)return out(`<div class="card intro"><h1>Inscription</h1><p class="muted">Crée ton accès au simulateur pour suivre tes exercices.</p><p><input id="nom" placeholder="Nom / prénom" maxlength="60" style="width:100%"></p><button class="btn pri big" data-act="register">${regBusy?"…":"Créer mon accès"}</button></div>`);
+ return null}
+const toast=(m,bad)=>{const t=$("#toast");t.textContent=m;t.hidden=false;t.style.background=bad?"#b3261e":"";t.style.color=bad?"#fff":"";clearTimeout(toast.h);toast.h=setTimeout(()=>t.hidden=true,2800)};
+const lsGet=k=>{try{return JSON.parse(localStorage.getItem(k))}catch{return null}};
+const lsSet=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch{}};
+const fmt=s=>{const a=Math.abs(s);return(s<0?"-":"")+String(Math.floor(a/60)).padStart(2,"0")+":"+String(a%60).padStart(2,"0")};
+const interName=(sc,id)=>id===TOUS?"Tous":(sc.interlocuteurs.find(i=>i.id===id)||{}).nom||"?";
+
+/* ---- coque ---- */
+function shell(inner,right=""){
+ return `<div class="bar"><span class="brand">Simulateur SOIEC</span><nav>${right}</nav></div><main>${inner}</main>`}
+function navHtml(){
+ const adm=route==="admin"||route==="edit"||route==="users";
+ let h=`<button data-act="home" class="${adm?"":"on"}">Espace stagiaire</button>`;
+ if(canAdmin)h+=`<button data-act="admin" class="${adm?"on":""}">Espace admin</button>`;
+ return h}
+function subNav(){
+ if(route==="home"||route==="suivi")return `<div class="tabs" style="margin-bottom:14px"><button data-act="home" class="${route==="home"?"on":""}">Exercices</button><button data-act="suivi" class="${route==="suivi"?"on":""}">Mon suivi</button></div>`;
+ if(!canAdmin)return"";
+ return `<div class="tabs" style="margin-bottom:14px"><button data-act="admin" class="${route==="users"?"":"on"}">Scénarios</button><button data-act="users" class="${route==="users"?"on":""}">Utilisateurs</button></div>`}
+function render(){
+ clearInterval(tmr);const a=$("#app");
+ const g=gate();if(g){a.innerHTML=g;return}
+ if(route==="home")a.innerHTML=shell(subNav()+homeHtml(),navHtml());
+ else if(route==="admin")a.innerHTML=shell(subNav()+adminHtml(),navHtml());
+ else if(route==="edit")a.innerHTML=shell(subNav()+editHtml(),navHtml());
+ else if(route==="suivi")a.innerHTML=shell(subNav()+suiviHtml(),navHtml());
+ else if(route==="users")a.innerHTML=shell(subNav()+usersHtml(),navHtml());
+ else if(route==="play")playRender();
+}
+
+/* ---- accueil (stagiaire) ---- */
+function homeHtml(){
+ const pub=list.filter(s=>s.publie);
+ let h=`<h1>Choisis un scénario</h1><p class="muted">Observe la photo, interroge les personnes présentes, puis construis ton SOIEC et ton message.</p>`;
+ if(!db)h+=`<div class="card warn">Base de données indisponible : connecte-toi pour utiliser les scénarios.</div>`;
+ else if(!loaded)h+=`<p class="muted">Chargement…</p>`;
+ else if(!pub.length)h+=`<div class="card">Aucun scénario publié.${canAdmin?` Crée-en un dans <b>Paramètres</b>.`:""}</div>`;
+ if(db&&loaded&&pub.length)h+=`<p><b>${pub.length}</b> scénario${pub.length>1?"s":""} disponible${pub.length>1?"s":""} · ${rubsCount(pub)}</p>`;
+ const card=s=>`<button class="card scn" data-act="play" data-arg="${s.id}">${s.vignette?`<img src="${s.vignette}" alt="">`:`<div class="ph">Pas de photo</div>`}<div class="b"><h2>${esc(s.titre)}</h2><p class="muted">${esc(s.description)}</p>${s.duree>0?`<span class="tag">${s.duree} min</span>`:""}</div></button>`;
+ const rubs=allRub().filter(r=>pub.some(x=>x.rubrique===r));if(pub.some(x=>!x.rubrique))rubs.push("");
+ h+=rubs.map(r=>{const g=pub.filter(x=>(x.rubrique||"")===r);return `<h3 class="rub">${esc(r||"Autres")} <span class="muted">(${g.length})</span></h3><div class="grid">${g.map(card).join("")}</div>`}).join("");
+ return h}
+
+/* ---- suivi du stagiaire ---- */
+const bilansOf=u=>(u&&u.bilans)||{};
+function statsOf(bs){const a=Object.values(bs);const tot=a.reduce((n,b)=>n+(b.essTot||0),0),ok=a.reduce((n,b)=>n+(b.essOk||0),0);
+ return{n:a.length,tmoy:a.length?Math.round(a.reduce((n,b)=>n+(b.duree||0),0)/a.length):0,ess:tot?Math.round(100*ok/tot):null}}
+function suiviHtml(){
+ const bs=bilansOf(me),st=statsOf(bs),pub=list.filter(x=>x.publie);
+ let h=`<h1>Mon suivi</h1>`;
+ if(!me&&canAdmin)return h+`<div class="card"><p>Active ton suivi pour enregistrer tes propres exercices. Les résultats des stagiaires sont dans <b>Espace admin → Utilisateurs → Suivi</b>.</p><p><input id="nom" placeholder="Ton nom" maxlength="60"></p><button class="btn pri" data-act="register">Activer mon suivi</button></div>`;
+ h+=`<div class="row"><div class="card grow"><div class="muted">Exercices terminés</div><h2>${st.n} / ${pub.length}</h2></div><div class="card grow"><div class="muted">Temps moyen</div><h2>${st.n?fmt(st.tmoy):"—"}</h2></div><div class="card grow"><div class="muted">Questions essentielles posées</div><h2>${st.ess===null?"—":st.ess+" %"}</h2></div></div>`;
+ if(!pub.length)return h+`<div class="card">Aucun exercice disponible.</div>`;
+ h+=pub.map(x=>{const b=bs[x.id],loc=lsGet("soiec:"+x.id),enc=!b&&loc&&loc.start&&!loc.finished;
+  const tag=b?`<span class="tag ok">Terminé</span>`:enc?`<span class="tag">En cours</span>`:`<span class="tag">Non commencé</span>`;
+  const info=b?`${dt(b.fin)} · ${fmt(b.duree||0)} · ${b.nbQ} question(s)${b.essTot?` · essentielles ${b.essOk}/${b.essTot}`:""}${b.nb>1?` · ${b.nb} tentatives`:""}`:"";
+  return `<div class="card row between"><div><b>${esc(x.titre)}</b> ${tag}<div class="muted" style="font-size:.85rem">${info}</div></div><div class="row"><button class="btn ${b?"":"pri"}" data-act="play" data-arg="${x.id}">${b?"Revoir mes réponses":enc?"Reprendre":"Commencer"}</button></div></div>`}).join("");
+ return h}
+function userDetail(u){const bs=bilansOf(u),ids=Object.keys(bs);
+ if(!ids.length)return `<p class="muted" style="margin:8px 0 0">Aucun exercice terminé.</p>`;
+ return `<table class="cmp" style="min-width:0;margin-top:8px"><thead><tr><th>Exercice</th><th>Fin</th><th>Temps</th><th>Questions</th><th>Essentielles</th><th>Tent.</th></tr></thead><tbody>${ids.map(i=>{const b=bs[i];return `<tr><td>${esc(b.titre)}</td><td>${dt(b.fin)}</td><td>${fmt(b.duree||0)}</td><td>${b.nbQ}</td><td>${b.essTot?b.essOk+"/"+b.essTot:"—"}</td><td>${b.nb||1}</td></tr>`}).join("")}</tbody></table>`}
+
+/* ---- utilisateurs (admin) ---- */
+function usersHtml(){
+ const all=users.map(u=>({...u,susp:(mods[u.id]||{}).statut==="suspendu"}));
+ const rows=all.filter(u=>{if(uq&&!(u.nom||"").toLowerCase().includes(uq.toLowerCase()))return false;return uf==="tous"||(uf==="suspendu"?u.susp:!u.susp)});
+ let h=`<div class="row between"><h1>Utilisateurs</h1><span class="muted">${all.length} inscrits · ${all.filter(u=>!u.susp).length} actifs · ${all.filter(u=>u.susp).length} suspendus</span></div>
+ <div class="row"><input id="uq" class="grow" placeholder="Rechercher un nom…" value="${esc(uq)}"><select id="uf"><option value="tous"${uf==="tous"?" selected":""}>Tous</option><option value="actif"${uf==="actif"?" selected":""}>Actifs</option><option value="suspendu"${uf==="suspendu"?" selected":""}>Suspendus</option></select></div>`;
+ if(!rows.length)h+=`<div class="card">Aucun utilisateur. Les stagiaires apparaissent ici après leur inscription : ils doivent ouvrir l'artefact (partagé avec droit d'utilisation) et saisir leur nom. Pour t'afficher toi-même : Espace stagiaire → Mon suivi → Activer mon suivi.</div>`;
+ const two=(k,l,act,id,cls="")=>confirmKey===k?`<button class="btn dng" data-act="${act}" data-arg="${id}">Confirmer ?</button>`:`<button class="btn ${cls}" data-act="uask" data-arg="${k}">${l}</button>`;
+ h+=rows.map(u=>`<div class="card row between"><div><b>${esc(u.nom||"—")}</b> ${u.susp?'<span class="tag">Suspendu</span>':'<span class="tag ok">Actif</span>'}<div class="muted" style="font-size:.85rem">Inscrit : ${dt(u.creeLe)} · Dernière visite : ${dt(u.derniere)} · ${u.visites||1} visite(s) · ${Object.keys(bilansOf(u)).length} exercice(s) terminé(s)</div>${uopen===u.id?userDetail(u):""}</div>
+ <div class="row"><button class="btn" data-act="uview" data-arg="${u.id}">${uopen===u.id?"Masquer":"Suivi"}</button>${two("s:"+u.id,u.susp?"Réactiver":"Suspendre","usus",u.id)}${two("d:"+u.id,"Supprimer","udel",u.id,"dng")}</div></div>`).join("");
+ return h+`<p class="muted">« Supprimer » efface le profil : la personne devra se réinscrire. Les droits administrateur suivent le partage de l'artefact (menu Partager), pas cette page.</p>`}
+
+/* ---- liste admin ---- */
+function adminHtml(){
+ let h=`<div class="row between"><h1>Scénarios</h1><button class="btn pri" data-act="new">+ Nouveau scénario</button></div>`;
+ if(!loaded)h+=`<p class="muted">Chargement…</p>`;
+ else if(!list.length)h+=`<div class="card">Aucun scénario. Crée le premier.</div>`;
+ h+=list.map(s=>{const dk="del"+s.id;return `<div class="card row between"><div class="row grow">${s.vignette?`<img class="thumb" src="${s.vignette}" alt="">`:`<div class="thumb"></div>`}<div><b>${esc(s.titre||"Sans titre")}</b> <span class="tag ${s.publie?"ok":""}">${s.publie?"Publié":"Brouillon"}</span>${s.rubrique?` <span class="tag">${esc(s.rubrique)}</span>`:""}<div class="muted">${(s.interlocuteurs||[]).length} interlocuteur(s) · ${(s.qa||[]).length} réponse(s)</div></div></div>
+ <div class="row"><button class="btn" data-act="play" data-arg="${s.id}">Tester</button><button class="btn" data-act="edit" data-arg="${s.id}">Modifier</button><button class="btn" data-act="dup" data-arg="${s.id}">Dupliquer</button>
+ ${confirmKey===dk?`<button class="btn dng" data-act="delok" data-arg="${s.id}">Confirmer la suppression</button>`:`<button class="btn dng" data-act="del" data-arg="${s.id}">Supprimer</button>`}</div></div>`}).join("");
+ return h}
+
+/* ---- éditeur ---- */
+const TABS=[["general","Général"],["situation","Situation"],["inter","Interlocuteurs"],["qa","Questions / réponses"],["corr","Correction SOIEC"]];
+const fi=(p,v,extra="")=>`<input data-p="${p}" value="${esc(v)}" ${extra}>`;
+const fta=(p,v,r=3)=>`<textarea data-p="${p}" rows="${r}">${esc(v)}</textarea>`;
+const fck=(p,v,l)=>`<label class="ck"><input type="checkbox" data-p="${p}" ${v?"checked":""}>${l}</label>`;
+let qaFilter="all",tw="",tq="";
+function editHtml(){
+ const s=ed;
+ let h=`<div class="row between stick"><div class="row"><button class="btn" data-act="admin">← Liste</button><h2>${esc(s.titre||"Nouveau scénario")}</h2></div><div class="row">${edDirty?`<span class="tag">Non enregistré</span>`:""}<button class="btn pri" data-act="save">Enregistrer</button></div></div>`;
+ h+=`<div class="tabs">`+TABS.map(([k,l])=>`<button data-act="tab" data-arg="${k}" class="${edTab===k?"on":""}">${l}</button>`).join("")+`</div>`;
+ if(edTab==="general"){
+  h+=`<div class="card form"><label>Titre</label>${fi("titre",s.titre)}<label>Description courte</label>${fta("description",s.description,2)}
+  <label>Rubrique</label><div class="row"><select id="rubsel" style="width:auto"><option value="">— Aucune —</option>${allRub().map(r=>`<option value="${esc(r)}"${!newRub&&s.rubrique===r?" selected":""}>${esc(r)}</option>`).join("")}<option value="__new"${newRub?" selected":""}>+ Nouvelle rubrique…</option></select>${newRub?fi("rubrique",s.rubrique||"",'placeholder="Nom de la nouvelle rubrique" maxlength="40"'):""}</div>
+  <label>Durée conseillée en minutes (0 = chronomètre simple)</label>${fi("duree",s.duree,'type="number" min="0"')}
+  ${fck("publie",s.publie,"Publié (visible par les stagiaires)")}${fck("afficherCorrection",s.afficherCorrection,"Afficher la correction au stagiaire à la fin")}
+  <label>Photo de la situation</label>${s.photo?`<img class="photo prev" src="${s.photo}" alt=""><br>`:""}
+  <div class="row"><input id="file" type="file" accept="image/*" style="width:auto">${s.photo?`<button class="btn dng" data-act="rmphoto">Retirer la photo</button>`:""}</div>
+  <p class="muted">L'image est redimensionnée et compressée automatiquement.</p></div>`}
+ if(edTab==="situation")h+=`<div class="card form"><label>Situation initiale (départ reçu, heure, engins engagés, informations connues)</label>${fta("situation.contexte",s.situation.contexte,6)}<label>Consigne donnée au stagiaire</label>${fta("situation.consigne",s.situation.consigne,4)}</div>`;
+ if(edTab==="inter"){
+  h+=s.interlocuteurs.map((it,i)=>`<div class="card form"><div class="row between"><b>Interlocuteur ${i+1}</b><button class="btn dng" data-act="delinter" data-arg="${i}">${confirmKey==="di"+i?"Confirmer (supprime ses réponses)":"Supprimer"}</button></div>
+  <div class="cols"><div><label>Nom (Requérant, Témoin 1, Badaud…)</label>${fi(`interlocuteurs.${i}.nom`,it.nom)}</div><div><label>Rôle / description</label>${fi(`interlocuteurs.${i}.role`,it.role)}</div></div>
+  <label>Réponse par défaut (question non reconnue)</label>${fi(`interlocuteurs.${i}.reponseDefaut`,it.reponseDefaut)}</div>`).join("");
+  h+=`<button class="btn" data-act="addinter">+ Ajouter un interlocuteur</button>`}
+ if(edTab==="qa"){
+  const opts=sel=>`<option value="${TOUS}" ${sel===TOUS?"selected":""}>Tous les interlocuteurs</option>`+s.interlocuteurs.map(i=>`<option value="${i.id}" ${sel===i.id?"selected":""}>${esc(i.nom)}</option>`).join("");
+  h+=`<div class="card form"><b>Tester la reconnaissance d'une question</b><div class="row"><select id="tw"><option value="">Interlocuteur…</option>${s.interlocuteurs.map(i=>`<option value="${i.id}" ${tw===i.id?"selected":""}>${esc(i.nom)}</option>`).join("")}</select><input id="tq" class="grow" value="${esc(tq)}" placeholder="Tape une question comme le stagiaire…"></div><p id="tres" class="muted"></p></div>`;
+  h+=`<div class="row between"><select id="qaf"><option value="all">Tous les interlocuteurs</option>${s.interlocuteurs.map(i=>`<option value="${i.id}" ${qaFilter===i.id?"selected":""}>${esc(i.nom)}</option>`).join("")}</select><button class="btn pri" data-act="addqa">+ Ajouter une question / réponse</button></div>`;
+  h+=s.qa.map((x,i)=>qaFilter!=="all"&&x.interlocuteurId!==qaFilter?"":`<div class="card form"><div class="row between"><select data-p="qa.${i}.interlocuteurId">${opts(x.interlocuteurId)}</select><div class="row">${fck(`qa.${i}.essentielle`,x.essentielle,"Question essentielle")}<button class="btn dng" data-act="delqa" data-arg="${i}">Supprimer</button></div></div>
+  <label>Intitulé (pour toi et pour le bilan), ex. « Y a-t-il des victimes ? »</label>${fi(`qa.${i}.intitule`,x.intitule)}
+  <label>Mots-clés déclencheurs, séparés par des virgules</label>${fi(`qa.${i}.motsCles`,x.motsCles,'placeholder="victime, blessé, quelqu\'un dedans"')}
+  <label>Réponse donnée par ${esc(interName(s,x.interlocuteurId))}</label>${fta(`qa.${i}.reponse`,x.reponse,3)}</div>`).join("");
+  h+=`<p class="muted">Plusieurs mots dans un même mot-clé (« odeur gaz ») doivent tous figurer dans la question. Accents, pluriels et mots proches sont reconnus.</p>`}
+ if(edTab==="corr"){
+  h+=`<div class="card form">`+SOIEC.map(r=>`<label><b>${r.k}</b> – ${r.t} <span class="muted" style="font-weight:400">${r.a}</span></label>${fta("correction."+r.k,s.correction[r.k],3)}`).join("")+
+  `<label><b>Message modèle</b></label>${fta("correction.message",s.correction.message,5)}<label>Commentaire du formateur</label>${fta("correction.commentaire",s.correction.commentaire,4)}</div>`}
+ return h}
+function testQ(){const r=$("#tres");if(!r)return;if(!tq||!tw){r.textContent="";return}
+ const x=findAnswer(tq,ed.qa,tw);r.className=x?"okt":"muted";r.textContent=x?`Réponse trouvée : « ${x.reponse} »`:"Aucune correspondance : réponse par défaut."}
+
+function compress(file,max,q,maxChars=0){return new Promise((res,rej)=>{const im=new Image(),u=URL.createObjectURL(file);
+ im.onload=()=>{const r=Math.min(1,max/Math.max(im.width,im.height)),c=document.createElement("canvas");c.width=Math.round(im.width*r);c.height=Math.round(im.height*r);c.getContext("2d").drawImage(im,0,0,c.width,c.height);URL.revokeObjectURL(u);
+  let o=c.toDataURL("image/jpeg",q);while(maxChars&&o.length>maxChars&&q>.3){q-=.1;o=c.toDataURL("image/jpeg",q)}res(o)};
+ im.onerror=()=>rej(new Error("Image illisible"));im.src=u})}
+
+/* ---- joueur ---- */
+const emptySess=()=>({start:null,finishedAt:null,finished:false,log:[],notes:{S:"",O:"",I:"",E:"",C:"",message:""}});
+function fromBilan(id){const b=bilansOf(me)[id];if(!b)return null;return{start:b.fin-(b.duree||0)*1000,finishedAt:b.fin,finished:true,log:b.log||[],notes:{...emptySess().notes,...(b.notes||{})}}}
+async function saveBilan(){if(!db||!myId||!me)return;const {sc,sess,id}=P,qs=sc.qa.filter(x=>x.essentielle),asked=new Set(sess.log.map(l=>l.qaId)),old=bilansOf(me)[id];
+ const b={titre:sc.titre,fin:sess.finishedAt,duree:Math.floor((sess.finishedAt-sess.start)/1000),nbQ:sess.log.length,essTot:qs.length,essOk:qs.filter(x=>asked.has(x.id)).length,nb:(old?old.nb||1:0)+1,log:sess.log.map(l=>({who:l.who,question:l.question,answer:l.answer,qaId:l.qaId})),notes:sess.notes};
+ try{await db.collection("users").doc(myId).update({bilans:{...bilansOf(me),[id]:b}})}catch(e){toast("Résultat non enregistré : "+(e.message||e.code),true)}}
+function openPlay(id){const sc=list.find(s=>s.id===id);if(!sc)return;const m=merge(sc);
+ P={sc:m,id,sess:lsGet("soiec:"+id)||fromBilan(id)||emptySess(),tab:"questions",who:m.interlocuteurs[0]?.id||null,zoom:false,now:Date.now()};route="play";render()}
+const saveSess=()=>lsSet("soiec:"+P.id,P.sess);
+function playRender(){
+ const {sc,sess}=P,a=$("#app"),back=`<button data-act="${canAdmin?"admin":"home"}">Quitter</button>`;
+ if(!sess.start){a.innerHTML=shell(`<div class="card intro"><h1>${esc(sc.titre)}</h1><p>${esc(sc.description)}</p><p class="consigne">${esc(sc.situation.consigne)}</p>${sc.duree>0?`<p class="muted">Durée conseillée : ${sc.duree} min</p>`:""}<button class="btn pri big" data-act="begin">Arriver sur les lieux</button></div>`,back);return}
+ if(sess.finished){a.innerHTML=shell(bilanHtml(),back);return}
+ a.innerHTML=shell(playHtml(),`<span id="tm" class="timer"></span>${back}`);tick();
+ tmr=setInterval(tick,1000);const c=$("#chat");if(c)c.scrollTop=c.scrollHeight}
+function tick(){const t=$("#tm");if(!t||!P)return;const el=Math.floor((Date.now()-P.sess.start)/1000),r=P.sc.duree>0?P.sc.duree*60-el:null;
+ t.textContent=fmt(r===null?el:r);t.classList.toggle("late",r!==null&&r<0)}
+function playHtml(){
+ const {sc,sess,tab,who}=P;
+ let h=`<div class="play"><section class="card"><h2>${esc(sc.titre)}</h2>${sc.photo?`<img class="photo ${P.zoom?"z":""}" data-act="zoom" src="${sc.photo}" alt="Situation">`:`<div class="ph tall">Pas de photo</div>`}
+ ${sc.situation.contexte?`<h3>Situation initiale</h3><p class="pre">${esc(sc.situation.contexte)}</p>`:""}<p class="consigne">${esc(sc.situation.consigne)}</p></section>
+ <section class="card"><div class="tabs">${[["questions","Questions"],["soiec","SOIEC"],["message","Message"]].map(([k,l])=>`<button data-act="ptab" data-arg="${k}" class="${tab===k?"on":""}">${l}</button>`).join("")}</div>`;
+ if(tab==="questions"){
+  h+=`<div class="chips">${sc.interlocuteurs.map(i=>`<button class="chip ${who===i.id?"on":""}" data-act="who" data-arg="${i.id}" title="${esc(i.role)}">${esc(i.nom)}</button>`).join("")}</div>
+  <div class="chat" id="chat">${sess.log.length?sess.log.map(l=>`<div><div class="bub me"><small>Vous → ${esc(interName(sc,l.who))}</small>${esc(l.question)}</div><div class="bub th"><small>${esc(interName(sc,l.who))}</small>${esc(l.answer)}</div></div>`).join(""):`<p class="muted">Choisis un interlocuteur, puis pose ta question (requérant, témoin, badaud…).</p>`}</div>
+  <form class="ask" id="askf"><input id="q" autocomplete="off" placeholder="Question à ${esc(interName(sc,who))}…"><button class="btn pri">Demander</button></form>`}
+ if(tab==="soiec")h+=SOIEC.map(r=>`<div class="note"><label><b>${r.k}</b> ${r.t} <small class="muted">${r.a}</small></label><textarea rows="3" data-n="${r.k}">${esc(sess.notes[r.k])}</textarea></div>`).join("");
+ if(tab==="message")h+=`<div class="note"><label><b>Message d'ambiance / de renseignements</b></label><textarea rows="12" data-n="message" id="msgta">${esc(sess.notes.message)}</textarea></div>${sess.notes.message?"":`<button class="btn" data-act="trame">Insérer une trame</button>`}`;
+ h+=`<div class="row end" style="margin-top:10px">${confirmKey==="end"?`<button class="btn pri" data-act="endok">Confirmer : terminer</button>`:`<button class="btn pri" data-act="end">Terminer l'exercice</button>`}</div></section></div>`;
+ return h}
+function bilanHtml(){
+ const {sc,sess}=P,el=Math.floor(((sess.finishedAt||Date.now())-sess.start)/1000);
+ const ess=sc.qa.filter(x=>x.essentielle),asked=new Set(sess.log.map(l=>l.qaId)),cor=sc.afficherCorrection;
+ const rows=[...SOIEC.map(r=>[`${r.k} – ${r.t}`,sess.notes[r.k],sc.correction[r.k]]),["Message",sess.notes.message,sc.correction.message]];
+ return `<div class="row between"><h1>Bilan : ${esc(sc.titre)}</h1>${confirmKey==="re"?`<button class="btn dng" data-act="reok">Confirmer : tout effacer</button>`:`<button class="btn" data-act="re">Recommencer</button>`}</div>
+ <p class="muted">Temps : ${fmt(el)} · ${sess.log.length} question(s) posée(s)</p>
+ ${cor&&ess.length?`<div class="card"><h3 style="margin-top:0">Questions essentielles</h3><ul class="checks">${ess.map(x=>`<li class="${asked.has(x.id)?"y":"n"}">${asked.has(x.id)?"✓":"✗"} ${esc(x.intitule||x.motsCles)} <span class="muted">(${esc(interName(sc,x.interlocuteurId))})</span></li>`).join("")}</ul></div>`:""}
+ <div class="card sc"><table class="cmp"><thead><tr><th></th><th>Ta réponse</th>${cor?"<th>Correction</th>":""}</tr></thead><tbody>${rows.map(r=>`<tr><th>${r[0]}</th><td>${esc(r[1])||"—"}</td>${cor?`<td>${esc(r[2])||"—"}</td>`:""}</tr>`).join("")}</tbody></table></div>
+ ${cor&&sc.correction.commentaire?`<div class="card"><h3 style="margin-top:0">Commentaire du formateur</h3><p class="pre">${esc(sc.correction.commentaire)}</p></div>`:""}
+ ${cor?"":`<p class="muted">La correction sera donnée par le formateur.</p>`}`}
+
+/* ---- actions ---- */
+const setPath=(o,p,v)=>{const k=p.split(".");let c=o;for(let i=0;i<k.length-1;i++)c=c[k[i]];c[k[k.length-1]]=v};
+async function persist(){if(!db)return toast("Base indisponible",true);if(!ed.titre.trim())return toast("Le titre est obligatoire.",true);
+ try{const col=db.collection("scenarios"),ref=edId?col.doc(edId):col.doc();const {id,...data}=ed;
+  await ref.set(JSON.parse(JSON.stringify({...data,maj:Date.now()})));edId=ref.id;edDirty=false;toast("Enregistré.");render()}
+ catch(e){toast("Erreur : "+(e.message||e.code)+" (photo trop lourde ?)",true)}}
+const A={
+ home(){route="home";render()},admin(){route="admin";confirmKey=null;render()},
+ new(){newRub=false;ed=newScn();edId=null;edTab="general";edDirty=false;route="edit";render()},
+ edit(id){newRub=false;const s=list.find(x=>x.id===id);ed=merge(JSON.parse(JSON.stringify(s)));edId=id;edTab="general";edDirty=false;route="edit";render()},
+ play(id){openPlay(id)},
+ users(){route="users";confirmKey=null;render()},
+ uask(k){confirmKey=k;render()},
+ suivi(){route="suivi";render()},
+ uview(id){uopen=uopen===id?null:id;render()},
+ async usus(id){confirmKey=null;const susp=(mods[id]||{}).statut==="suspendu";try{await db.collection("moderation").doc(id).set({statut:susp?"actif":"suspendu",le:Date.now()});toast(susp?"Compte réactivé.":"Compte suspendu.")}catch(e){toast("Erreur : "+e.message,true)}},
+ async udel(id){confirmKey=null;try{await db.collection("users").doc(id).delete();await db.collection("moderation").doc(id).delete();toast("Profil supprimé.")}catch(e){toast("Erreur : "+e.message,true)}},
+ async register(){const n=($("#nom").value||"").trim();if(n.length<2)return toast("Indique ton nom.",true);regBusy=true;try{await db.collection("users").doc(myId).set({nom:n,creeLe:Date.now(),derniere:Date.now(),visites:1});}catch(e){toast("Erreur : "+e.message,true)}regBusy=false},
+ async dup(id){const s=list.find(x=>x.id===id);const {id:_,...d}=JSON.parse(JSON.stringify(s));try{await db.collection("scenarios").doc().set({...d,titre:d.titre+" (copie)",publie:false});toast("Dupliqué.")}catch(e){toast("Erreur : "+e.message,true)}},
+ del(id){confirmKey="del"+id;render()},
+ async delok(id){confirmKey=null;try{await db.collection("scenarios").doc(id).delete();localStorage.removeItem("soiec:"+id)}catch(e){toast("Erreur : "+e.message,true)}render()},
+ save(){persist()},tab(k){edTab=k;render()},
+ addinter(){ed.interlocuteurs.push({id:uid(),nom:"",role:"",reponseDefaut:"Je ne sais pas, je n'ai pas vu ça."});edDirty=true;render()},
+ delinter(i){if(confirmKey!=="di"+i){confirmKey="di"+i;return render()}const id=ed.interlocuteurs[i].id;ed.interlocuteurs.splice(i,1);ed.qa=ed.qa.filter(x=>x.interlocuteurId!==id);confirmKey=null;edDirty=true;render()},
+ addqa(){ed.qa.push({id:uid(),interlocuteurId:qaFilter!=="all"?qaFilter:(ed.interlocuteurs[0]?.id||TOUS),intitule:"",motsCles:"",reponse:"",essentielle:false});edDirty=true;render()},
+ delqa(i){ed.qa.splice(i,1);edDirty=true;render()},
+ rmphoto(){ed.photo=null;ed.vignette=null;edDirty=true;render()},
+ begin(){P.sess={...emptySess(),start:Date.now()};saveSess();render()},
+ zoom(){P.zoom=!P.zoom;const i=$(".photo");i.classList.toggle("z",P.zoom)},
+ ptab(k){P.tab=k;render()},who(id){P.who=id;render();$("#q")?.focus()},
+ trame(){P.sess.notes.message=MSG_TRAME;saveSess();render()},
+ end(){confirmKey="end";render()},endok(){confirmKey=null;P.sess.finished=true;P.sess.finishedAt=Date.now();saveSess();saveBilan();render()},
+ re(){confirmKey="re";render()},reok(){confirmKey=null;P.sess=emptySess();saveSess();render()}
+};
+document.addEventListener("click",e=>{const b=e.target.closest("[data-act]");if(!b)return;const f=A[b.dataset.act];if(f){const a=b.dataset.arg;f(/^\d+$/.test(a||"")?Number(a):a)}});
+document.addEventListener("input",e=>{const t=e.target;
+ if(t.id==="uq"){uq=t.value;const p=t.selectionStart;render();const i=$("#uq");i.focus();i.setSelectionRange(p,p);return}
+ if(t.dataset.p&&ed){const v=t.type==="checkbox"?t.checked:t.type==="number"?Number(t.value)||0:t.value;setPath(ed,t.dataset.p,v);if(!edDirty){edDirty=true;const s=$(".stick .row:last-child");if(s&&!s.querySelector(".tag"))s.insertAdjacentHTML("afterbegin",'<span class="tag">Non enregistré</span>')}}
+ else if(t.dataset.n&&P){P.sess.notes[t.dataset.n]=t.value;saveSess()}
+ else if(t.id==="tw"){tw=t.value;testQ()}else if(t.id==="tq"){tq=t.value;testQ()}});
+document.addEventListener("change",e=>{const t=e.target;
+ if(t.id==="rubsel"){if(t.value==="__new"){newRub=true;ed.rubrique=""}else{newRub=false;ed.rubrique=t.value}edDirty=true;render()}
+ else if(t.id==="uf"){uf=t.value;render()}
+ else if(t.id==="qaf"){qaFilter=t.value;render()}
+ else if(t.id==="file"&&t.files[0]){const f=t.files[0];(async()=>{try{ed.photo=await compress(f,960,.62,260000);ed.vignette=await compress(f,300,.6);edDirty=true;render()}catch(er){toast(er.message,true)}})()}
+ else if(t.dataset.p&&t.tagName==="SELECT"){/* déjà pris en compte par input */}});
+document.addEventListener("submit",e=>{if(e.target.id!=="askf")return;e.preventDefault();const q=$("#q").value.trim();if(!q||!P.who)return;
+ const {sc}=P,it=sc.interlocuteurs.find(i=>i.id===P.who),x=findAnswer(q,sc.qa,P.who);
+ P.sess.log.push({id:uid(),who:P.who,question:q,answer:x?x.reponse:(it.reponseDefaut||"Je n'ai pas d'information à ce sujet."),qaId:x?x.id:null});saveSess();render();$("#q")?.focus()});
+
+/* ---- démarrage ---- */
+render();
+(async()=>{
+ try{const c=window.claude;if(!c)return render();
+  db=await c.use("db");const u=await c.use("user");canAdmin=u?await u.canEdit():false;
+  if(db)db.collection("scenarios").onSnapshot(s=>{list=s.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(a.titre||"").localeCompare(b.titre||"","fr"));loaded=true;if(route==="home"||route==="admin")render()},()=>{loaded=true;if(route==="home")render()});
+  else loaded=true;
+  if(db&&u){myId=await u.id();
+   if(myId&&canAdmin){db.collection("users").onSnapshot(q=>{users=q.docs.map(d=>({id:d.id,...d.data()}));me=users.find(x=>x.id===myId)||null;if(route==="users"||route==="suivi")render()});
+    db.collection("moderation").onSnapshot(q=>{mods={};q.docs.forEach(d=>mods[d.id]=d.data());if(route==="users")render()})}
+   else if(myId){let first=true;
+    db.collection("moderation").doc(myId).onSnapshot(sn=>{mods[myId]=sn.exists?sn.data():null;if(route!=="play"||(mods[myId]&&mods[myId].statut==="suspendu"))render()});
+    db.collection("users").doc(myId).onSnapshot(sn=>{me=sn.exists?sn.data():null;meLoaded=true;
+     if(me&&first){first=false;db.collection("users").doc(myId).update({derniere:Date.now(),visites:(me.visites||1)+1}).catch(()=>{})}
+     if(route!=="play")render()},()=>{meLoaded=true;me={}})}}
+  if(route==="home")render()}catch{loaded=true;render()}
+})();
+</script>

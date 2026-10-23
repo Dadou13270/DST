@@ -1,0 +1,43 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Admin = utilisateur authentifié dont l'UID existe dans la collection "admins"
+    function isAdmin() {
+      return request.auth != null
+        && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+    function userActif() {
+      return request.auth != null
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.statut != "suspendu";
+    }
+
+    // Le premier admin se crée à la main dans la console ; ensuite on les gère depuis Paramètres > Utilisateurs.
+    match /admins/{uid} {
+      allow read: if request.auth != null && (request.auth.uid == uid || isAdmin());
+      allow write: if isAdmin() && request.auth.uid != uid; // on ne s'auto-modifie pas
+    }
+
+    // Profils : inscription libre (statut "actif"), gestion par les admins.
+    match /users/{uid} {
+      allow read: if request.auth != null && (request.auth.uid == uid || isAdmin());
+      allow create: if request.auth != null && request.auth.uid == uid
+        && request.resource.data.statut == "actif";
+      allow update: if isAdmin()
+        || (request.auth.uid == uid
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["derniereConnexion", "nom", "bilans"]));
+      allow delete: if isAdmin() && request.auth.uid != uid;
+    }
+
+    match /scenarios/{id} {
+      allow read: if isAdmin() || (resource.data.publie == true && userActif());
+      allow write: if isAdmin();
+
+      match /media/{m} {
+        allow read: if isAdmin()
+          || (get(/databases/$(database)/documents/scenarios/$(id)).data.publie == true && userActif());
+        allow write: if isAdmin();
+      }
+    }
+  }
+}
