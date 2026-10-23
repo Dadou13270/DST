@@ -1,4 +1,4 @@
-# Simulateur SOIEC — devoirs sur table pompiers
+# Devoir sur table simulateur — pompiers (SOIEC)
 
 React + Vite + Firebase (Firestore + Auth). Déploiement Netlify.
 

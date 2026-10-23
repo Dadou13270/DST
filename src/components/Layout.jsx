@@ -9,7 +9,7 @@ export default function Layout({ children, extra }) {
   return (
     <>
       <header className="top">
-        <Link to="/" className="brand">Simulateur SOIEC</Link>
+        <Link to="/" className="brand">Devoir sur table simulateur</Link>
         <nav>
           {extra}
           {user && (
@@ -23,6 +23,7 @@ export default function Layout({ children, extra }) {
         </nav>
       </header>
       <main className="wrap">{children}</main>
+      <footer className="foot">© {new Date().getFullYear()} Devoir sur table simulateur — Tous droits réservés</footer>
     </>
   );
 }

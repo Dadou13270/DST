@@ -1,4 +1,4 @@
-<title>Simulateur SOIEC</title>
+<title>Devoir sur table simulateur</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap">
 <style>
@@ -62,6 +62,7 @@ select{width:auto;max-width:100%}textarea{resize:vertical}input[type=checkbox]{w
 .stick{position:sticky;top:0;background:var(--bg);padding:6px 0;z-index:5}
 .toast{position:fixed;left:50%;bottom:calc(16px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 16px;border-radius:8px;z-index:20;max-width:90%}
 .rub{font-size:1.3rem;margin:22px 0 8px;padding-bottom:4px;border-bottom:2px solid var(--line)}.rub .muted{font-size:.9rem;font-family:var(--f-b)}
+.foot{text-align:center;color:var(--mut);font-size:.82rem;margin:36px auto 0;padding-top:14px;border-top:1px solid var(--line);max-width:1180px}
 .intro{max-width:620px;margin:24px auto;text-align:center}
 @media(max-width:800px){.play,.cols{grid-template-columns:1fr}}
 </style>
@@ -77,6 +78,7 @@ const SOIEC=[
  {k:"E",t:"Exécution",a:"Mission de chaque engin / équipe / secteur."},
  {k:"C",t:"Commandement",a:"PC, liaisons, transmissions, renforts, sécurité, logistique."}];
 const TOUS="tous", MSG_TRAME="ICI [indicatif], MESSAGE D'AMBIANCE\nArrivé sur les lieux de : \nSituation : \nActions en cours : \nJe demande : \n";
+const foot=()=>`<footer class="foot">© ${new Date().getFullYear()} ${"Devoir sur table simulateur"} — Tous droits réservés</footer>`;
 const uid=()=>Math.random().toString(36).slice(2,9);
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const $=s=>document.querySelector(s);
@@ -107,7 +109,7 @@ let uopen=null,myId=null,me=null,meLoaded=false,users=[],mods={},uq="",uf="tous"
 const dt=t=>t?new Date(t).toLocaleString("fr-FR",{dateStyle:"short",timeStyle:"short"}):"—";
 function gate(){
  if(canAdmin||!db||!myId||!meLoaded)return null;
- const out=x=>`<div class="bar"><span class="brand">Simulateur SOIEC</span></div><main>${x}</main>`;
+ const out=x=>`<div class="bar"><span class="brand">Devoir sur table simulateur</span></div><main>${x}</main>${foot()}`;
  if(mods[myId]&&mods[myId].statut==="suspendu")return out(`<div class="card warn intro"><h2>Compte suspendu</h2><p>Ton accès a été suspendu par un administrateur.</p></div>`);
  if(!me)return out(`<div class="card intro"><h1>Inscription</h1><p class="muted">Crée ton accès au simulateur pour suivre tes exercices.</p><p><input id="nom" placeholder="Nom / prénom" maxlength="60" style="width:100%"></p><button class="btn pri big" data-act="register">${regBusy?"…":"Créer mon accès"}</button></div>`);
  return null}
@@ -119,7 +121,7 @@ const interName=(sc,id)=>id===TOUS?"Tous":(sc.interlocuteurs.find(i=>i.id===id)|
 
 /* ---- coque ---- */
 function shell(inner,right=""){
- return `<div class="bar"><span class="brand">Simulateur SOIEC</span><nav>${right}</nav></div><main>${inner}</main>`}
+ return `<div class="bar"><span class="brand">Devoir sur table simulateur</span><nav>${right}</nav></div><main>${inner}</main>${foot()}`}
 function navHtml(){
  const adm=route==="admin"||route==="edit"||route==="users";
  let h=`<button data-act="home" class="${adm?"":"on"}">Espace stagiaire</button>`;

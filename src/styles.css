@@ -87,3 +87,4 @@ select { width: auto; max-width: 100%; } textarea { resize: vertical; } input[ty
 
 @media (max-width: 800px) { .play, .cols { grid-template-columns: 1fr; } .top { padding: 8px 12px; } .wrap { padding: 12px; } .sticky { top: 48px; } }
 @media print { .top, .btn, .tabs { display: none; } body { background: #fff; color: #000; } .card { border-color: #999; } }
+.foot { text-align: center; color: var(--mut); font-size: .82rem; margin: 36px auto 0; padding: 14px 24px 0; border-top: 1px solid var(--line); max-width: 1480px; }
