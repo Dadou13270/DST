@@ -197,12 +197,11 @@ export default function Player() {
   /* ---------- Exercice ---------- */
   return (
     <Layout
-      wide
-      right={
+      extra={
         <>
           {remaining !== null && <span className={remaining < 0 ? "timer late" : "timer"}>{fmt(remaining)}</span>}
           {remaining === null && <span className="timer">{fmt(elapsed)}</span>}
-          <Link to="/">Quitter</Link>
+          <Link to="/" className="navbtn">Quitter</Link>
         </>
       }
     >

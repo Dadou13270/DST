@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, Outlet } from "react-router-dom";
+import { Link, Outlet, useLocation } from "react-router-dom";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import Layout from "../components/Layout";
 import { auth, configured } from "../firebase";
@@ -7,6 +7,7 @@ import { useAuth } from "../lib/auth";
 
 export default function AdminGate() {
   const { user, isAdmin, loading, logout } = useAuth();
+  const { pathname } = useLocation();
   const [email, setEmail] = useState("");
   const [pwd, setPwd] = useState("");
   const [err, setErr] = useState("");
@@ -74,6 +75,10 @@ export default function AdminGate() {
         </>
       }
     >
+      <div className="tabs">
+        <Link to="/admin" className="tablink"><button className={pathname === "/admin" || pathname.startsWith("/admin/scenario") ? "on" : ""}>Scénarios</button></Link>
+        <Link to="/admin/utilisateurs" className="tablink"><button className={pathname.startsWith("/admin/utilisateurs") ? "on" : ""}>Utilisateurs</button></Link>
+      </div>
       <Outlet />
     </Layout>
   );
