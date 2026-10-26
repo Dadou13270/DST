@@ -95,3 +95,11 @@ export const setCommentaire = (uid, scId, texte, auteur) =>
   updateDoc(doc(db, "users", uid), {
     ["commentaires." + scId]: texte.trim() ? { texte: texte.trim(), auteur, le: Date.now() } : deleteField(),
   });
+
+// Utilisateurs du même CIS (et département) que le gestionnaire : pour les affecter à une équipe.
+export async function listUtilisateursCis(departement, cis) {
+  if (!cis) return [];
+  const s = await getDocs(query(collection(db, "users"), where("departement", "==", departement || ""), where("cis", "==", cis)));
+  return s.docs.map((d) => ({ id: d.id, ...d.data() })).filter((u) => u.statut !== "suspendu").sort((a, b) => (a.nom || "").localeCompare(b.nom || "", "fr"));
+}
+export const affecterMembre = deplacerMembre;

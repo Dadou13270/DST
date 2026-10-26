@@ -5,6 +5,7 @@ import Logo from "./Logo";
 import AvisModal from "./AvisModal";
 import HorsLigne from "./HorsLigne";
 import { useAuth } from "../lib/auth";
+import { profilComplet } from "../lib/model";
 import { useEffect, useState } from "react";
 import { pingStats, compteurs } from "../lib/inscrits";
 
@@ -61,6 +62,11 @@ export default function Layout({ children, extra }) {
           )}
         </nav>
       </header>
+      {user && profil && !profilComplet(profil) && pathname !== "/profil" && (
+        <div className="card alerte" role="status" style={{ margin: "10px auto", maxWidth: 1100 }}>
+          <strong>Complète ton profil</strong> (grade, département, CIS) pour que ton gestionnaire te retrouve facilement. <Link to="/profil" className="btn primary">Compléter mon profil</Link>
+        </div>
+      )}
       <main className="wrap">{children}</main>
       <Visite />
       {user && <HorsLigne />}

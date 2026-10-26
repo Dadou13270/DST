@@ -20,6 +20,7 @@ const ERR = {
 const d = (t) => (t?.toDate ? t.toDate().toLocaleString("fr-FR", { dateStyle: "short", timeStyle: "short" }) : "—");
 
 export default function Profil() {
+  const [bienvenue] = useState(() => { try { const v = sessionStorage.getItem("op-bienvenue") === "1"; sessionStorage.removeItem("op-bienvenue"); return v; } catch { return false; } });
   const { user, profil, isAdmin, refreshProfil } = useAuth();
   const [f, setF] = useState({
     nom: profil?.nom || "", grade: profil?.grade || "", departement: profil?.departement || "", cis: profil?.cis || "",
@@ -71,6 +72,7 @@ export default function Profil() {
       <StagiaireNav />
       <div className="pgrid etroit">
       <h1>Mon profil</h1>
+      {bienvenue && <div className="card alerte span"><strong>Bienvenue !</strong> Dernière étape : renseigne ton grade, ton département et ton CIS, puis enregistre. Ton gestionnaire pourra ainsi t'affecter à son équipe.</div>}
       {profil?.mdpProvisoire && <div className="card alerte span"><strong>Mot de passe provisoire.</strong> Il t'a été fourni par ton gestionnaire : change-le dans la section « Connexion » ci-dessous.</div>}
       <form className="dc" onSubmit={save}>
       <div className="card form">

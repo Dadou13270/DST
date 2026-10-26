@@ -69,6 +69,7 @@ export const mergeScenario = (d) => {
   };
 };
 
+export const profilComplet = (p) => Boolean(p && p.nom && p.grade && p.departement && p.cis);
 export const RI = "Risques industriels";
 export const RUBRIQUES = ["Incendie", "Secours à personne", "Secours routier", "Opérations diverses", "Risques industriels"];
 export const rubriquesDe = (list) => {

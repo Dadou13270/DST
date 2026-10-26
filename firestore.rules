@@ -25,6 +25,10 @@ service cloud.firestore {
     // Profils : inscription libre (statut "actif"), gestion par les admins.
     match /users/{uid} {
       allow read: if request.auth != null && (request.auth.uid == uid || isAdmin()
+        // un gestionnaire voit les utilisateurs de son CIS (pour les affecter à une équipe)
+        || (isGest() && resource.data.get("cis", "") != ""
+            && resource.data.get("cis", "") == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get("cis", null)
+            && resource.data.get("departement", "") == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get("departement", null))
         || (resource.data.get("equipeId", null) != null
             && get(/databases/$(database)/documents/teams/$(resource.data.equipeId)).data.owner == request.auth.uid));
       allow create: if request.auth != null && request.auth.uid == uid
@@ -46,6 +50,14 @@ service cloud.firestore {
         || (resource.data.get("equipeId", null) != null
             && get(/databases/$(database)/documents/teams/$(resource.data.equipeId)).data.owner == request.auth.uid
             && request.resource.data.get("equipeId", null) != null
+            && get(/databases/$(database)/documents/teams/$(request.resource.data.equipeId)).data.owner == request.auth.uid
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["equipeId", "equipeNom", "equipeCode", "equipeGest"]))
+        // le gestionnaire peut affecter à une de ses équipes un utilisateur de son CIS sans équipe (ou déjà dans une de ses équipes)
+        || (isGest() && resource.data.get("cis", "") != ""
+            && resource.data.get("cis", "") == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get("cis", null)
+            && resource.data.get("departement", "") == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get("departement", null)
+            && (resource.data.get("equipeId", null) == null
+                || get(/databases/$(database)/documents/teams/$(resource.data.equipeId)).data.owner == request.auth.uid)
             && get(/databases/$(database)/documents/teams/$(request.resource.data.equipeId)).data.owner == request.auth.uid
             && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["equipeId", "equipeNom", "equipeCode", "equipeGest"]))
         // le gestionnaire peut retirer un membre de son équipe

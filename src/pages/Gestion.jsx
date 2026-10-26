@@ -1,9 +1,9 @@
 import { listCalculs } from "../lib/calculs";
 import { useEffect, useState } from "react";
-import { Navigate } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
 import Layout from "../components/Layout";
 import { useAuth } from "../lib/auth";
-import { createEquipe, listMesEquipes, listMembres, regenCode, retirerMembre, supprimerEquipe, deplacerMembre, envoyerMessageFormateur, marquerFilLu, effacerFil } from "../lib/equipes";
+import { listUtilisateursCis, affecterMembre, createEquipe, listMesEquipes, listMembres, regenCode, retirerMembre, supprimerEquipe, deplacerMembre, envoyerMessageFormateur, marquerFilLu, effacerFil } from "../lib/equipes";
 import { fmtDate, fmtDuree, statsOf } from "../lib/users";
 import { inscrireStagiaire, parseLignes } from "../lib/inscription";
 import { listScenarios } from "../lib/db";
@@ -228,6 +228,53 @@ function Equipe({ team, autres, scs, pcs, onChange }) {
   );
 }
 
+// Affectation rapide : liste déroulante des utilisateurs du CIS du gestionnaire.
+function AffecterCis({ teams, profil, user, onDone }) {
+  const [tid, setTid] = useState(teams[0]?.id || "");
+  const [users, setUsers] = useState(null);
+  const [sel, setSel] = useState([]);
+  const [msg, setMsg] = useState("");
+  const [busy, setBusy] = useState(false);
+  const ok = Boolean(profil?.cis && profil?.departement);
+  useEffect(() => { if (ok) listUtilisateursCis(profil.departement, profil.cis).then(setUsers).catch((e) => { setUsers([]); setMsg("Lecture impossible : " + e.message); }); else setUsers([]); }, [profil?.cis, profil?.departement]); // eslint-disable-line
+  const team = teams.find((t) => t.id === (tid || teams[0]?.id));
+  const dispo = (users || []).filter((u) => u.id !== user?.uid && u.equipeId !== team?.id && !sel.some((x) => x.id === u.id));
+  const go = async () => {
+    setBusy(true); setMsg("");
+    let n = 0; const ko = [];
+    for (const u of sel) { try { await affecterMembre(u.id, team); n++; } catch (e) { ko.push(`${u.nom} (${e.code || e.message})`); } }
+    setSel([]); setBusy(false);
+    setMsg(`${n} utilisateur(s) affecté(s) à ${team.nom}.` + (ko.length ? " Échec : " + ko.join(", ") : ""));
+    listUtilisateursCis(profil.departement, profil.cis).then(setUsers).catch(() => {});
+    onDone();
+  };
+  return (
+    <div className="card form">
+      <h2>Affecter des utilisateurs de mon CIS</h2>
+      {!ok ? <p className="muted">Renseigne ton département et ton CIS dans <Link to="/profil">Mon profil</Link> pour voir les utilisateurs de ton centre.</p> : (
+        <>
+          <p className="muted">Utilisateurs déjà inscrits sur l'application et rattachés à {profil.cis} ({profil.departement}). Choisis-les dans la liste, puis affecte-les à l'équipe.</p>
+          <label>Équipe</label>
+          <select value={tid || teams[0]?.id} onChange={(e) => setTid(e.target.value)}>{teams.map((t) => <option key={t.id} value={t.id}>{t.nom}</option>)}</select>
+          <label>Utilisateur du CIS</label>
+          <select value="" onChange={(e) => { const u = users.find((x) => x.id === e.target.value); if (u) setSel([...sel, u]); }} disabled={!users}>
+            <option value="">{users === null ? "Chargement…" : dispo.length ? `Choisir un utilisateur (${dispo.length})…` : "Aucun autre utilisateur disponible"}</option>
+            {dispo.map((u) => <option key={u.id} value={u.id}>{u.nom}{u.grade ? " — " + u.grade : ""}{u.equipeNom ? ` (équipe : ${u.equipeNom})` : ""}</option>)}
+          </select>
+          {sel.length > 0 && (
+            <div className="chips">
+              {sel.map((u) => <button type="button" key={u.id} className="chip on" onClick={() => setSel(sel.filter((x) => x.id !== u.id))} title="Retirer de la sélection">{u.nom} ✕</button>)}
+            </div>
+          )}
+          <button className="btn primary" disabled={!sel.length || busy} onClick={go}>{busy ? "Affectation…" : `Affecter ${sel.length || ""} à l'équipe`}</button>
+          {msg && <p className={msg.includes("Échec") || msg.includes("impossible") ? "err" : "ok-txt"}>{msg}</p>}
+          <p className="muted">Les utilisateurs rattachés à une autre équipe d'un autre gestionnaire n'apparaissent pas comme affectables : ils doivent d'abord quitter leur équipe.</p>
+        </>
+      )}
+    </div>
+  );
+}
+
 function Inscription({ teams, user, onDone }) {
   const [tid, setTid] = useState(teams[0]?.id || "");
   const [txt, setTxt] = useState("");
@@ -310,6 +357,7 @@ export default function Gestion() {
         <input className="grow" placeholder="Nom de la nouvelle équipe (ex. FMPA Chef d'agrès 2026)" value={nom} onChange={(e) => setNom(e.target.value)} required minLength={2} />
         <button className="btn primary">Créer l'équipe</button>
       </form>
+      {teams && teams.length > 0 && <AffecterCis teams={teams} profil={profil} user={user} onDone={load} />}
       {teams && teams.length > 0 && <Inscription teams={teams} user={user} onDone={load} />}
       {teams && teams.length > 0 && (
         <p className="muted">

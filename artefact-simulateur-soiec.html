@@ -164,7 +164,7 @@ const interName=(sc,id)=>id===TOUS?"Tous":(sc.interlocuteurs.find(i=>i.id===id)|
 
 /* ---- coque ---- */
 function shell(inner,right=""){
- return `<div class="bar"><span class="brand" style="display:inline-flex;align-items:center;gap:8px">${LOGO(36)}Op'Training</span>${cntHtml()}<nav>${right}</nav></div><main class="pg-${route}">${inner}</main>${foot()}${avisOpen?avisHtml():""}${tkOpen?tkModal():""}`}
+ return `<div class="bar"><span class="brand" style="display:inline-flex;align-items:center;gap:8px">${LOGO(36)}Op'Training</span>${cntHtml()}<nav>${right}</nav></div>${me&&!profOk()&&route!=="profil"&&route!=="play"?`<div class="card warn" role="status"><b>Complète ton profil</b> (grade, département, CIS) pour que ton gestionnaire te retrouve facilement. <button class="btn pri" data-act="profil">Compléter mon profil</button></div>`:""}<main class="pg-${route}">${inner}</main>${foot()}${avisOpen?avisHtml():""}${tkOpen?tkModal():""}`}
 function navHtml(){
  const adm=route==="admin"||route==="edit"||route==="calcedit"||route==="users"||route==="stats"||route==="params"||route==="tkadmin",gs=route==="gestion"||route==="salle"||route==="salleproj";
  let h=`<button data-act="home" class="${adm||gs?"":"on"}">Espace stagiaire</button>`;
@@ -410,6 +410,7 @@ let pf=null,pfAutre=false;
 const opts=(arr,v)=>`<option value="">— Choisir —</option>`+arr.map(x=>`<option${x===v?" selected":""}>${esc(x)}</option>`).join("");
 function profilHtml(){
  let h=`<h1>Mon profil</h1>`;
+ if(bienvenue&&me)h+=`<div class="card warn span"><b>Bienvenue !</b> Dernière étape : renseigne ton grade, ton département et ton CIS, puis enregistre. Ton gestionnaire pourra ainsi t'affecter à son équipe.</div>`;
  if(!me)return h+`<div class="card">Crée d'abord ton accès (onglet Mon suivi).</div>`;
  if(!pf){pf={nom:me.nom||"",email:me.email||"",grade:me.grade||"",departement:me.departement||"",cis:me.cis||""};pfAutre=Boolean(pf.cis&&!(pf.departement.startsWith("13 ")&&CIS13.includes(pf.cis)))}
  const l13=pf.departement.startsWith("13 "),t=myTeam();
@@ -637,6 +638,15 @@ const reqAll=()=>users.flatMap(u=>(u.scnReq||[]).map(r=>({...r,uid:u.id,uNom:u.n
 const reqNew=()=>reqAll().filter(r=>r.statut==="nouvelle").length;
 const RST={nouvelle:"Nouvelle",en_cours:"En cours",livree:"Livrée",refusee:"Refusée"};
 const isGest=()=>canAdmin||Boolean(mods[myId]&&mods[myId].gestionnaire);
+const profOk=()=>Boolean(me&&me.nom&&me.grade&&me.departement&&me.cis);
+let bienvenue=false,ann=[],annKey="",annSel=[],annTid="",annSynced=false;
+const annSync=async()=>{if(!db||!myId||!me||!me.cis)return;try{await db.collection("annuaire").doc(myId).set({nom:me.nom||"",grade:me.grade||"",departement:me.departement||"",cis:me.cis||"",maj:Date.now()})}catch{}};
+const annWatch=()=>{if(!db||!me||!me.cis||annKey===me.cis)return;annKey=me.cis;db.collection("annuaire").where("cis","==",me.cis).onSnapshot(q=>{ann=q.docs.map(d=>({id:d.id,...d.data()}));if(route==="gestion")render()},()=>{})};
+const annHtml=mine=>{if(!mine.length)return"";if(!me||!me.cis||!me.departement)return `<div class="card form"><h3 style="margin-top:0">Affecter des utilisateurs de mon CIS</h3><p class="muted">Renseigne ton département et ton CIS dans <a href="#" data-act="profil">Mon profil</a> pour voir les utilisateurs de ton centre.</p></div>`;annWatch();
+ const tid=annTid||mine[0].id,t=mine.find(x=>x.id===tid)||mine[0];
+ const inOther=id=>eqs.some(e=>e.owner!==myId&&e.membres&&e.membres[id]);
+ const dispo=ann.filter(u=>u.id!==myId&&u.departement===me.departement&&!(t.membres||{})[u.id]&&!inOther(u.id)&&!annSel.some(x=>x===u.id)).sort((a,b)=>(a.nom||"").localeCompare(b.nom||"","fr"));
+ return `<div class="card form"><h3 style="margin-top:0">Affecter des utilisateurs de mon CIS</h3><p class="muted">Utilisateurs déjà inscrits rattachés à ${esc(me.cis)} (${esc(me.departement)}). Choisis-les dans la liste, puis affecte-les à l'équipe.</p><label>Équipe</label><select id="anntid">${mine.map(x=>`<option value="${x.id}" ${x.id===t.id?"selected":""}>${esc(x.nom)}</option>`).join("")}</select><label>Utilisateur du CIS</label><select id="annsel"><option value="">${dispo.length?`Choisir un utilisateur (${dispo.length})…`:"Aucun autre utilisateur disponible"}</option>${dispo.map(u=>`<option value="${u.id}">${esc(u.nom||"—")}${u.grade?" — "+esc(u.grade):""}</option>`).join("")}</select>${annSel.length?`<div class="chips" style="margin-top:8px">${annSel.map(id=>{const u=ann.find(x=>x.id===id);return `<button class="chip on" data-act="annrm" data-arg="${id}" title="Retirer de la sélection">${esc((u&&u.nom)||id)} ✕</button>`}).join("")}</div>`:""}<p><button class="btn pri" data-act="annok" ${annSel.length?"":"disabled"}>Affecter ${annSel.length||""} à l'équipe</button></p></div>`};
 const myTeam=()=>eqs.find(t=>t.membres&&t.membres[myId]);
 /* ---- séance en salle ---- */
 let sallesList=[],sQ=[],sP=[],curS=null,sFilt="all",sCorr=false,sUnsubQ=null,sUnsubP=null,sWatched=null;
@@ -718,6 +728,7 @@ function gestionHtml(){
  const mine=eqs.filter(t=>t.owner===myId).sort((a,b)=>(a.nom||"").localeCompare(b.nom||"","fr"));
  let h=`<div class="card row"><input id="eqnom" class="grow" placeholder="Nom de la nouvelle équipe" maxlength="80"><button class="btn pri" data-act="eqnew">Créer l'équipe</button></div>`;
  let dem=`<div class="card form"><h3 style="margin-top:0">Demander un scénario</h3><p class="muted">Décris le scénario souhaité : l'administrateur le prépare puis te l'attribue. Il ne sera visible que par toi et ton équipe.</p><label>Thème</label><input id="rqt" maxlength="100" placeholder="Ex. Feu de véhicule électrique en parking"><label>Rubrique</label><select id="rqr"><option value="">—</option>${allRub().map(r=>`<option>${esc(r)}</option>`).join("")}</select><label>Détails (lieu, enjeux, points à travailler)</label><textarea id="rqd" rows="3" maxlength="800"></textarea>${arHtml()}<div class="row"><button class="btn pri" data-act="rqsend">Envoyer la demande</button></div>${((me&&me.scnReq)||[]).length?`<h4>Mes demandes</h4>`+me.scnReq.slice().reverse().map(r=>`<div class="row between" style="margin:4px 0"><span>${esc(r.titre)} <span class="muted">${dt(r.le)}</span></span><span><span class="tag ${r.statut==="livree"?"ok":""}">${RST[r.statut]||r.statut}</span>${r.scenarioId&&r.statut==="livree"?` <button class="btn" data-act="play" data-arg="${r.scenarioId}">Ouvrir</button>`:""}</span></div>`).join(""):""}</div>`;
+ h+=annHtml(mine);
  if(!me)h+=`<div class="card warn">Crée d'abord ton profil (Espace stagiaire → Mon suivi) pour apparaître comme gestionnaire.</div>`;
  if(mine.length)h+=`<p class="muted">Tu peux créer plusieurs équipes. Les stagiaires rejoignent avec le code de n'importe laquelle de tes équipes, puis tu les répartis avec « Déplacer vers… ».</p>`;
  if(!mine.length)h+=`<div class="card">Aucune équipe. Crée-en une : un code d'accès est généré.</div>`;
@@ -1057,7 +1068,7 @@ const A={
  uask(k){confirmKey=k;render()},
  suivi(){route="suivi";render()},
  profil(){pf=null;route="profil";render()},
- async pfsave(){setTimeout(statPing,1500);if(!pf||!me)return;if((pf.nom||"").trim().length<2)return toast("Indique ton nom.",true);try{await db.collection("users").doc(myId).update({nom:pf.nom.trim(),email:(pf.email||"").trim(),grade:pf.grade,departement:pf.departement,cis:(pf.cis||"").trim()});toast("Profil enregistré.");pushTeam()}catch(e){toast("Erreur : "+(e.message||e.code),true)}},
+ async pfsave(){setTimeout(statPing,1500);if(!pf||!me)return;if((pf.nom||"").trim().length<2)return toast("Indique ton nom.",true);try{await db.collection("users").doc(myId).update({nom:pf.nom.trim(),email:(pf.email||"").trim(),grade:pf.grade,departement:pf.departement,cis:(pf.cis||"").trim()});toast("Profil enregistré.");bienvenue=false;pushTeam();setTimeout(annSync,600)}catch(e){toast("Erreur : "+(e.message||e.code),true)}},
  domadd(){const v=($('#domin').value||'').trim();if(!v)return;ed.dominantes=ed.dominantes||[];if(!ed.dominantes.some(x=>x.toLowerCase()===v.toLowerCase())&&ed.dominantes.length<8)ed.dominantes.push(v);edDirty=true;render();const i=$('#domin');if(i)i.focus()},
  domsug(d){ed.dominantes=ed.dominantes||[];if(!ed.dominantes.includes(d)&&ed.dominantes.length<8)ed.dominantes.push(d);edDirty=true;render()},
  domrm(i){ed.dominantes.splice(i,1);edDirty=true;render()},
@@ -1146,7 +1157,7 @@ const A={
  uview(id){uopen=uopen===id?null:id;render()},
  async usus(id){confirmKey=null;const susp=(mods[id]||{}).statut==="suspendu";try{await db.collection("moderation").doc(id).set({...(mods[id]||{}),statut:susp?"actif":"suspendu",le:Date.now()});toast(susp?"Compte réactivé.":"Compte suspendu.")}catch(e){toast("Erreur : "+e.message,true)}},
  async udel(id){confirmKey=null;try{await db.collection("users").doc(id).delete();await db.collection("moderation").doc(id).delete();toast("Profil supprimé.")}catch(e){toast("Erreur : "+e.message,true)}},
- async register(){const n=($("#nom").value||"").trim();if(n.length<2)return toast("Indique ton nom.",true);if(!$("#okcgu")||!$("#okcgu").checked)return toast("Accepte les CGU pour continuer.",true);if($("#arq")&&!arOk())return;regBusy=true;try{await db.collection("users").doc(myId).set({nom:n,creeLe:Date.now(),derniere:Date.now(),visites:1});}catch(e){toast("Erreur : "+e.message,true)}regBusy=false},
+ async register(){const n=($("#nom").value||"").trim();if(n.length<2)return toast("Indique ton nom.",true);if(!$("#okcgu")||!$("#okcgu").checked)return toast("Accepte les CGU pour continuer.",true);if($("#arq")&&!arOk())return;regBusy=true;try{await db.collection("users").doc(myId).set({nom:n,creeLe:Date.now(),derniere:Date.now(),visites:1});bienvenue=true;pf=null;route="profil";}catch(e){toast("Erreur : "+e.message,true)}regBusy=false;render()},
  async dup(id){const s=list.find(x=>x.id===id);const {id:_,...d}=JSON.parse(JSON.stringify(s));try{await db.collection("scenarios").doc().set({...d,titre:d.titre+" (copie)",publie:false});toast("Dupliqué.")}catch(e){toast("Erreur : "+e.message,true)}},
  del(id){confirmKey="del"+id;render()},
  async delok(id){confirmKey=null;try{await db.collection("scenarios").doc(id).delete();localStorage.removeItem("soiec:"+id)}catch(e){toast("Erreur : "+e.message,true)}render()},
@@ -1156,6 +1167,10 @@ const A={
  addvar(){(ed.variantes=ed.variantes||[]).push({nom:"",txt:""});edDirty=true;render()},
  delvar(i){ed.variantes.splice(i,1);edDirty=true;render()},
  vartest(){const v=tirer(ed);toast(Object.keys(v).length?Object.entries(v).map(([k,x])=>k+" = "+x).join(" · "):"Aucune variable active.")},
+ annrm(id){annSel=annSel.filter(x=>x!==id);render()},
+ async annok(){const mine=eqs.filter(t=>t.owner===myId),t=mine.find(x=>x.id===(annTid||(mine[0]&&mine[0].id)));if(!t||!annSel.length)return;let n=0;const mem={...(t.membres||{})};
+  annSel.forEach(id=>{const u=ann.find(x=>x.id===id);if(u&&!mem[id]){mem[id]={nom:u.nom||"",grade:u.grade||"",cis:u.cis||"",rejoint:Date.now(),maj:Date.now(),bilans:{},calculs:{}};n++}});
+  try{await db.collection("equipes").doc(t.id).update({membres:mem});annSel=[];toast(n+" utilisateur(s) affecté(s) à "+t.nom+".")}catch(e){toast("Erreur : "+(e.message||e.code),true)}render()},
  chon(k){chOpen[k]=true;render()},
  bqopen(){bqOpen=!bqOpen;render()},
  bqall(){bqFilt().slice(0,60).forEach(x=>bqSel[x.k]=true);render()},
@@ -1204,6 +1219,8 @@ document.addEventListener("input",e=>{const t=e.target;
  else if(t.id==="tw"){tw=t.value;testQ()}else if(t.id==="tq"){tq=t.value;testQ()}});
 document.addEventListener("change",e=>{const t=e.target;
  if(t.id==="hr"||t.id==="hd"||t.id==="he"){({hr:v=>hr=v,hd:v=>hd=v,he:v=>he=v})[t.id](t.value);render();return}
+ if(t.id==="anntid"){annTid=t.value;annSel=[];render();return}
+ if(t.id==="annsel"){if(t.value&&!annSel.includes(t.value))annSel.push(t.value);render();return}
  if(t.id==="bqr"){bqR=t.value;render();return}
  if(t.id==="bqt"){bqT=t.value;return}
  if(t.dataset.bqk){bqSel[t.dataset.bqk]=t.checked;const n=Object.values(bqSel).filter(Boolean).length,b=$("[data-act=bqimp]");if(b){b.disabled=!n;b.textContent="Importer "+n+" question(s)"}return}
@@ -1248,6 +1265,7 @@ render();
     db.collection("demandes").doc(myId).onSnapshot(sn=>{demandes=sn.exists?[{id:myId,...sn.data()}]:[];if(route==="aide")render()},()=>{});
     db.collection("moderation").doc(myId).onSnapshot(sn=>{mods[myId]=sn.exists?sn.data():null;if(route!=="play"||(mods[myId]&&mods[myId].statut==="suspendu"))render()});
     db.collection("users").doc(myId).onSnapshot(sn=>{me=sn.exists?sn.data():null;meLoaded=true;if(!pinged&&me){pinged=true;statPing()}syncLocal();
+     if(me&&me.cis&&!annSynced){annSynced=true;annSync()}
      if(me&&first){first=false;db.collection("users").doc(myId).update({derniere:Date.now(),visites:(me.visites||1)+1}).catch(()=>{})}
      if(route!=="play")render()},()=>{meLoaded=true;me={}})}}
   if(route==="home")render()}catch{loaded=true;render()}

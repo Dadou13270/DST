@@ -39,7 +39,8 @@ export default function Login() {
         <div className="card warn">Firebase n'est pas configuré. Renseigne le fichier .env (voir README).</div>
       </Layout>
     );
-  if (!loading && user) return <Navigate to={loc.state?.from || "/"} replace />;
+  const bienvenue = (() => { try { return sessionStorage.getItem("op-bienvenue") === "1"; } catch { return false; } })();
+  if (!loading && user) return <Navigate to={loc.state?.from || (bienvenue ? "/profil" : "/")} replace />;
 
   const submit = async (e) => {
     e.preventDefault();
@@ -57,8 +58,8 @@ export default function Login() {
     setBusy(true);
     try {
       if (mode === "login") await login(email, pwd);
-      else await register(nom.trim(), email, pwd);
-      nav(loc.state?.from || "/", { replace: true });
+      else { try { sessionStorage.setItem("op-bienvenue", "1"); } catch { /* */ } await register(nom.trim(), email, pwd); }
+      nav(loc.state?.from || (mode === "register" ? "/profil" : "/"), { replace: true });
     } catch (e2) {
       setErr(MSG[e2.code] || "Erreur : " + e2.message);
       if (mode === "login") setEchecs((n) => n + 1);
