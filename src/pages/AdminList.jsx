@@ -38,6 +38,14 @@ export default function AdminList() {
             if (!ex.rubrique && d.rubrique) patch.rubrique = d.rubrique;
             if (!ex.duree && d.duree) patch.duree = d.duree;
             if (ex.evolutif === undefined && d.evolutif !== undefined) { patch.evolutif = d.evolutif; if (d.evolutions) patch.evolutions = d.evolutions; }
+            // Variantes aléatoires : on applique les variables et les textes qui les utilisent.
+            if ((d.variantes || []).length && !(ex.variantes || []).length) {
+              patch.variantes = d.variantes;
+              patch.variantesAuto = d.variantesAuto;
+              patch.qa = d.qa;
+              patch.correction = d.correction;
+              if (d.situation?.contexte) patch["situation.contexte"] = d.situation.contexte;
+            }
             if (ex.cubique === undefined && d.cubique !== undefined) patch.cubique = d.cubique;
           }
           if (Object.keys(patch).length) { await updateScenarioChamps(ex.id, patch); maj++; } else ignores++;
