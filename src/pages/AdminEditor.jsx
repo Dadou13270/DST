@@ -49,19 +49,36 @@ export default function AdminEditor() {
   const importerLib = async (e) => {
     const files = [...(e.target.files || [])];
     e.target.value = "";
-    let n = 0;
+    let n = 0, ign = 0;
     try {
+      const deja = new Set((await listIllustrations()).map((x) => x.titre));
       for (const f of files) {
         const d = JSON.parse(await f.text());
         if (d.titre && d.photo && d.vignette) {
+          if (deja.has(d.titre)) { ign++; continue; } // évite les doublons à chaque réimport
           await addIllustration(d.titre, d.photo, d.vignette, d.tags || "");
+          deja.add(d.titre);
           n++;
         }
       }
-      setLibMsg(`${n} illustration(s) importée(s).`);
+      setLibMsg(`${n} illustration(s) importée(s)${ign ? `, ${ign} déjà présente(s) ignorée(s)` : ""}.`);
       chargerLib();
     } catch (e2) {
       setLibMsg("Import impossible : " + e2.message);
+    }
+  };
+
+  const dedoublonnerLib = async () => {
+    try {
+      const vus = new Set();
+      let n = 0;
+      for (const x of await listIllustrations()) {
+        if (vus.has(x.titre)) { await deleteIllustration(x.id); n++; } else vus.add(x.titre);
+      }
+      setLibMsg(`${n} doublon(s) supprimé(s).`);
+      chargerLib();
+    } catch (e2) {
+      setLibMsg("Erreur : " + e2.message);
     }
   };
 
@@ -368,6 +385,7 @@ export default function AdminEditor() {
                   Importer (.json)
                   <input type="file" accept=".json,application/json" multiple hidden onChange={importerLib} />
                 </label>
+                <button type="button" className="btn" onClick={dedoublonnerLib}>Supprimer les doublons</button>
               </div>
             </div>
           )}
