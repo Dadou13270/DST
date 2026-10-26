@@ -32,7 +32,7 @@ export default function Nouveautes() {
 
   const form = (
     ed && (
-      <div className="card form" style={{ maxWidth: 780 }}>
+      <div className="card form span">
         <h3 style={{ marginTop: 0 }}>{ed.id ? "Modifier la nouveauté" : "Nouvelle nouveauté"}</h3>
         <label>Date</label>
         <input type="date" value={ed.d} onChange={(e) => setEd({ ...ed, d: e.target.value })} />
@@ -50,6 +50,7 @@ export default function Nouveautes() {
 
   return (
     <Layout>
+      <div className="pgrid">
       <div className="row between">
         <h1>Nouveautés</h1>
         {isAdmin && !ed && <button className="btn pri" onClick={() => setEd(vide())}>+ Ajouter</button>}
@@ -58,14 +59,14 @@ export default function Nouveautes() {
       {err && <div className="card warn">{err}</div>}
       {ed && !ed.id && form}
       {list && list.length === 0 && (
-        <div className="card" style={{ maxWidth: 780 }}>
+        <div className="card">
           Aucune nouveauté pour le moment.
           {isAdmin && <> <button className="btn" onClick={charger}>Charger l'historique</button></>}
         </div>
       )}
       {(list || []).map((n) =>
         ed && ed.id === n.id ? <div key={n.id}>{form}</div> : (
-          <div className="card" style={{ maxWidth: 780 }} key={n.id}>
+          <div className="card" key={n.id}>
             <div className="row between">
               <span className="muted">{fmt(n.d)}</span>
               {isAdmin && (conf === n.id ? (
@@ -85,6 +86,7 @@ export default function Nouveautes() {
           </div>
         )
       )}
+      </div>
     </Layout>
   );
 }

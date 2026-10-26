@@ -140,3 +140,18 @@ select { width: auto; max-width: 100%; } textarea { resize: vertical; } input[ty
 .tag.dom,.tag.evo{border:0;font-weight:600;font-size:.72rem;padding:2px 8px;background:#fde8ec;color:#c8102e}.tag.evo{background:#fff3d6;color:#8a5a12}
 .bdg{flex-basis:100%;margin-top:2px}.bdg>div{margin-top:0!important}
 .meta{display:flex;flex-wrap:wrap;gap:2px 14px;align-items:center;margin-top:4px;font-size:.88rem}.st{font-weight:700}.st.ok{color:var(--ok)}.st.br{color:#b26a00}
+/* pages de contenu : cartes en colonnes sur toute la largeur (comme la page Exercices) */
+.pgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: 14px; align-items: start; }
+.pgrid.etroit { grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr)); }
+.pgrid > * { grid-column: 1 / -1; min-width: 0; }
+.pgrid > .card { grid-column: auto; margin: 0; }
+.pgrid > .card.span { grid-column: 1 / -1; }
+.pgrid form.dc { display: contents; }
+.card.form select { width: 100%; }
+
+.domblk{margin:18px 0 6px}
+.domblk>label{margin:0 0 8px}
+.domblk .doml{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 10px}
+.domblk .row{margin:0 0 10px}
+.domblk .chips{margin:0}
+.domblk+label{margin-top:20px}

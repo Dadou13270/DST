@@ -41,7 +41,7 @@ export default function Tickets() {
       </div>
       <p className="muted">Pose une question ou signale un problème : l'équipe te répond ici, en direct.</p>
       {nouveau && (
-        <form className="card form" style={{ maxWidth: 780 }} onSubmit={envoyer}>
+        <form className="card form" onSubmit={envoyer}>
           <h3 style={{ marginTop: 0 }}>Nouveau ticket</h3>
           <label>Objet</label>
           <select value={f.objet} onChange={(e) => setF({ ...f, objet: e.target.value })}>{OBJETS_TICKET.map((o) => <option key={o}>{o}</option>)}</select>

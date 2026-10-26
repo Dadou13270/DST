@@ -69,10 +69,12 @@ export default function Profil() {
   return (
     <Layout>
       <StagiaireNav />
+      <div className="pgrid etroit">
       <h1>Mon profil</h1>
-      {profil?.mdpProvisoire && <div className="card alerte"><strong>Mot de passe provisoire.</strong> Il t'a été fourni par ton gestionnaire : change-le dans la section « Connexion » ci-dessous.</div>}
-      <form className="card form" onSubmit={save} style={{ maxWidth: 640 }}>
-        <h3>Inscription</h3>
+      {profil?.mdpProvisoire && <div className="card alerte span"><strong>Mot de passe provisoire.</strong> Il t'a été fourni par ton gestionnaire : change-le dans la section « Connexion » ci-dessous.</div>}
+      <form className="dc" onSubmit={save}>
+      <div className="card form">
+        <h3 style={{ marginTop: 0 }}>Inscription</h3>
         <label>Nom / prénom</label>
         <input value={f.nom} onChange={set("nom")} required />
         <label>E-mail</label>
@@ -85,7 +87,9 @@ export default function Profil() {
           <span className="tag">Stagiaire</span>
           {profil?.equipeNom && <span className="muted"> · équipe {profil.equipeNom}</span>}
         </p>
-        <h3>Informations complémentaires</h3>
+      </div>
+      <div className="card form">
+        <h3 style={{ marginTop: 0 }}>Informations complémentaires</h3>
         <label>Grade</label>
         <select value={f.grade} onChange={set("grade")}><option value="">— Choisir —</option>{GRADES.map((g) => <option key={g}>{g}</option>)}</select>
         <label>Département</label>
@@ -103,8 +107,9 @@ export default function Profil() {
         {err && <p className="err">{err}</p>}
         {msg && <p className="ok-txt">{msg}</p>}
         <button className="btn primary big">Enregistrer</button>
+      </div>
       </form>
-      <div className="card form" style={{ maxWidth: 640 }}>
+      <div className="card form">
         <h3>Connexion</h3>
         <p className="muted">E-mail actuel : <strong>{user?.email}</strong>. Le mot de passe actuel est demandé pour toute modification.</p>
         <label>Mot de passe actuel</label>
@@ -124,7 +129,7 @@ export default function Profil() {
         {cerr && <p className="err">{cerr}</p>}
         {cmsg && <p className="ok-txt">{cmsg}</p>}
       </div>
-      <div className="card row between item" style={{ maxWidth: 640 }}>
+      <div className="card row between item">
         <div>
           <h3 style={{ margin: 0 }}>Affectation</h3>
           {profil?.equipeId ? (
@@ -134,6 +139,7 @@ export default function Profil() {
           )}
         </div>
         <Link className="btn" to="/equipe">{profil?.equipeId ? "Gérer" : "Rejoindre une équipe"}</Link>
+      </div>
       </div>
     </Layout>
   );

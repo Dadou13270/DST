@@ -4,12 +4,13 @@ import Layout from "../components/Layout";
 export default function AideSalle() {
   return (
     <Layout>
+      <div className="pgrid">
       <h1>Séance en salle : mode d'emploi</h1>
-      <div className="card" style={{ maxWidth: 780 }}>
+      <div className="card">
         <h2>À quoi ça sert ?</h2>
         <p>Animer un devoir sur table en groupe : le formateur projette le scénario, les stagiaires interrogent les intervenants depuis leur appareil et le formateur voit leurs questions en direct pour conduire le débriefing.</p>
       </div>
-      <div className="card" style={{ maxWidth: 780 }}>
+      <div className="card">
         <h2>Déroulement</h2>
         <ol>
           <li>Le <strong>formateur</strong> ouvre une salle : Espace gestionnaire → carte « Séance en salle » → il choisit un scénario puis « Ouvrir une salle ». Un <strong>code de 5 caractères</strong> (ex. K7M2P) est généré.</li>
@@ -19,7 +20,7 @@ export default function AideSalle() {
           <li><strong>Clôturer</strong> la séance : « Clôturer » empêche d'autres stagiaires d'entrer ; on peut la rouvrir ou la supprimer (les questions de la salle sont alors effacées).</li>
         </ol>
       </div>
-      <div className="card" style={{ maxWidth: 780 }}>
+      <div className="card">
         <h2>Bon à savoir</h2>
         <ul>
           <li>Il faut être gestionnaire pour ouvrir une salle (<Link to="/contact?objet=gestionnaire">demander l'accès</Link>).</li>
@@ -28,6 +29,7 @@ export default function AideSalle() {
           <li>Le stagiaire doit être connecté avec son profil pour être identifié dans la salle.</li>
           <li>L'administrateur retrouve le nombre de séances dans Statistiques → Suivi de l'activité.</li>
         </ul>
+      </div>
       </div>
     </Layout>
   );

@@ -231,8 +231,9 @@ export default function AdminEditor() {
             <input type="checkbox" checked={s.suggestions !== false} onChange={(e) => upd((n) => (n.suggestions = e.target.checked))} />
             Proposer des questions suggérées aux stagiaires (à partir des intitulés des questions)
           </label>
+          <div className="domblk">
           <label>Dominantes du scénario (badges affichés aux stagiaires pour guider leur choix)</label>
-          <div>
+          <div className="doml">
             {(s.dominantes || []).map((d, i) => (
               <span key={d} className="tag dom" style={{ marginRight: 4 }}>
                 {d} <button type="button" className="linkbtn" title="Retirer" onClick={() => upd((n) => { n.dominantes = (n.dominantes || []).filter((_, k) => k !== i); })}>✕</button>
@@ -247,6 +248,7 @@ export default function AdminEditor() {
           </div>
           <div className="chips">
             {DOMS.filter((d) => !(s.dominantes || []).includes(d)).map((d) => <button type="button" className="chip" key={d} onClick={() => ajouterDom(d)}>+ {d}</button>)}
+          </div>
           </div>
           <label>Durée conseillée en minutes (0 = chronomètre simple, sans limite)</label>
           <input type="number" min="0" value={s.duree} onChange={(e) => upd((n) => (n.duree = Number(e.target.value) || 0))} />
