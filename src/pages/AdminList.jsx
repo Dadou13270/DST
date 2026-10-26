@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import Dominantes from "../components/Dominantes";
 import { Link, useNavigate } from "react-router-dom";
-import { listScenarios, deleteScenario, duplicateScenario, saveScenario } from "../lib/db";
+import { listScenarios, deleteScenario, duplicateScenario, saveScenario, updateScenarioChamps } from "../lib/db";
 
 export default function AdminList() {
   const nav = useNavigate();
@@ -18,13 +18,24 @@ export default function AdminList() {
     setInfo("Import en cours…");
     setErr("");
     const titres = new Set((list || []).map((x) => x.titre));
-    let ok = 0, ignores = 0;
+    const parTitre = new Map((list || []).map((x) => [x.titre, x]));
+    let ok = 0, ignores = 0, maj = 0;
     try {
       for (const f of files) {
         const d = JSON.parse(await f.text());
         if (!d.titre) continue;
         if (titres.has(d.titre)) {
-          ignores++;
+          // Scénario déjà présent : on complète seulement les champs manquants (dominantes, rubrique, durée, évolutif…).
+          const ex = parTitre.get(d.titre);
+          const patch = {};
+          if (ex?.id) {
+            if (!(ex.dominantes || []).length && (d.dominantes || []).length) patch.dominantes = d.dominantes;
+            if (!ex.rubrique && d.rubrique) patch.rubrique = d.rubrique;
+            if (!ex.duree && d.duree) patch.duree = d.duree;
+            if (ex.evolutif === undefined && d.evolutif !== undefined) { patch.evolutif = d.evolutif; if (d.evolutions) patch.evolutions = d.evolutions; }
+            if (ex.cubique === undefined && d.cubique !== undefined) patch.cubique = d.cubique;
+          }
+          if (Object.keys(patch).length) { await updateScenarioChamps(ex.id, patch); maj++; } else ignores++;
           continue;
         }
         const { photo, ...rest } = d;
@@ -32,7 +43,7 @@ export default function AdminList() {
         titres.add(d.titre);
         ok++;
       }
-      setInfo(`${ok} scénario(s) importé(s)${ignores ? `, ${ignores} déjà présent(s) ignoré(s)` : ""}.`);
+      setInfo(`${ok} scénario(s) importé(s)${maj ? `, ${maj} existant(s) complété(s) (badges, rubrique…)` : ""}${ignores ? `, ${ignores} déjà à jour` : ""}.`);
     } catch (e2) {
       setInfo("");
       setErr("Import impossible : " + e2.message);

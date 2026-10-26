@@ -40,6 +40,8 @@ export async function listScenarios(onlyPublished, ctx) {
   return [...m.values()].sort(byTitre);
 }
 
+export const updateScenarioChamps = (id, patch) => updateDoc(doc(db, "scenarios", id), clean(patch));
+
 export const setReserve = (id, uid) => updateDoc(doc(db, "scenarios", id), { reserveA: uid || null });
 
 // À lancer une fois par l'admin : donne reserveA = null aux anciens scénarios (nécessaire pour les requêtes ci-dessus).
