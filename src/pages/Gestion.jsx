@@ -10,6 +10,7 @@ import { listScenarios } from "../lib/db";
 import { ajouterDevoir, retirerDevoir, statutDevoir, fmtLimite, limiteDepuisInput, assignerParcours, retirerParcours } from "../lib/devoirs";
 import { listParcours } from "../lib/parcours";
 import Parcours from "../components/Parcours";
+import Frise from "../components/Frise";
 import FilMessages, { nonLus, nonLusMembre } from "../components/FilMessages";
 import TableauBord from "../components/TableauBord";
 import SalleCard from "../components/SalleCard";
@@ -131,6 +132,15 @@ function Devoirs({ team, membres, scs, pcs, onChange }) {
   );
 }
 
+function FriseBilan({ b, sc }) {
+  const [on, setOn] = useState(false);
+  if (!sc) return null;
+  if (!on) return <button className="btn" onClick={() => setOn(true)}>Voir la chronologie</button>;
+  const sess = { log: (b.log || []).map((l) => ({ ...l, who: l.who })), start: b.fin - (b.duree || 0) * 1000, finishedAt: b.fin, evoT: b.evos };
+  const interName = (id) => (sc.interlocuteurs || []).find((i) => i.id === id)?.nom || "?";
+  return <Frise sc={sc} sess={sess} interName={interName} />;
+}
+
 function Equipe({ team, autres, scs, pcs, onChange }) {
   const { profil } = useAuth();
   const [m, setM] = useState(null);
@@ -196,6 +206,7 @@ function Equipe({ team, autres, scs, pcs, onChange }) {
                         <thead><tr><th>Exercice</th><th>Fin</th><th>Temps</th><th>Questions</th><th>Essentielles</th><th>Tent.</th></tr></thead>
                         <tbody>{Object.entries(u.bilans).map(([scId, b]) => [
                           <tr key={scId}><td>{b.titre}</td><td>{fmtDate(b.fin)}</td><td>{fmtDuree(b.duree || 0)}</td><td>{b.nbQ}</td><td>{b.essTot ? `${b.essOk}/${b.essTot}` : "—"}</td><td>{b.nb || 1}</td></tr>,
+                          <tr key={scId + "f"}><td colSpan={6}><FriseBilan b={b} sc={scs.find((x) => x.id === scId)} /></td></tr>,
                           <tr key={scId + "c"}><td colSpan={6}><Commentaire u={u} scId={scId} auteur={profil?.nom || "Formateur"} onSaved={load} /></td></tr>,
                         ])}</tbody>
                       </table>

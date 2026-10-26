@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
 import Layout from "../components/Layout";
 import SalleChat from "../components/SalleChat";
+import { FriseSvg, FRISE_COL, frMmss } from "../components/Frise";
 import { useAuth } from "../lib/auth";
 import { getScenario } from "../lib/db";
 import { watchSalle, watchQuestions, watchParticipants, setOuverte, supprimerSalle, etatSalle, libEtat, fmtDebut, setDebut, debutDepuisInput, inputDepuisDebut } from "../lib/salles";
@@ -94,6 +95,20 @@ export default function Salle() {
         ))}
         {ess.length === 0 && <p className="muted">Aucune question essentielle définie.</p>}
       </div>
+      {qs.length > 0 && (() => {
+        const t0 = Math.min(...qs.map((q) => q.le), salle.debut && salle.debut <= Math.min(...qs.map((q) => q.le)) ? salle.debut : Infinity);
+        const D = Math.max(60, ...qs.map((q) => Math.round((q.le - t0) / 1000))) + 10;
+        const noms = [...new Set(qs.map((q) => q.whoNom || "?"))];
+        const lanes = ps.filter((u) => qs.some((q) => q.uid === u.uid)).map((u) => ({ id: u.uid, label: u.nom }));
+        const pts = qs.filter((q) => lanes.some((l) => l.id === q.uid)).map((q) => ({ t: Math.round((q.le - t0) / 1000), lane: q.uid, col: FRISE_COL[noms.indexOf(q.whoNom || "?") % FRISE_COL.length], big: esId.has(q.qaId), title: `${frMmss(Math.round((q.le - t0) / 1000))} — ${q.nom} → ${q.whoNom} : ${q.q}` }));
+        return (
+          <div className="card">
+            <h3 style={{ marginTop: 0 }}>Chronologie de la séance</h3>
+            <FriseSvg lanes={lanes} pts={pts} D={D} />
+            <p className="muted" style={{ margin: "6px 0 0" }}>Une ligne par stagiaire · couleur = interlocuteur interrogé ({noms.map((n, i) => <span key={n} style={{ color: FRISE_COL[i % FRISE_COL.length] }}>● {n} </span>)}) · contour épais = question essentielle.</p>
+          </div>
+        );
+      })()}
       <div className="card">
         <h3 style={{ marginTop: 0 }}>Questions en direct</h3>
         {feed.length === 0 && <p className="muted">Aucune question pour le moment.</p>}

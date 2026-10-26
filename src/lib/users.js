@@ -2,6 +2,7 @@ import { essentielles, nbQuestions } from "./evolutif";
 import { db } from "../firebase";
 import { collection, doc, getDocs, setDoc, updateDoc, deleteDoc } from "firebase/firestore";
 import { cubStat } from "./model";
+import { evTimes } from "../components/Frise";
 
 export async function listUsers() {
   const [u, a] = await Promise.all([getDocs(collection(db, "users")), getDocs(collection(db, "admins"))]);
@@ -32,8 +33,10 @@ export function buildBilan(sc, sess, ancien) {
     essTot: ess.length,
     essOk: ess.filter((x) => asked.has(x.id)).length,
     ...(sc.cubique ? (() => { const c = cubStat(sc, asked).filter((r) => r.q.length); return { cubTot: c.length, cubOk: c.filter((r) => r.ok).length }; })() : {}),
+    vars: sess.vars || null,
+    evos: evTimes(sc, sess),
     nb: (ancien?.nb || (ancien ? 1 : 0)) + 1,
-    log: sess.log.filter((l) => !l.sys).map((l) => ({ who: l.who, question: l.question, answer: l.answer, qaId: l.qaId || null })),
+    log: sess.log.filter((l) => !l.sys).map((l) => ({ t: typeof l.t === "number" ? l.t : null, who: l.who, question: l.question, answer: l.answer, qaId: l.qaId || null })),
     notes: sess.notes,
   };
 }

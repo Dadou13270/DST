@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import Layout from "../components/Layout";
 import { getScenario, getPhoto, getSituationPhotos } from "../lib/db";
@@ -9,9 +9,11 @@ import { useAuth } from "../lib/auth";
 import { db } from "../firebase";
 import { doc, updateDoc, deleteField } from "firebase/firestore";
 import Dominantes from "../components/Dominantes";
+import Frise from "../components/Frise";
 import SalleChat from "../components/SalleChat";
 import { posterQuestion, watchSalle } from "../lib/salles";
 import { buildBilan, saveBilan } from "../lib/users";
+import { applyVars, tirer, varsDe } from "../lib/variantes";
 
 const emptySession = () => ({
   start: null,
@@ -37,7 +39,7 @@ const save = (k, v) => {
   }
 };
 const bilanSession = (b) =>
-  b ? { start: b.fin - (b.duree || 0) * 1000, finishedAt: b.fin, finished: true, log: b.log || [], notes: { ...emptySession().notes, ...b.notes } } : null;
+  b ? { start: b.fin - (b.duree || 0) * 1000, finishedAt: b.fin, finished: true, evoT: b.evos || undefined, vars: b.vars || undefined, log: b.log || [], notes: { ...emptySession().notes, ...b.notes } } : null;
 const fmt = (s) => {
   const a = Math.abs(s);
   return `${s < 0 ? "-" : ""}${String(Math.floor(a / 60)).padStart(2, "0")}:${String(a % 60).padStart(2, "0")}`;
@@ -61,7 +63,7 @@ export default function Player() {
   const [sp] = useSearchParams();
   const salle = sp.get("salle") || "";
   const key = salle ? `soiec-session-${id}-s${salle}` : `soiec-session-${id}`;
-  const [sc, setSc] = useState(null);
+  const [scRaw, setSc] = useState(null);
   const [photo, setPhoto] = useState(null);
   const [sitPhotos, setSitPhotos] = useState([]);
   const [sz, setSz] = useState(-1);
@@ -75,6 +77,7 @@ export default function Player() {
     if (cl && (!loc || (cl.maj || 0) > (loc.maj || 0))) return { ...emptySession(), ...cl, finished: false, finishedAt: null };
     return loc || (salle ? null : bilanSession(profil?.bilans?.[id])) || emptySession();
   });
+  const sc = useMemo(() => (scRaw ? applyVars(scRaw, sess.vars) : null), [scRaw, sess.vars]);
   const [sugOpen, setSugOpen] = useState(true);
   const [tab, setTab] = useState("questions");
   const [who, setWho] = useState(null);
@@ -112,7 +115,7 @@ export default function Player() {
       const val =
         !sess.start || sess.finished
           ? deleteField()
-          : { start: sess.start, maj, evo: sess.evo || {}, log: sess.log.map((l) => ({ id: l.id, who: l.who, question: l.question, answer: l.answer, qaId: l.qaId || null, sys: !!l.sys })), notes: sess.notes };
+          : { start: sess.start, maj, evo: sess.evo || {}, log: sess.log.map((l) => ({ t: l.t ?? null, id: l.id, who: l.who, question: l.question, answer: l.answer, qaId: l.qaId || null, sys: !!l.sys })), notes: sess.notes };
       updateDoc(doc(db, "users", user.uid), { [`encours.${id}`]: val }).catch(() => {});
     }, 2500);
     return () => clearTimeout(t);
@@ -137,7 +140,7 @@ export default function Player() {
       dues.forEach((x) => {
         if (evo[x.id]) return;
         evo[x.id] = Date.now();
-        log.push({ id: uid(), who: "__evo", question: "⚠ " + (x.titre || "Évolution de la situation"), answer: x.message || "", sys: true, qaId: null });
+        log.push({ t: Math.max(0, Math.round((Date.now() - s.start) / 1000)), id: uid(), who: "__evo", question: "⚠ " + (x.titre || "Évolution de la situation"), answer: x.message || "", sys: true, qaId: null });
       });
       return { ...s, evo, log };
     });
@@ -175,7 +178,7 @@ export default function Player() {
     const answer = qa ? qa.reponse : inter.reponseDefaut || "Je n'ai pas d'information à ce sujet.";
     setSess((s) => ({
       ...s,
-      log: [...s.log, { id: uid(), who, question: text, answer, qaId: qa ? qa.id : null }],
+      log: [...s.log, { t: Math.max(0, Math.round((Date.now() - s.start) / 1000)), id: uid(), who, question: text, answer, qaId: qa ? qa.id : null }],
     }));
     if (salle) posterQuestion(salle, user.uid, profil?.nom, who, inter.nom, text, answer, qa ? qa.id : null);
     setQ("");
@@ -183,7 +186,7 @@ export default function Player() {
 
   const poserSuggestion = (x) => {
     if (salle) posterQuestion(salle, user.uid, profil?.nom, who, sc.interlocuteurs.find((i) => i.id === who)?.nom || "", x.intitule, x.reponse, x.id);
-    setSess((s) => ({ ...s, log: [...s.log, { id: uid(), who, question: x.intitule, answer: x.reponse, qaId: x.id }] }));
+    setSess((s) => ({ ...s, log: [...s.log, { t: Math.max(0, Math.round((Date.now() - s.start) / 1000)), id: uid(), who, question: x.intitule, answer: x.reponse, qaId: x.id }] }));
   };
   const suggestions = (() => {
     if (!sc || sc.suggestions === false || !who) return [];
@@ -203,10 +206,11 @@ export default function Player() {
           <h1>{sc.titre}</h1>
           <p>{sc.description}</p>
           <Dominantes s={sc} />
+          {varsDe(scRaw).length > 0 && <p className="muted">Conditions variables : heure, météo, vent… sont tirées au sort à chaque tentative.</p>}
           {sc.evolutif && <p className="muted">Scénario évolutif : la situation changera pendant l'exercice, des informations te seront transmises.</p>}
           <p className="consigne">{sc.situation.consigne}</p>
           {sc.duree > 0 && <p className="muted">Durée conseillée : {sc.duree} min</p>}
-          <button className="btn primary big" onClick={() => setSess({ ...emptySession(), start: Date.now() })}>
+          <button className="btn primary big" onClick={() => { const v = tirer(scRaw); setSess({ ...emptySession(), start: Date.now(), ...(Object.keys(v).length ? { vars: v } : {}) }); }}>
             Arriver sur les lieux
           </button>
         </div>
@@ -229,9 +233,10 @@ export default function Player() {
           </div>
         </div>
         <p className="muted">
-          Temps : {fmt(elapsed)} · {nbQuestions(sess)} question(s) posée(s){sc.evolutif && ` · ${Object.keys(sess.evo || {}).length}/${(sc.evolutions || []).length} évolution(s) vue(s)`}
+          Temps : {fmt(elapsed)} · {nbQuestions(sess)} question(s) posée(s){sc.evolutif && ` · ${Object.keys(sess.evo || {}).length}/${(sc.evolutions || []).length} évolution(s) vue(s)`}{sess.vars && ` · Variante jouée : ${Object.values(sess.vars).join(" · ")}`}
           {saveMsg && <span className="err"> — {saveMsg}</span>}
         </p>
+        <Frise sc={sc} sess={sess} interName={interName} />
 
         {sc.afficherCorrection && essentielles.length > 0 && (
           <div className="card">

@@ -53,6 +53,7 @@ export const newScenario = () => ({
     },
   ],
   qa: [],
+  variantes: [],
   correction: { S: "", O: "", I: "", E: "", C: "", message: "", commentaire: "", cubique: "" },
 });
 

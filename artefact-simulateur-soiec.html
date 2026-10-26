@@ -124,7 +124,7 @@ const CUB=[["1","Victimes, enjeux humains"],["2","Construction"],["3","Public et
 const cubStat=(sc,asked)=>CUB.map(([c,l])=>{const q=sc.qa.filter(x=>x.cub===c);return{c,l,q,ok:q.some(x=>asked.has(x.id))}});
 const DOMS=["Reconnaissance cubique","Positionnement échelle","Sauvetage","Risque d'explosion","Risque d'effondrement","TMD","Milieu industriel","Hydrocarbures","Risque électrique","Fumées / désenfumage","ERP / évacuation","Lever de doute","Véhicule","Victimes multiples","Commandement"];
 const domBadges=s=>(s.dominantes||[]).map(d=>`<span class="tag dom">${esc(d)}</span>`).join(" ");
-const newScn=()=>({titre:"",description:"",rubrique:"",dominantes:[],evolutif:false,evolutions:[],duree:0,publie:false,afficherCorrection:true,cubique:false,reserveA:null,vignette:null,photo:null,
+const newScn=()=>({variantes:[],titre:"",description:"",rubrique:"",dominantes:[],evolutif:false,evolutions:[],duree:0,publie:false,afficherCorrection:true,cubique:false,reserveA:null,vignette:null,photo:null,
  situation:{photos:[],contexte:"",consigne:"Vous arrivez sur les lieux en tant que chef d'agrès. Observez la photo, interrogez les personnes présentes, puis rédigez votre SOIEC et votre message."},
  interlocuteurs:[{id:uid(),nom:"Requérant",role:"Personne ayant appelé les secours",reponseDefaut:"Je ne sais pas, je n'ai pas vu ça."}],
  qa:[],correction:{S:"",O:"",I:"",E:"",C:"",message:"",commentaire:"",cubique:""}});
@@ -624,7 +624,7 @@ const calcMem=u=>{const c=u.calculs||{},ids=Object.keys(c);return ids.length?`<t
 function memDetail(t,u){const bs=u.bilans||{},ids=Object.keys(bs),cm=((t.commentaires||{})[u.id])||{},rp=((t.reponses||{})[u.id])||{};
  if(!ids.length)return `<p class="muted" style="margin:8px 0 0">Aucun exercice terminé.</p>`+calcMem(u);
  return calcMem(u)+`<table class="cmp" style="min-width:0;margin-top:8px"><thead><tr><th>Exercice</th><th>Fin</th><th>Temps</th><th>Questions</th><th>Essentielles</th><th>Tent.</th></tr></thead><tbody>${ids.map(i=>{const b=bs[i],c=cm[i],k=t.id+"|"+u.id+"|"+i,nl=nonLus(c,rp[i]);
-  return `<tr><td>${esc(b.titre)}${nl?` <span class="tag" style="background:#c42a1c;border-color:#c42a1c;color:#fff">${nl} réponse(s) non lue(s)</span>`:""}</td><td>${dt(b.fin)}</td><td>${fmt(b.duree||0)}</td><td>${b.nbQ}</td><td>${b.essTot?b.essOk+"/"+b.essTot:"—"}</td><td>${b.nb||1}</td></tr><tr><td colspan="6">${c?filHtml(c,rp[i],u.nom):""}<textarea data-cm="${k}" rows="2" maxlength="800" placeholder="${c?"Répondre au stagiaire…":"Commentaire du formateur (visible par le stagiaire)…"}" style="width:100%"></textarea><div class="row"><button class="btn pri" data-act="cmsend" data-arg="${k}">${c?"Envoyer la réponse":"Envoyer le commentaire"}</button>${nl?`<button class="btn" data-act="cmread" data-arg="${k}">Marquer comme lu</button>`:""}${c?(confirmKey==="cc:"+k?`<button class="btn dng" data-act="cmclr" data-arg="${k}">Confirmer ?</button>`:`<button class="btn dng" data-act="uask" data-arg="cc:${k}">Effacer le fil</button>`):""}</div></td></tr>`}).join("")}</tbody></table>`}
+  return `<tr><td>${esc(b.titre)}${nl?` <span class="tag" style="background:#c42a1c;border-color:#c42a1c;color:#fff">${nl} réponse(s) non lue(s)</span>`:""}</td><td>${dt(b.fin)}</td><td>${fmt(b.duree||0)}</td><td>${b.nbQ}</td><td>${b.essTot?b.essOk+"/"+b.essTot:"—"}</td><td>${b.nb||1}</td></tr><tr><td colspan="6"><div style="margin-bottom:6px">${chOpen[k]?friseMem(b,i):`<button class="btn" data-act="chon" data-arg="${k}">Voir la chronologie</button>`}</div>${c?filHtml(c,rp[i],u.nom):""}<textarea data-cm="${k}" rows="2" maxlength="800" placeholder="${c?"Répondre au stagiaire…":"Commentaire du formateur (visible par le stagiaire)…"}" style="width:100%"></textarea><div class="row"><button class="btn pri" data-act="cmsend" data-arg="${k}">${c?"Envoyer la réponse":"Envoyer le commentaire"}</button>${nl?`<button class="btn" data-act="cmread" data-arg="${k}">Marquer comme lu</button>`:""}${c?(confirmKey==="cc:"+k?`<button class="btn dng" data-act="cmclr" data-arg="${k}">Confirmer ?</button>`:`<button class="btn dng" data-act="uask" data-arg="cc:${k}">Effacer le fil</button>`):""}</div></td></tr>`}).join("")}</tbody></table>`}
 const monCommentaire=sc=>{const t=myTeam(),c=t&&t.commentaires&&t.commentaires[myId]&&t.commentaires[myId][sc];if(!c)return"";const reps=((t.reponses||{})[myId]||{})[sc]||[];
  return `<div class="card" style="margin:8px 0 0;border-left:5px solid var(--ok)"><b>Échange avec le formateur</b>${filHtml(c,reps,"Moi")}<textarea data-rp="${esc(sc)}" rows="2" maxlength="600" placeholder="Répondre au formateur…" style="width:100%"></textarea><div class="row"><button class="btn" data-act="cmrep" data-arg="${esc(sc)}">Envoyer ma réponse</button></div></div>`};
 
@@ -693,6 +693,7 @@ function salleHtml(){const r=salleOf(curS);
  ${chatHtml()}
  <div class="card"><h3 style="margin-top:0">Stagiaires</h3>${N?`<div class="chips"><button class="chip ${sFilt==="all"?"on":""}" data-act="sfilt" data-arg="all">Tous (${sQ.length})</button>${sP.map(u=>`<button class="chip ${sFilt===u.uid?"on":""}" data-act="sfilt" data-arg="u${u.uid}">${esc(u.nom||"Stagiaire")} (${cnt(u.uid)})</button>`).join("")}</div>`:`<p class="muted">En attente des stagiaires…</p>`}</div>
  <div class="card"><h3 style="margin-top:0">Questions essentielles : ${done} / ${ess.length} posées au moins une fois</h3>${ess.map(x=>{const n=who(x);return `<div class="row between" style="margin:3px 0"><span>${n?"✅":"⬜"} ${esc(x.intitule)} <span class="muted">${esc(interName(sc,x.interlocuteurId))}</span></span><span class="tag ${n?"ok":""}">${n} / ${N}</span></div>`}).join("")||`<p class="muted">Aucune question essentielle définie.</p>`}</div>
+ ${friseSalle(sc,esId)}
  <div class="card"><h3 style="margin-top:0">Questions en direct</h3>${feed.length?feed.map(x=>`<div style="margin:8px 0;padding-bottom:6px;border-bottom:1px solid var(--line)"><div class="muted">${hhmm(x.le)} · <b>${esc(x.nom)}</b> → ${esc(x.whoNom||"")} ${x.qaId?(esId.has(x.qaId)?`<span class="tag ok">essentielle</span>`:""):`<span class="tag">hors base</span>`}</div><div>${esc(x.q)}</div><div class="muted">↳ ${esc(x.a)}</div></div>`).join(""):`<p class="muted">Aucune question pour le moment.</p>`}</div>`;
  return h}
 function salleProj(){const r=salleOf(curS);if(!r)return`<div class="card">Salle introuvable.</div><button class="btn" data-act="sprojx">Fermer</button>`;
@@ -704,7 +705,7 @@ function salleProj(){const r=salleOf(curS);if(!r)return`<div class="card">Salle 
  ${sCorr?`<div class="card" style="font-size:1.1rem"><h2>Correction</h2>${["S","O","I","E","C"].map(k=>c[k]?`<p class="pre"><b>${k}</b> — ${esc(c[k])}</p>`:"").join("")}${c.message?`<h3>Message de renseignements</h3><p class="pre">${esc(c.message)}</p>`:""}${c.commentaire?`<h3>Points de vigilance</h3><p class="pre">${esc(c.commentaire)}</p>`:""}${sc.cubique&&c.cubique?`<h3>Reconnaissance cubique</h3><p class="pre">${esc(c.cubique)}</p>`:""}</div>`:""}</div>`}
 const normCode=c=>(c||"").toUpperCase().replace(/[^A-Z0-9]/g,"");
 const genCode=()=>{const A="ABCDEFGHJKLMNPQRSTUVWXYZ23456789";for(let k=0;k<20;k++){const c=Array.from({length:6},()=>A[Math.floor(Math.random()*A.length)]).join("");if(!eqs.some(t=>t.code===c))return c}return Date.now().toString(36).toUpperCase().slice(-6)};
-const bilanResume=bs=>{const o={};for(const[k,b]of Object.entries(bs||{}))o[k]={titre:b.titre,fin:b.fin,duree:b.duree,nbQ:b.nbQ,essTot:b.essTot,essOk:b.essOk,cubTot:b.cubTot||0,cubOk:b.cubOk||0,nb:b.nb||1};return o};
+const bilanResume=bs=>{const o={};for(const[k,b]of Object.entries(bs||{}))o[k]={ch:{q:(b.log||[]).filter(l=>typeof l.t==="number").slice(0,80).map(l=>[l.t,l.who,l.qaId||""]),e:(b.evos||[]).map(e=>[e.t,String(e.titre||"").slice(0,40)])},titre:b.titre,fin:b.fin,duree:b.duree,nbQ:b.nbQ,essTot:b.essTot,essOk:b.essOk,cubTot:b.cubTot||0,cubOk:b.cubOk||0,nb:b.nb||1};return o};
 async function pushTeam(bs){const t=myTeam();if(!t||!db||!me)return;
  try{await db.collection("equipes").doc(t.id).update({membres:{...t.membres,[myId]:{...t.membres[myId],nom:me.nom,grade:me.grade||"",cis:me.cis||"",maj:Date.now(),bilans:bilanResume(bs||me.bilans),calculs:resumeCalculs(me.calculs)}}})}catch{}}
 function equipeHtml(){
@@ -784,12 +785,19 @@ function adminHtml(){
  return h}
 
 /* ---- éditeur ---- */
-const TABS=[["general","Général"],["situation","Situation"],["inter","Interlocuteurs"],["evo","Évolutions"],["qa","Questions / réponses"],["corr","Correction SOIEC"]];
+const TABS=[["general","Général"],["situation","Situation"],["inter","Interlocuteurs"],["evo","Évolutions"],["var","Variantes"],["qa","Questions / réponses"],["corr","Correction SOIEC"]];
 const fi=(p,v,extra="")=>`<input data-p="${p}" value="${esc(v)}" ${extra}>`;
 const fta=(p,v,r=3)=>`<textarea data-p="${p}" rows="${r}">${esc(v)}</textarea>`;
 const fck=(p,v,l)=>`<label class="ck"><input type="checkbox" data-p="${p}" ${v?"checked":""}>${l}</label>`;
 const MAXSIT=6;
 let qaFilter="all",tw="",tq="",admRub="all";
+let bqOpen=false,bqQ="",bqR="all",bqSel={},bqT="";
+const bqAll=()=>{const o=[];allList.forEach(sc=>{if(sc.id===edId)return;(sc.qa||[]).forEach(q=>{const it=(sc.interlocuteurs||[]).find(i=>i.id===q.interlocuteurId);o.push({k:sc.id+"|"+q.id,sc,q,inter:q.interlocuteurId===TOUS?"Tous":(it?it.nom:"")})})});return o};
+const bqFilt=()=>{const w=norm(bqQ).split(" ").filter(Boolean);return bqAll().filter(x=>(bqR==="all"||x.sc.rubrique===bqR)&&w.every(t=>norm([x.q.intitule,x.q.motsCles,x.q.reponse,x.sc.titre,x.inter].join(" ")).includes(t)))};
+const bqHtml=()=>{const f=bqFilt(),sh=f.slice(0,60),n=Object.keys(bqSel).filter(k=>bqSel[k]).length,rubs=[...new Set(allList.map(x=>x.rubrique).filter(Boolean))];if(!bqT||!ed.interlocuteurs.some(i=>i.id===bqT))bqT=ed.interlocuteurs[0]?.id||TOUS;
+ return `<div class="card form"><div class="row between"><b>Banque de questions (${bqAll().length} questions dans ${allList.length-(edId?1:0)} scénarios)</b><button class="btn" data-act="bqopen">Fermer</button></div><div class="row"><input id="bqq" class="grow" value="${esc(bqQ)}" placeholder="Rechercher : intitulé, mot-clé, réponse, scénario, interlocuteur…"><select id="bqr"><option value="all">Toutes rubriques</option>${rubs.map(r=>`<option ${bqR===r?"selected":""}>${esc(r)}</option>`).join("")}</select></div><div class="row between"><span class="muted">${f.length} résultat(s)${f.length>60?" (60 premiers affichés, affine la recherche)":""}</span><span class="row"><button class="btn" data-act="bqall">Tout cocher</button><button class="btn" data-act="bqnone">Décocher</button></span></div>
+ <div style="max-height:360px;overflow:auto">${sh.map(x=>`<label class="check" style="display:block;border-top:1px solid var(--line);padding:6px 0"><input type="checkbox" data-bqk="${x.k}" ${bqSel[x.k]?"checked":""}> <b>${esc(x.q.intitule||"(sans intitulé)")}</b>${x.q.essentielle?' <span class="tag">essentielle</span>':""}<br><span class="muted" style="font-size:.85rem">${esc(x.sc.titre||"")} · ${esc(x.inter||"?")} — ${esc((x.q.reponse||"").slice(0,140))}</span></label>`).join("")||'<p class="muted">Aucune question.</p>'}</div>
+ <div class="row"><label>Interlocuteur de repli</label><select id="bqt">${`<option value="${TOUS}" ${bqT===TOUS?"selected":""}>Tous les interlocuteurs</option>`+ed.interlocuteurs.map(i=>`<option value="${i.id}" ${bqT===i.id?"selected":""}>${esc(i.nom)}</option>`).join("")}</select><button class="btn pri" data-act="bqimp" ${n?"":"disabled"}>Importer ${n} question(s)</button></div><p class="muted">Un interlocuteur de même nom est retrouvé automatiquement ; sinon la question va à l'interlocuteur de repli. Les doublons sont ignorés ; les évolutions et rubriques cubiques ne sont pas reprises.</p></div>`};
 function libHtml(){
  let h=`<div class="card" style="background:var(--soft)">`;
  if(!illus.length)h+=`<p class="muted">La bibliothèque est vide. Ajoute une image au scénario puis « Ajouter à la bibliothèque ».</p>`;
@@ -826,11 +834,16 @@ function editHtml(){
   h+=`<div class="card form"><p class="muted">Chaque évolution se déclenche automatiquement N minutes après le début de l'exercice du stagiaire. Le message s'affiche en alerte et reste dans l'historique. Dans l'onglet Questions / réponses, indique pour chaque question à partir de quelle évolution elle est disponible et quand elle est remplacée (même mots-clés, nouvelle réponse).</p></div>`;
   h+=(s.evolutions||[]).map((e,i)=>`<div class="card form"><div class="row between"><b>Évolution ${i+1}</b><button class="btn dng" data-act="delevo" data-arg="${i}">Supprimer</button></div><div class="cols"><div><label>Titre (ex. Le feu gagne les combles)</label>${fi(`evolutions.${i}.titre`,e.titre)}</div><div><label>Déclenchement : minutes après le début</label>${fi(`evolutions.${i}.delai`,e.delai,'type="number" min="0"')}</div></div><label>Information donnée au stagiaire (changement de situation)</label>${fta(`evolutions.${i}.message`,e.message,4)}</div>`).join("");
   h+=`<button class="btn" data-act="addevo">+ Ajouter une évolution</button>`}
+ if(edTab==="var"){
+  h+=`<div class="card form"><p class="muted">À chaque tentative, une valeur est tirée au hasard pour chaque variable. Écris <b>{nom}</b> dans le contexte, les réponses, les évolutions ou la correction : le texte est remplacé par la valeur tirée.</p>${fck("variantesAuto",varAutoOn(s),"Conditions du jour automatiques (heure, météo, vent, température) : ajoutées à la situation et répondues si le stagiaire pose la question (activées par défaut pour la rubrique Incendie)")}<p class="muted">Variables automatiques : {heure} {meteo} {vent} {temperature}.</p></div>`;
+  h+=(s.variantes||[]).map((v,i)=>`<div class="card form"><div class="row between"><b>Variable ${i+1}</b><button class="btn dng" data-act="delvar" data-arg="${i}">Supprimer</button></div><label>Nom (sans espace ni accent, ex. nb_victimes)</label>${fi(`variantes.${i}.nom`,v.nom||"")}<label>Valeurs possibles (une par ligne)</label>${fta(`variantes.${i}.txt`,v.txt||"",4)}<p class="muted">Utilisation : {${esc(v.nom||"nom")}}</p></div>`).join("");
+  h+=`<div class="row"><button class="btn" data-act="addvar">+ Ajouter une variable</button><button class="btn" data-act="vartest">Voir un tirage</button></div>`}
  if(edTab==="qa"){
   const opts=sel=>`<option value="${TOUS}" ${sel===TOUS?"selected":""}>Tous les interlocuteurs</option>`+s.interlocuteurs.map(i=>`<option value="${i.id}" ${sel===i.id?"selected":""}>${esc(i.nom)}</option>`).join("");
   h+=`<div class="card form"><b>Tester la reconnaissance d'une question</b><div class="row"><select id="tw"><option value="">Interlocuteur…</option>${s.interlocuteurs.map(i=>`<option value="${i.id}" ${tw===i.id?"selected":""}>${esc(i.nom)}</option>`).join("")}</select><input id="tq" class="grow" value="${esc(tq)}" placeholder="Tape une question comme le stagiaire…"></div><p id="tres" class="muted"></p></div>`;
   const cnt=id=>s.qa.filter(x=>x.interlocuteurId===id).length,nShown=qaFilter==="all"?s.qa.length:cnt(qaFilter);
-  h+=`<div class="row between"><select id="qaf"><option value="all">Tous les interlocuteurs (${s.qa.length})</option><option value="${TOUS}" ${qaFilter===TOUS?"selected":""}>Réponses « Tous » (${cnt(TOUS)})</option>${s.interlocuteurs.map(i=>`<option value="${i.id}" ${qaFilter===i.id?"selected":""}>${esc(i.nom)} (${cnt(i.id)})</option>`).join("")}</select><b>${qaFilter==="all"?`${s.qa.length} question(s)`:`${nShown} / ${s.qa.length} question(s)`}</b><button class="btn pri" data-act="addqa">+ Ajouter une question / réponse</button></div>`;
+  h+=`<div class="row between"><select id="qaf"><option value="all">Tous les interlocuteurs (${s.qa.length})</option><option value="${TOUS}" ${qaFilter===TOUS?"selected":""}>Réponses « Tous » (${cnt(TOUS)})</option>${s.interlocuteurs.map(i=>`<option value="${i.id}" ${qaFilter===i.id?"selected":""}>${esc(i.nom)} (${cnt(i.id)})</option>`).join("")}</select><b>${qaFilter==="all"?`${s.qa.length} question(s)`:`${nShown} / ${s.qa.length} question(s)`}</b><button class="btn" data-act="bqopen">Banque de questions</button><button class="btn pri" data-act="addqa">+ Ajouter une question / réponse</button></div>`;
+  if(bqOpen)h+=bqHtml();
   h+=s.qa.map((x,i)=>qaFilter!=="all"&&x.interlocuteurId!==qaFilter?"":`<div class="card form"><div class="row between"><select data-p="qa.${i}.interlocuteurId">${opts(x.interlocuteurId)}</select><div class="row">${s.cubique?`<select data-p="qa.${i}.cub" title="Rubrique de la reconnaissance cubique"><option value="">Cubique : aucune</option>${CUB.map(([c,l])=>`<option value="${c}"${x.cub===c?" selected":""}>${c}. ${esc(l)}</option>`).join("")}</select>`:""}${fck(`qa.${i}.essentielle`,x.essentielle,"Question essentielle")}<button class="btn dng" data-act="delqa" data-arg="${i}">Supprimer</button></div></div>
   ${s.evolutif?`<div class="cols"><div><label>Disponible</label><select data-p="qa.${i}.evo"><option value="">Dès le départ</option>${(s.evolutions||[]).map((e,k)=>`<option value="${e.id}"${x.evo===e.id?" selected":""}>À partir de : ${esc(e.titre||"Évolution "+(k+1))} (${Number(e.delai)||0} min)</option>`).join("")}</select></div><div><label>Remplacée</label><select data-p="qa.${i}.fin"><option value="">Jamais</option>${(s.evolutions||[]).map((e,k)=>`<option value="${e.id}"${x.fin===e.id?" selected":""}>À partir de : ${esc(e.titre||"Évolution "+(k+1))} (${Number(e.delai)||0} min)</option>`).join("")}</select></div></div>`:""}<label>Intitulé (pour toi et pour le bilan), ex. « Y a-t-il des victimes ? »</label>${fi(`qa.${i}.intitule`,x.intitule)}
   <label>Mots-clés déclencheurs, séparés par des virgules</label>${fi(`qa.${i}.motsCles`,x.motsCles,'placeholder="victime, blessé, quelqu\'un dedans"')}
@@ -855,13 +868,63 @@ const qaAct=(sc,sess)=>{if(!sc.evolutif)return sc.qa;const ev=(sess&&sess.evo)||
 const essAct=(sc,sess)=>sc.qa.filter(x=>x.essentielle&&(!sc.evolutif||!x.evo||((sess&&sess.evo)||{})[x.evo]));
 const nbQuest=sess=>sess.log.filter(l=>!l.sys).length;
 function checkEvo(){if(!P||!P.sc.evolutif||!P.sess.start||P.sess.finished)return;P.sess.evo=P.sess.evo||{};const el=(Date.now()-P.sess.start)/60000;let ch=false;
- for(const e of evoList(P.sc)){if(!P.sess.evo[e.id]&&el>=(Number(e.delai)||0)){P.sess.evo[e.id]=Date.now();P.sess.log.push({id:uid(),who:"__evo",question:"⚠ "+(e.titre||"Évolution de la situation"),answer:e.message||"",sys:true,qaId:null});P.evoAlert=e.id;ch=true}}
+ for(const e of evoList(P.sc)){if(!P.sess.evo[e.id]&&el>=(Number(e.delai)||0)){P.sess.evo[e.id]=Date.now();P.sess.log.push({t:tNow(),id:uid(),who:"__evo",question:"⚠ "+(e.titre||"Évolution de la situation"),answer:e.message||"",sys:true,qaId:null});P.evoAlert=e.id;ch=true}}
  if(ch){saveSess();toast("La situation évolue !");render()}}
 function evoBanner(){if(!P||!P.evoAlert)return"";const e=(P.sc.evolutions||[]).find(x=>x.id===P.evoAlert);if(!e)return"";return `<div class="card" style="border:2px solid #c4161c;background:var(--soft)"><b>⚠ Évolution de la situation${e.titre?" : "+esc(e.titre):""}</b><p class="pre" style="margin:6px 0">${esc(e.message||"")}</p><button class="btn pri" data-act="evoack">Compris</button></div>`}
 const emptySess=()=>({start:null,finishedAt:null,finished:false,evo:{},log:[],notes:{S:"",O:"",I:"",E:"",C:"",message:""}});
-function fromBilan(id){const b=bilansOf(me)[id];if(!b)return null;return{start:b.fin-(b.duree||0)*1000,finishedAt:b.fin,finished:true,log:b.log||[],notes:{...emptySess().notes,...(b.notes||{})}}}
+function fromBilan(id){const b=bilansOf(me)[id];if(!b)return null;return{evoT:b.evos||undefined,vars:b.vars||undefined,start:b.fin-(b.duree||0)*1000,finishedAt:b.fin,finished:true,log:b.log||[],notes:{...emptySess().notes,...(b.notes||{})}}}
+/* ---- variantes aléatoires ---- */
+const VAR_AUTO=[{nom:"heure",txt:"03 h 15\n06 h 40\n10 h 30\n14 h 20\n18 h 05\n22 h 45"},{nom:"meteo",txt:"ciel dégagé\nciel couvert\npluie fine\nforte pluie\nbrouillard\norage"},{nom:"vent",txt:"nul\nfaible (10 km/h) de secteur nord\nfaible (10 km/h) de secteur ouest\nmodéré (25 km/h) de secteur sud\nfort (40 km/h) de secteur est\nfort (50 km/h) de secteur nord-ouest"},{nom:"temperature",txt:"-2 °C\n5 °C\n12 °C\n20 °C\n28 °C\n35 °C"}];
+const AUTOQA=[["vent","Vent","vent,direction du vent,souffle,rafale","Vent {vent}."],["heure","Heure","quelle heure,heure,horaire","Il est environ {heure}."],["meteo","Météo","meteo,temps,pluie,orage,brouillard,ciel,il pleut","Météo : {meteo}."],["temperature","Température","temperature,degres,il fait chaud,il fait froid","Il fait {temperature}."]];
+const varAutoOn=sc=>sc.variantesAuto===undefined?sc.rubrique==="Incendie":!!sc.variantesAuto;
+const varVals=v=>(v.txt||"").split("\n").map(x=>x.trim()).filter(Boolean);
+const varsDe=sc=>{const c=(sc.variantes||[]).filter(v=>v.nom&&varVals(v).length),n=new Set(c.map(v=>v.nom));return[...(varAutoOn(sc)?VAR_AUTO.filter(v=>!n.has(v.nom)):[]),...c]};
+const tirer=sc=>{const o={};varsDe(sc).forEach(v=>{const a=varVals(v);o[v.nom]=a[Math.floor(Math.random()*a.length)]});return o};
+const subS=(t,v)=>typeof t==="string"&&t.includes("{")?t.replace(/\{(\w+)\}/g,(m,k)=>v[k]!==undefined?v[k]:m):t;
+const subO=(o,v)=>Array.isArray(o)?o.map(x=>subO(x,v)):o&&typeof o==="object"?Object.fromEntries(Object.entries(o).map(([k,x])=>[k,(k==="photo"||k==="photos"||k==="vignette")?x:subO(x,v)])):subS(o,v);
+function applyVars(sc,v){if(!v||!Object.keys(v).length)return sc;
+ const r={...sc,situation:subO(sc.situation,v),interlocuteurs:subO(sc.interlocuteurs,v),qa:subO(sc.qa,v),evolutions:subO(sc.evolutions,v),correction:subO(sc.correction,v),description:subS(sc.description,v)};
+ if(varAutoOn(sc)&&v.heure!==undefined){
+  r.situation.contexte=(r.situation.contexte?r.situation.contexte+"\n\n":"")+`Conditions : il est ${v.heure} · ${v.meteo} · vent ${v.vent} · ${v.temperature}.`;
+  const has=k=>sc.qa.some(x=>norm(x.motsCles).split(" ").includes(k));
+  AUTOQA.forEach(([k,t,m,rp])=>{if(!has(k))r.qa=[...r.qa,{id:"auto-"+k,interlocuteurId:TOUS,intitule:t,motsCles:m,reponse:subS(rp,v),essentielle:false}]})}
+ return r}
+/* ---- chronologie ---- */
+const tNow=()=>Math.max(0,Math.floor((Date.now()-P.sess.start)/1000));
+const evTimes=(sc,sess)=>sess.evoT||Object.entries(sess.evo||{}).map(([id,ms])=>({titre:((sc.evolutions||[]).find(e=>e.id===id)||{}).titre||"Évolution",t:Math.max(0,Math.round((ms-sess.start)/1000))}));
+const FR_COL=["#c42a1c","#1f6feb","#2a9d5c","#b7791f","#7b3fb3","#0e8f9a","#d6336c","#667"];
+const mmss=t=>String(Math.floor(t/60)).padStart(2,"0")+":"+String(t%60).padStart(2,"0");
+function friseSvg(lanes,pts,marks,D){
+ const W=820,L=130,R=20,T=34,H=T+lanes.length*34+26,X=t=>L+(W-L-R)*t/D,step=D>3600?1200:D>1800?600:D>900?300:D>300?120:60;let g="";
+ for(let t=0;t<=D;t+=step)g+=`<line x1="${X(t)}" x2="${X(t)}" y1="${T-6}" y2="${H-20}" stroke="currentColor" opacity=".12"/><text x="${X(t)}" y="${H-6}" font-size="11" text-anchor="middle" fill="currentColor" opacity=".7">${Math.round(t/60)} min</text>`;
+ lanes.forEach((l,i)=>{g+=`<text x="${L-8}" y="${T+i*34+20}" font-size="12" text-anchor="end" fill="currentColor">${esc((l.label||"").slice(0,18))}</text><line x1="${L}" x2="${W-R}" y1="${T+i*34+16}" y2="${T+i*34+16}" stroke="currentColor" opacity=".08"/>`});
+ marks.forEach(e=>{const d=X(e.t)>W*0.65;g+=`<line x1="${X(e.t)}" x2="${X(e.t)}" y1="${T-8}" y2="${H-20}" stroke="#c42a1c" stroke-width="2" stroke-dasharray="5 3"><title>${esc(e.title)}</title></line><text x="${X(e.t)+(d?-4:4)}" y="12" font-size="11" text-anchor="${d?"end":"start"}" fill="#c42a1c">${esc(e.label)}</text>`});
+ pts.forEach(p=>{const i=lanes.findIndex(l=>l.id===p.lane);g+=`<circle cx="${X(p.t)}" cy="${T+i*34+16}" r="${p.big?8:6}" fill="${p.col}" ${p.big?'stroke="currentColor" stroke-width="2.5"':""}><title>${esc(p.title)}</title></circle>`});
+ return `<div style="overflow-x:auto"><svg viewBox="0 0 ${W} ${H}" style="min-width:640px;width:100%;color:inherit" role="img" aria-label="Chronologie">${g}</svg></div>`}
+function friseHtml(sc,sess){
+ const log=(sess.log||[]).filter(l=>!l.sys&&typeof l.t==="number"),head=`<div class="card"><h3 style="margin-top:0">Chronologie de l'exercice</h3>`;
+ if(!log.length)return head+`<p class="muted">Pas de chronologie pour cet exercice (terminé avant l'ajout de cette fonction).</p></div>`;
+ const ev=evTimes(sc,sess).filter(e=>typeof e.t==="number"),ess=new Set(sc.qa.filter(x=>x.essentielle).map(x=>x.id));
+ const D=Math.max(60,sess.finishedAt&&sess.start?Math.round((sess.finishedAt-sess.start)/1000):0,...log.map(l=>l.t),...ev.map(e=>e.t))+10;
+ const ids=[...new Set(log.map(l=>l.who))],lanes=ids.map(w=>({id:w,label:interName(sc,w)}));
+ const pts=log.map(l=>({t:l.t,lane:l.who,col:FR_COL[ids.indexOf(l.who)%FR_COL.length],big:ess.has(l.qaId),title:mmss(l.t)+" — "+l.question+" → "+(l.answer||"").slice(0,120)}));
+ const marks=ev.map(e=>({t:e.t,label:"⚠ "+(e.titre||"").slice(0,26),title:mmss(e.t)+" — "+e.titre}));
+ const ts=log.map(l=>l.t).sort((a,b)=>a-b);let gap=0,ga=0;for(let i=1;i<ts.length;i++)if(ts[i]-ts[i-1]>gap){gap=ts[i]-ts[i-1];ga=ts[i-1]}
+ const late=ev.length?log.filter(l=>ess.has(l.qaId)&&l.t>Math.min(...ev.map(e=>e.t))).length:0;
+ return head+friseSvg(lanes,pts,marks,D)+`<p class="muted" style="margin:6px 0 0">Pastille = question (contour épais = question essentielle) · ligne rouge = évolution · survole une pastille pour lire question et réponse.</p><p class="muted" style="margin:4px 0 0">Première question à ${mmss(ts[0])}${ts.length>1?` · plus long silence : ${mmss(gap)} (après ${mmss(ga)})`:""}${late?` · ${late} question(s) essentielle(s) posée(s) après la 1re évolution`:""}.</p></div>`}
+// fiche stagiaire (gestionnaire) : chronologie compacte stockée dans le résumé d'équipe
+const chOpen={};
+function friseMem(b,scId){const sc=merge(allList.find(x=>x.id===scId)||{titre:b.titre});const c=b.ch;
+ if(!c||!(c.q||[]).length)return `<p class="muted">Pas de chronologie pour cet exercice (terminé avant l'ajout de cette fonction, ou le stagiaire doit rouvrir l'application pour la synchroniser).</p>`;
+ const sess={log:c.q.map(([t,who,qaId])=>{const x=sc.qa.find(q=>q.id===qaId);return{t,who,qaId:qaId||null,question:x?x.intitule:"(question libre)",answer:x?x.reponse:""}}),start:(b.fin||0)-(b.duree||0)*1000,finishedAt:b.fin,evoT:(c.e||[]).map(([t,titre])=>({t,titre}))};
+ return friseHtml(sc,sess)}
+function friseSalle(sc,ess){
+ if(!sQ.length)return"";const t0=Math.min(...sQ.map(q=>q.le));const D=Math.max(60,...sQ.map(q=>Math.round((q.le-t0)/1000)))+10;
+ const noms=[...new Set(sQ.map(q=>q.whoNom||"?"))],lanes=sP.filter(u=>sQ.some(q=>q.uid===u.uid)).map(u=>({id:u.uid,label:u.nom||"Stagiaire"}));
+ const pts=sQ.filter(q=>lanes.some(l=>l.id===q.uid)).map(q=>{const t=Math.round((q.le-t0)/1000);return{t,lane:q.uid,col:FR_COL[noms.indexOf(q.whoNom||"?")%FR_COL.length],big:ess.has(q.qaId),title:mmss(t)+" — "+q.nom+" → "+(q.whoNom||"")+" : "+q.q}});
+ return `<div class="card"><h3 style="margin-top:0">Chronologie de la séance</h3>${friseSvg(lanes,pts,[],D)}<p class="muted" style="margin:6px 0 0">Une ligne par stagiaire · couleur = interlocuteur interrogé (${noms.map((n,i)=>`<span style="color:${FR_COL[i%FR_COL.length]}">● ${esc(n)}</span>`).join(" ")}) · contour épais = question essentielle.</p></div>`}
 const makeBilan=(sc,sess,old)=>{const qs=essAct(sc,sess),asked=new Set(sess.log.map(l=>l.qaId));
- return{titre:sc.titre,fin:sess.finishedAt,duree:Math.floor((sess.finishedAt-sess.start)/1000),nbQ:nbQuest(sess),essTot:qs.length,essOk:qs.filter(x=>asked.has(x.id)).length,...(sc.cubique?(()=>{const c=cubStat(sc,asked).filter(r=>r.q.length);return{cubTot:c.length,cubOk:c.filter(r=>r.ok).length}})():{}),nb:(old?old.nb||1:0)+1,log:sess.log.filter(l=>!l.sys).map(l=>({who:l.who,question:l.question,answer:l.answer,qaId:l.qaId||null})),notes:sess.notes}};
+ return{titre:sc.titre,fin:sess.finishedAt,duree:Math.floor((sess.finishedAt-sess.start)/1000),nbQ:nbQuest(sess),essTot:qs.length,essOk:qs.filter(x=>asked.has(x.id)).length,...(sc.cubique?(()=>{const c=cubStat(sc,asked).filter(r=>r.q.length);return{cubTot:c.length,cubOk:c.filter(r=>r.ok).length}})():{}),nb:(old?old.nb||1:0)+1,vars:sess.vars||null,evos:evTimes(sc,sess),log:sess.log.filter(l=>!l.sys).map(l=>({t:typeof l.t==="number"?l.t:null,who:l.who,question:l.question,answer:l.answer,qaId:l.qaId||null})),notes:sess.notes}};
 async function saveBilan(){const {sc,sess,id}=P;
  if(!db||!myId)return toast("Résultat non enregistré : compte non identifié.",true);
  if(!me)return toast("Résultat non enregistré : active ton suivi (Espace stagiaire → Mon suivi).",true);
@@ -875,7 +938,7 @@ async function syncLocal(){if(synced||!db||!myId||!me||!loaded)return;synced=tru
  if(ch){try{await db.collection("users").doc(myId).update({bilans:bs});toast("Exercices terminés récupérés dans ton suivi.")}catch(e){synced=false}}}
 function openPlay(id){const sc=list.find(s=>s.id===id);if(!sc)return;const m=merge(sc);
  const loc=lsGet("soiec:"+id),cl=me&&me.encours&&me.encours[id],useCl=cl&&(!loc||(cl.maj||0)>(loc.maj||0));
- P={sz:-1,sc:m,id,sess:useCl?{...emptySess(),...cl,finished:false,finishedAt:null}:(loc||fromBilan(id)||emptySess()),tab:"questions",who:m.interlocuteurs[0]?.id||null,zoom:false,now:Date.now()};route="play";render()}
+ P={sz:-1,sc:m,id,sess:useCl?{...emptySess(),...cl,finished:false,finishedAt:null}:(loc||fromBilan(id)||emptySess()),tab:"questions",who:m.interlocuteurs[0]?.id||null,zoom:false,now:Date.now(),base:m};if(P.sess.vars)P.sc=applyVars(m,P.sess.vars);route="play";render()}
 const saveSess=()=>{P.sess.maj=Date.now();if(P.salle)return;lsSet("soiec:"+P.id,P.sess);cloudSave()};
 function cloudSave(){if(!db||!myId||!me||!P)return;clearTimeout(cloudT);const id=P.id;
  cloudT=setTimeout(async()=>{const sess=lsGet("soiec:"+id);if(!sess)return;const enc={...(me.encours||{})};
@@ -883,7 +946,7 @@ function cloudSave(){if(!db||!myId||!me||!P)return;clearTimeout(cloudT);const id
   try{await db.collection("users").doc(myId).update({encours:enc})}catch(e){}},2500)}
 function playRender(){
  const {sc,sess}=P,a=$("#app"),back=`<button data-act="${canAdmin?"admin":"home"}">Quitter</button>`;
- if(!sess.start){a.innerHTML=shell(`<div class="card intro"><h1>${esc(sc.titre)}</h1><p>${esc(sc.description)}</p>${domBadges(sc)?`<p>${domBadges(sc)}</p>`:""}${sc.evolutif?`<p class="muted">Scénario évolutif : la situation changera pendant l'exercice, des informations te seront transmises.</p>`:""}<p class="consigne">${esc(sc.situation.consigne)}</p>${sc.duree>0?`<p class="muted">Durée conseillée : ${sc.duree} min</p>`:""}<button class="btn pri big" data-act="begin">Arriver sur les lieux</button></div>`,back);return}
+ if(!sess.start){a.innerHTML=shell(`<div class="card intro"><h1>${esc(sc.titre)}</h1><p>${esc(sc.description)}</p>${domBadges(sc)?`<p>${domBadges(sc)}</p>`:""}${varsDe(sc).length?`<p class="muted">Conditions variables : heure, météo, vent… sont tirées au sort à chaque tentative.</p>`:""}${sc.evolutif?`<p class="muted">Scénario évolutif : la situation changera pendant l'exercice, des informations te seront transmises.</p>`:""}<p class="consigne">${esc(sc.situation.consigne)}</p>${sc.duree>0?`<p class="muted">Durée conseillée : ${sc.duree} min</p>`:""}<button class="btn pri big" data-act="begin">Arriver sur les lieux</button></div>`,back);return}
  if(sess.finished){a.innerHTML=shell(bilanHtml(),back);return}
  a.innerHTML=shell(salleBanner()+evoBanner()+playHtml(),`<span id="tm" class="timer"></span>${back}`);tick();
  tmr=setInterval(tick,1000);const c=$("#chat");if(c)c.scrollTop=c.scrollHeight}
@@ -913,7 +976,8 @@ function bilanHtml(){
  const ess=essAct(sc,sess),asked=new Set(sess.log.map(l=>l.qaId)),cor=sc.afficherCorrection;
  const rows=[...SOIEC.map(r=>[`${r.k} – ${r.t}`,sess.notes[r.k],sc.correction[r.k]]),["Message",sess.notes.message,sc.correction.message]];
  return `<div class="row between"><h1>Bilan : ${esc(sc.titre)}</h1>${confirmKey==="re"?`<button class="btn dng" data-act="reok">Confirmer : tout effacer</button>`:`<button class="btn" data-act="re">Recommencer</button>`}</div>
- <p class="muted">Temps : ${fmt(el)} · ${nbQuest(sess)} question(s) posée(s)${sc.evolutif?` · ${Object.keys(sess.evo||{}).length}/${(sc.evolutions||[]).length} évolution(s) vue(s)`:""}</p>
+ <p class="muted">Temps : ${fmt(el)} · ${nbQuest(sess)} question(s) posée(s)${sc.evolutif?` · ${Object.keys(sess.evo||{}).length}/${(sc.evolutions||[]).length} évolution(s) vue(s)`:""}${sess.vars?` · Variante jouée : ${esc(Object.values(sess.vars).join(" · "))}`:""}</p>
+ ${friseHtml(sc,sess)}
  ${cor&&ess.length?`<div class="card"><h3 style="margin-top:0">Questions essentielles</h3><ul class="checks">${ess.map(x=>`<li class="${asked.has(x.id)?"y":"n"}">${asked.has(x.id)?"✓":"✗"} ${esc(x.intitule||x.motsCles)} <span class="muted">(${esc(interName(sc,x.interlocuteurId))})</span>${!asked.has(x.id)&&x.reponse?`<div style="margin:4px 0 8px 22px;padding:6px 10px;background:var(--soft);border-left:3px solid var(--red);border-radius:4px"><b>Réponse :</b> ${esc(x.reponse)}</div>`:""}</li>`).join("")}</ul></div>`:""}
  ${cor&&sc.cubique?`<div class="card"><h3 style="margin-top:0">Reconnaissance cubique</h3><ul class="checks">${cubStat(sc,asked).map(r=>r.q.length?`<li class="${r.ok?"y":"n"}">${r.ok?"✓":"✗"} ${r.c}. ${esc(r.l)}${r.ok?"":r.q.filter(x=>x.reponse).map(x=>`<div style="margin:4px 0 8px 22px;padding:6px 10px;background:var(--soft);border-left:3px solid var(--red);border-radius:4px"><b>${esc(x.intitule)}</b> ${esc(x.reponse)}</div>`).join("")}</li>`:`<li>• ${r.c}. ${esc(r.l)} <span class="muted">(à apprécier, voir synthèse)</span></li>`).join("")}</ul>${sc.correction.cubique?`<p class="pre"><b>Synthèse attendue</b>\n${esc(sc.correction.cubique)}</p>`:""}</div>`:""}
  <div class="card sc"><table class="cmp"><thead><tr><th></th><th>Ta réponse</th>${cor?"<th>Correction</th>":""}</tr></thead><tbody>${rows.map(r=>`<tr><th>${r[0]}</th><td>${esc(r[1])||"—"}</td>${cor?`<td>${esc(r[2])||"—"}</td>`:""}</tr>`).join("")}</tbody></table></div>
@@ -941,10 +1005,10 @@ const A={
  async sjoin(){const code=normCode($("#scode")&&$("#scode").value),r=salleOf(code);if(!code)return toast("Saisis le code de la salle.",true);if(!r)return toast("Code inconnu.",true);if(r.ouverte===false)return toast("Cette séance est clôturée.",true);if(salleEtat(r)==="plan")return toast("Cette séance débute le "+dt(r.debut)+". Reviens à cette heure.",true);
   const sc=allList.find(x=>x.id===r.scId);if(!sc)return toast("Scénario indisponible.",true);if(!myId)return toast("Connexion requise.",true);
   try{await db.collection("sallesp").doc(code+"_"+myId).set({salle:code,uid:myId,nom:(me&&me.nom)||"Stagiaire",le:Date.now()})}catch(e){return toast("Erreur : "+(e.message||e.code),true)}
-  const m=merge(sc);P={sz:-1,sc:m,id:sc.id,sess:emptySess(),tab:"questions",who:m.interlocuteurs[0]?.id||null,zoom:false,now:Date.now(),salle:code};watchMsgs(code);route="play";render()},
+  const m=merge(sc);P={sz:-1,sc:m,id:sc.id,sess:emptySess(),tab:"questions",who:m.interlocuteurs[0]?.id||null,zoom:false,now:Date.now(),salle:code,base:m};watchMsgs(code);route="play";render()},
  enter(){entered=true;try{sessionStorage.setItem("soiec-intro","1")}catch{}render()},home(){route="home";render()},admin(){route="admin";confirmKey=null;render()},
- new(){libOpen=false;newRub=false;ed=newScn();edId=null;edTab="general";edDirty=false;route="edit";render()},
- edit(id){libOpen=false;newRub=false;const s=list.find(x=>x.id===id);ed=merge(JSON.parse(JSON.stringify(s)));edId=id;edTab="general";edDirty=false;route="edit";render()},
+ new(){bqOpen=false;bqSel={};libOpen=false;newRub=false;ed=newScn();edId=null;edTab="general";edDirty=false;route="edit";render()},
+ edit(id){bqOpen=false;bqSel={};libOpen=false;newRub=false;const s=list.find(x=>x.id===id);ed=merge(JSON.parse(JSON.stringify(s)));edId=id;edTab="general";edDirty=false;route="edit";render()},
  play(id){openPlay(id)},
  libt(){libOpen=!libOpen;confirmKey=null;render()},
  libuse(id){const i=illus.find(x=>x.id===id);if(!i)return;ed.photo=i.photo;ed.vignette=i.vignette;edDirty=true;libOpen=false;toast("Illustration appliquée (pense à enregistrer).");render()},
@@ -953,7 +1017,7 @@ const A={
  async libadd(){const t=($("#libtitre").value||"").trim();if(!t)return toast("Donne un titre à l'image.",true);
   try{await db.collection("illustrations").doc().set({titre:t,photo:ed.photo,vignette:ed.vignette,le:Date.now()});toast("Ajoutée à la bibliothèque.")}catch(e){toast("Erreur : "+(e.message||e.code),true)}},
  sugt(){sugOpen=!sugOpen;render()},
- sug(id){const x=P.sc.qa.find(q=>q.id===id);if(!x||!P.who)return;P.sess.log.push({id:uid(),who:P.who,question:x.intitule,answer:x.reponse,qaId:x.id});sPost(P.who,x.intitule,x.reponse,x.id);saveSess();render()},
+ sug(id){const x=P.sc.qa.find(q=>q.id===id);if(!x||!P.who)return;P.sess.log.push({t:tNow(),id:uid(),who:P.who,question:x.intitule,answer:x.reponse,qaId:x.id});sPost(P.who,x.intitule,x.reponse,x.id);saveSess();render()},
  users(){route="users";confirmKey=null;render()},
  
  calcgo(id){calcId=id;calcTab="ex";calcRep={};calcFait=null;calcT0=Date.now();calcA=0;calcB=0;const l=myCalculs()[id]||[];calcA=Math.max(0,l.length-2);calcB=Math.max(0,l.length-1);route="calc";render();scrollTo(0,0)},
@@ -1089,6 +1153,18 @@ const A={
  save(){persist()},tab(k){edTab=k;render()},
  addinter(){ed.interlocuteurs.push({id:uid(),nom:"",role:"",reponseDefaut:"Je ne sais pas, je n'ai pas vu ça."});edDirty=true;render()},
  delinter(i){if(confirmKey!=="di"+i){confirmKey="di"+i;return render()}const id=ed.interlocuteurs[i].id;ed.interlocuteurs.splice(i,1);ed.qa=ed.qa.filter(x=>x.interlocuteurId!==id);confirmKey=null;edDirty=true;render()},
+ addvar(){(ed.variantes=ed.variantes||[]).push({nom:"",txt:""});edDirty=true;render()},
+ delvar(i){ed.variantes.splice(i,1);edDirty=true;render()},
+ vartest(){const v=tirer(ed);toast(Object.keys(v).length?Object.entries(v).map(([k,x])=>k+" = "+x).join(" · "):"Aucune variable active.")},
+ chon(k){chOpen[k]=true;render()},
+ bqopen(){bqOpen=!bqOpen;render()},
+ bqall(){bqFilt().slice(0,60).forEach(x=>bqSel[x.k]=true);render()},
+ bqnone(){bqSel={};render()},
+ bqimp(){let a=0,d=0;const key=q=>q.interlocuteurId+"|"+norm(q.intitule)+"|"+norm(q.motsCles);const have=new Set(ed.qa.map(key));
+  bqAll().forEach(x=>{if(!bqSel[x.k])return;let t=x.q.interlocuteurId===TOUS?TOUS:((ed.interlocuteurs.find(i=>norm(i.nom)===norm(x.inter))||{}).id||bqT);
+   const q={id:uid(),interlocuteurId:t,intitule:x.q.intitule||"",motsCles:x.q.motsCles||"",reponse:x.q.reponse||"",essentielle:!!x.q.essentielle};
+   if(have.has(key(q))){d++;return}have.add(key(q));ed.qa.push(q);a++});
+  bqSel={};if(a)edDirty=true;toast(a+" question(s) importée(s)"+(d?", "+d+" doublon(s) ignoré(s)":"")+(a?" (pense à enregistrer).":"."));render()},
  addqa(){ed.qa.push({id:uid(),interlocuteurId:qaFilter!=="all"?qaFilter:(ed.interlocuteurs[0]?.id||TOUS),intitule:"",motsCles:"",reponse:"",essentielle:false});edDirty=true;render()},
  delqa(i){ed.qa.splice(i,1);edDirty=true;render()},
  sitrm(i){ed.situation.photos.splice(i,1);edDirty=true;render()},
@@ -1110,23 +1186,27 @@ const A={
    await ref.set(d);await setReq(uid,rid,{statut:"en_cours",scenarioId:ref.id});edId=ref.id;ed=merge(d);edTab="general";edDirty=false;route="edit";render()}catch(e){toast("Erreur : "+(e.message||e.code),true)}},
  async rqst(k){const[uid,rid,st]=k.split("|");try{await setReq(uid,rid,{statut:st});toast("Statut mis à jour.")}catch(e){toast("Erreur : "+(e.message||e.code),true)}},
  rmphoto(){ed.photo=null;ed.vignette=null;edDirty=true;render()},
- begin(){P.sess={...emptySess(),start:Date.now()};saveSess();render()},
+ begin(){const b=P.base||P.sc,v=tirer(b);P.base=b;P.sess={...emptySess(),start:Date.now()};if(Object.keys(v).length){P.sess.vars=v;P.sc=applyVars(b,v)};saveSess();render()},
  zoom(){P.zoom=!P.zoom;const i=$(".photo");i.classList.toggle("z",P.zoom)},
  ptab(k){P.tab=k;render()},who(id){P.who=id;render();$("#q")?.focus()},
  trame(){P.sess.notes.message=MSG_TRAME;saveSess();render()},
  end(){confirmKey="end";render()},endok(){confirmKey=null;P.sess.finished=true;P.sess.finishedAt=Date.now();saveSess();saveBilan();render()},
- re(){confirmKey="re";render()},reok(){confirmKey=null;P.sess=emptySess();saveSess();render()}
+ re(){confirmKey="re";render()},reok(){confirmKey=null;P.sess=emptySess();if(P.base)P.sc=P.base;saveSess();render()}
 };
 document.addEventListener("click",e=>{const b=e.target.closest("[data-act]");if(!b)return;if(b.tagName==="A")e.preventDefault();const f=A[b.dataset.act];if(f){const a=b.dataset.arg;f(/^\d+$/.test(a||"")?Number(a):a)}});
 document.addEventListener("input",e=>{const t=e.target;
  if(t.id==="hq"){hq=t.value;const p=t.selectionStart;render();const i=$("#hq");i.focus();i.setSelectionRange(p,p);return}
  if(t.dataset.pf&&pf&&t.tagName==="INPUT"){pf[t.dataset.pf]=t.value;return}
+ if(t.id==="bqq"){bqQ=t.value;const p=t.selectionStart;render();const i=$("#bqq");i.focus();i.setSelectionRange(p,p);return}
  if(t.id==="uq"){uq=t.value;const p=t.selectionStart;render();const i=$("#uq");i.focus();i.setSelectionRange(p,p);return}
  if(t.dataset.p&&ed){const v=t.type==="checkbox"?t.checked:t.type==="number"?Number(t.value)||0:t.value;setPath(ed,t.dataset.p,v);if(!edDirty){edDirty=true;const s=$(".stick .row:last-child");if(s&&!s.querySelector(".tag"))s.insertAdjacentHTML("afterbegin",'<span class="tag">Non enregistré</span>')}}
  else if(t.dataset.n&&P){P.sess.notes[t.dataset.n]=t.value;saveSess()}
  else if(t.id==="tw"){tw=t.value;testQ()}else if(t.id==="tq"){tq=t.value;testQ()}});
 document.addEventListener("change",e=>{const t=e.target;
  if(t.id==="hr"||t.id==="hd"||t.id==="he"){({hr:v=>hr=v,hd:v=>hd=v,he:v=>he=v})[t.id](t.value);render();return}
+ if(t.id==="bqr"){bqR=t.value;render();return}
+ if(t.id==="bqt"){bqT=t.value;return}
+ if(t.dataset.bqk){bqSel[t.dataset.bqk]=t.checked;const n=Object.values(bqSel).filter(Boolean).length,b=$("[data-act=bqimp]");if(b){b.disabled=!n;b.textContent="Importer "+n+" question(s)"}return}
  if(t.dataset.cmpsel){calcSync();if(t.dataset.cmpsel==="a")calcA=Number(t.value);else calcB=Number(t.value);render();return}
  if(t.dataset.mv){if(t.value)A.eqmove(t.dataset.mv,t.value);return}
  if(t.dataset.pf&&pf){const k=t.dataset.pf;if(k==="cis"&&t.value==="__autre"){pfAutre=true;pf.cis="";render();return}
@@ -1143,7 +1223,7 @@ document.addEventListener("change",e=>{const t=e.target;
  else if(t.dataset.p&&t.tagName==="SELECT"){/* déjà pris en compte par input */}});
 document.addEventListener("submit",e=>{if(e.target.id!=="askf")return;e.preventDefault();const q=$("#q").value.trim();if(!q||!P.who)return;
  const {sc}=P,it=sc.interlocuteurs.find(i=>i.id===P.who),x=findAnswer(q,qaAct(sc,P.sess),P.who);
- {const ans=x?x.reponse:(it.reponseDefaut||"Je n'ai pas d'information à ce sujet.");P.sess.log.push({id:uid(),who:P.who,question:q,answer:ans,qaId:x?x.id:null});sPost(P.who,q,ans,x?x.id:null)}saveSess();render();$("#q")?.focus()});
+ {const ans=x?x.reponse:(it.reponseDefaut||"Je n'ai pas d'information à ce sujet.");P.sess.log.push({t:tNow(),id:uid(),who:P.who,question:q,answer:ans,qaId:x?x.id:null});sPost(P.who,q,ans,x?x.id:null)}saveSess();render();$("#q")?.focus()});
 
 /* ---- démarrage ---- */
 render();

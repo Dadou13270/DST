@@ -6,6 +6,8 @@ import { compressImage } from "../lib/image";
 import { findAnswer } from "../lib/matching";
 import { newScenario, uid, SOIEC, TOUS, CUB, rubriquesDe } from "../lib/model";
 import { listScenarios } from "../lib/db";
+import { varAutoOn, tirer } from "../lib/variantes";
+import BanqueQuestions from "../components/BanqueQuestions";
 import { listGestionnaires } from "../lib/demandesScenario";
 import { listIllustrations, addIllustration, deleteIllustration } from "../lib/illustrations";
 
@@ -14,6 +16,7 @@ const TABS = [
   ["situation", "Situation"],
   ["inter", "Interlocuteurs"],
   ["evo", "Évolutions"],
+  ["var", "Variantes"],
   ["qa", "Questions / réponses"],
   ["corr", "Correction SOIEC"],
 ];
@@ -39,6 +42,7 @@ export default function AdminEditor() {
   const [rubs, setRubs] = useState(rubriquesDe([]));
   const [nouvelle, setNouvelle] = useState(false);
   const [libOpen, setLibOpen] = useState(false);
+  const [bqOpen, setBqOpen] = useState(false);
   const [gests, setGests] = useState([]);
   useEffect(() => { listGestionnaires().then(setGests).catch(() => {}); }, []);
   const [lib, setLib] = useState(null);
@@ -494,6 +498,33 @@ export default function AdminEditor() {
       )}
 
       {/* ---------- QUESTIONS / RÉPONSES ---------- */}
+      {tab === "var" && (
+        <>
+          <div className="card form">
+            <p className="muted">À chaque tentative, une valeur est tirée au hasard pour chaque variable. Écris <b>{"{nom}"}</b> dans le contexte, les réponses, les évolutions ou la correction : le texte est remplacé par la valeur tirée.</p>
+            <label className="check">
+              <input type="checkbox" checked={varAutoOn(s)} onChange={(e) => upd((n) => (n.variantesAuto = e.target.checked))} />
+              Conditions du jour automatiques (heure, météo, vent, température) : ajoutées à la situation et répondues si le stagiaire pose la question (activées par défaut pour la rubrique Incendie)
+            </label>
+            <p className="muted">Variables automatiques : {"{heure} {meteo} {vent} {temperature}"}.</p>
+          </div>
+          {(s.variantes || []).map((v, i) => (
+            <div className="card form" key={i}>
+              <div className="row between"><b>Variable {i + 1}</b><button className="btn danger" onClick={() => upd((n) => n.variantes.splice(i, 1))}>Supprimer</button></div>
+              <label>Nom (sans espace ni accent, ex. nb_victimes)</label>
+              <input value={v.nom || ""} onChange={(e) => upd((n) => (n.variantes[i].nom = e.target.value))} />
+              <label>Valeurs possibles (une par ligne)</label>
+              <textarea rows={4} value={v.txt || ""} onChange={(e) => upd((n) => (n.variantes[i].txt = e.target.value))} />
+              <p className="muted">Utilisation : {"{" + (v.nom || "nom") + "}"}</p>
+            </div>
+          ))}
+          <div className="row">
+            <button className="btn" onClick={() => upd((n) => { n.variantes = n.variantes || []; n.variantes.push({ nom: "", txt: "" }); })}>+ Ajouter une variable</button>
+            <button className="btn" onClick={() => { const v = tirer(s); setMsg(Object.keys(v).length ? Object.entries(v).map(([k, x]) => k + " = " + x).join(" · ") : "Aucune variable active."); }}>Voir un tirage</button>
+          </div>
+        </>
+      )}
+
       {tab === "evo" && (
         <>
           <div className="card form">
@@ -563,6 +594,7 @@ export default function AdminEditor() {
             <b>
               {filtre === "all" ? s.qa.length : `${s.qa.filter((x) => x.interlocuteurId === filtre).length} / ${s.qa.length}`} question(s)
             </b>
+            <button className="btn" onClick={() => setBqOpen((v) => !v)}>Banque de questions</button>
             <button
               className="btn primary"
               onClick={() =>
@@ -581,6 +613,11 @@ export default function AdminEditor() {
               + Ajouter une question / réponse
             </button>
           </div>
+
+          {bqOpen && (
+            <BanqueQuestions s={s} scId={isNew ? null : id} onClose={() => setBqOpen(false)}
+              onImport={(nouv, d) => { upd((n) => n.qa.push(...nouv)); setMsg(`${nouv.length} question(s) importée(s)${d ? `, ${d} doublon(s) ignoré(s)` : ""} (pense à enregistrer).`); }} />
+          )}
 
           {s.qa.map((x, i) =>
             filtre === "all" || x.interlocuteurId === filtre ? (

@@ -3,6 +3,7 @@ import { basculerTheme, changerTaille } from "../lib/prefs";
 import Visite, { rouvrirVisite } from "./Visite";
 import Logo from "./Logo";
 import AvisModal from "./AvisModal";
+import HorsLigne from "./HorsLigne";
 import { useAuth } from "../lib/auth";
 import { useEffect, useState } from "react";
 import { pingStats, compteurs } from "../lib/inscrits";
@@ -62,6 +63,7 @@ export default function Layout({ children, extra }) {
       </header>
       <main className="wrap">{children}</main>
       <Visite />
+      {user && <HorsLigne />}
       <footer className="foot">
         <div className="fin">
           <div className="fbrand">
