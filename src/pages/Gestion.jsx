@@ -2,13 +2,14 @@ import { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
 import Layout from "../components/Layout";
 import { useAuth } from "../lib/auth";
-import { createEquipe, listMesEquipes, listMembres, regenCode, retirerMembre, supprimerEquipe, deplacerMembre, setCommentaire } from "../lib/equipes";
+import { createEquipe, listMesEquipes, listMembres, regenCode, retirerMembre, supprimerEquipe, deplacerMembre, envoyerMessageFormateur, marquerFilLu, effacerFil } from "../lib/equipes";
 import { fmtDate, fmtDuree, statsOf } from "../lib/users";
 import { inscrireStagiaire, parseLignes } from "../lib/inscription";
 import { listScenarios } from "../lib/db";
 import { ajouterDevoir, retirerDevoir, statutDevoir, fmtLimite, limiteDepuisInput, assignerParcours, retirerParcours } from "../lib/devoirs";
 import { listParcours } from "../lib/parcours";
 import Parcours from "../components/Parcours";
+import FilMessages, { nonLus, nonLusMembre } from "../components/FilMessages";
 import TableauBord from "../components/TableauBord";
 import SalleCard from "../components/SalleCard";
 import { pdfEquipe } from "../lib/pdf";
@@ -18,19 +19,27 @@ const d = (t) => (t?.toDate ? t.toDate().toLocaleString("fr-FR", { dateStyle: "s
 
 function Commentaire({ u, scId, auteur, onSaved }) {
   const c = (u.commentaires || {})[scId];
-  const [txt, setTxt] = useState(c?.texte || "");
+  const reps = (u.reponses || {})[scId];
+  const nl = nonLus(c, reps);
+  const [txt, setTxt] = useState("");
   const [etat, setEtat] = useState("");
-  const save = async () => {
+  const [conf, setConf] = useState(false);
+  const run = async (fn, ok) => {
     setEtat("…");
-    try { await setCommentaire(u.id, scId, txt, auteur); setEtat("Enregistré"); onSaved(); } catch (e) { setEtat("Erreur : " + e.message); }
+    try { await fn(); setEtat(ok); setTxt(""); setConf(false); onSaved(); } catch (e) { setEtat("Erreur : " + e.message); }
   };
   return (
     <div>
-      <textarea rows={2} placeholder="Commentaire du formateur (visible par le stagiaire)…" value={txt} onChange={(e) => setTxt(e.target.value)} maxLength={800} />
+      {nl > 0 && <span className="tag late">{nl} réponse(s) non lue(s)</span>}
+      {c && <FilMessages c={c} reps={reps} nomStagiaire={u.nom} />}
+      <textarea rows={2} placeholder={c ? "Répondre au stagiaire…" : "Commentaire du formateur (visible par le stagiaire)…"} value={txt} onChange={(e) => setTxt(e.target.value)} maxLength={800} />
       <div className="row item">
-        <button className="btn" onClick={save}>Enregistrer le commentaire</button>
+        <button className="btn primary" disabled={!txt.trim()} onClick={() => run(() => envoyerMessageFormateur(u, scId, txt, auteur), "Envoyé")}>{c ? "Envoyer la réponse" : "Envoyer le commentaire"}</button>
+        {nl > 0 && <button className="btn" onClick={() => run(() => marquerFilLu(u, scId), "Marqué comme lu")}>Marquer comme lu</button>}
+        {c && (conf
+          ? <button className="btn danger" onClick={() => run(() => effacerFil(u.id, scId), "Fil effacé")}>Confirmer ?</button>
+          : <button className="btn danger" onClick={() => setConf(true)}>Effacer le fil</button>)}
         {etat && <span className="muted">{etat}</span>}
-        {c && <span className="muted">Dernier : {c.auteur}, {fmtDate(c.le)}</span>}
       </div>
     </div>
   );
@@ -162,7 +171,7 @@ function Equipe({ team, autres, scs, pcs, onChange }) {
               const st = statsOf(u.bilans);
               return [
                 <tr key={u.id}>
-                  <td><strong>{u.nom}</strong><div className="muted">{[u.grade, u.cis].filter(Boolean).join(" · ") || u.email}</div></td>
+                  <td><strong>{u.nom}</strong>{nonLusMembre(u) > 0 && <> <span className="tag late" title="Réponses non lues">💬 {nonLusMembre(u)}</span></>}<div className="muted">{[u.grade, u.cis].filter(Boolean).join(" · ") || u.email}</div></td>
                   <td>{st.n}</td><td>{st.n ? fmtDuree(st.tmoy) : "—"}</td><td>{st.ess === null ? "—" : st.ess + " %"}</td><td>{d(u.derniereConnexion)}</td>
                   <td>
                     <div className="row">

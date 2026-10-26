@@ -1,7 +1,6 @@
 import { db } from "../firebase";
 import {
-  collection, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc, deleteField, query, where, serverTimestamp, writeBatch,
-} from "firebase/firestore";
+  collection, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc, deleteField, query, where, serverTimestamp, writeBatch, arrayUnion } from "firebase/firestore";
 
 const ALPHA = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // sans 0/O/1/I
 const genCode = () => Array.from({ length: 6 }, () => ALPHA[Math.floor(Math.random() * ALPHA.length)]).join("");
@@ -75,6 +74,23 @@ export const deplacerMembre = (uid, team) =>
   updateDoc(doc(db, "users", uid), { equipeId: team.id, equipeNom: team.nom, equipeCode: team.code, equipeGest: team.ownerNom || "" });
 
 // Commentaire du formateur sur un exercice d'un stagiaire : users/{uid}.commentaires[scId]
+// Fil de discussion formateur ↔ stagiaire sur un exercice.
+// Formateur : users/{uid}.commentaires[scId] = { texte, auteur, le, fil: [{texte, auteur, le}], vu }
+// Stagiaire : users/{uid}.reponses[scId] = [{ texte, le }]
+export const envoyerMessageFormateur = (u, scId, texte, auteur) => {
+  const c = (u.commentaires || {})[scId], now = Date.now(), t = texte.trim();
+  const val = c ? { ...c, fil: [...(c.fil || []), { texte: t, auteur, le: now }], vu: now } : { texte: t, auteur, le: now, vu: now };
+  return updateDoc(doc(db, "users", u.id), { ["commentaires." + scId]: val });
+};
+export const marquerFilLu = (u, scId) => {
+  const c = (u.commentaires || {})[scId];
+  return c ? updateDoc(doc(db, "users", u.id), { ["commentaires." + scId]: { ...c, vu: Date.now() } }) : Promise.resolve();
+};
+export const effacerFil = (uid, scId) =>
+  updateDoc(doc(db, "users", uid), { ["commentaires." + scId]: deleteField(), ["reponses." + scId]: deleteField() });
+export const repondreFormateur = (uid, scId, texte) =>
+  updateDoc(doc(db, "users", uid), { ["reponses." + scId]: arrayUnion({ texte: texte.trim(), le: Date.now() }) });
+
 export const setCommentaire = (uid, scId, texte, auteur) =>
   updateDoc(doc(db, "users", uid), {
     ["commentaires." + scId]: texte.trim() ? { texte: texte.trim(), auteur, le: Date.now() } : deleteField(),

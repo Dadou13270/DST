@@ -9,6 +9,29 @@ import { fmtDate, fmtDuree, statsOf, buildBilan } from "../lib/users";
 import { mergeScenario } from "../lib/model";
 import { pdfSuivi } from "../lib/pdf";
 import { StagiaireNav } from "./Home";
+import FilMessages from "../components/FilMessages";
+import { repondreFormateur } from "../lib/equipes";
+
+function Fil({ profil, scId, uid, onSent }) {
+  const [txt, setTxt] = useState("");
+  const [err, setErr] = useState("");
+  const reps = (profil.reponses || {})[scId] || [];
+  const envoyer = async () => {
+    setErr("");
+    try { await repondreFormateur(uid, scId, txt); setTxt(""); await onSent(); } catch (e) { setErr(e.message); }
+  };
+  return (
+    <div className="card alerte" style={{ margin: "8px 0 0", borderLeftColor: "var(--ok)" }}>
+      <strong>Échange avec le formateur</strong>
+      <FilMessages c={profil.commentaires[scId]} reps={reps} nomStagiaire="Moi" />
+      <textarea rows={2} maxLength={600} placeholder="Répondre au formateur…" value={txt} onChange={(e) => setTxt(e.target.value)} />
+      <div className="row item">
+        <button className="btn" disabled={!txt.trim() || reps.length >= 30} onClick={envoyer}>Envoyer ma réponse</button>
+        {err && <span className="err">{err}</span>}
+      </div>
+    </div>
+  );
+}
 
 export default function Suivi() {
   const { user, profil, isAdmin, logout, refreshProfil } = useAuth();
@@ -86,13 +109,7 @@ export default function Suivi() {
                   {b.nb > 1 ? ` · ${b.nb} tentatives` : ""}
                 </div>
               )}
-              {profil?.commentaires?.[s.id] && (
-                <div className="card alerte" style={{ margin: "8px 0 0", borderLeftColor: "var(--ok)" }}>
-                  <strong>Commentaire du formateur</strong>{" "}
-                  <span className="muted">{profil.commentaires[s.id].auteur} · {fmtDate(profil.commentaires[s.id].le)}</span>
-                  <div className="pre">{profil.commentaires[s.id].texte}</div>
-                </div>
-              )}
+              {profil?.commentaires?.[s.id] && <Fil profil={profil} scId={s.id} uid={user?.uid} onSent={refreshProfil} />}
             </div>
             <Link className={b ? "btn" : "btn primary"} to={`/scenario/${s.id}`}>
               {b ? "Revoir mes réponses" : ec ? "Reprendre" : "Commencer"}
