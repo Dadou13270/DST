@@ -6,7 +6,9 @@ import { createEquipe, listMesEquipes, listMembres, regenCode, retirerMembre, su
 import { fmtDate, fmtDuree, statsOf } from "../lib/users";
 import { inscrireStagiaire, parseLignes } from "../lib/inscription";
 import { listScenarios } from "../lib/db";
-import { ajouterDevoir, retirerDevoir, statutDevoir, fmtLimite, limiteDepuisInput } from "../lib/devoirs";
+import { ajouterDevoir, retirerDevoir, statutDevoir, fmtLimite, limiteDepuisInput, assignerParcours, retirerParcours } from "../lib/devoirs";
+import { listParcours } from "../lib/parcours";
+import Parcours from "../components/Parcours";
 import SalleCard from "../components/SalleCard";
 import { pdfEquipe } from "../lib/pdf";
 import DemandeScenario from "../components/DemandeScenario";
@@ -33,7 +35,9 @@ function Commentaire({ u, scId, auteur, onSaved }) {
   );
 }
 
-function Devoirs({ team, membres, scs, onChange }) {
+function Devoirs({ team, membres, scs, pcs, onChange }) {
+  const [pcId, setPcId] = useState("");
+  const [pcLim, setPcLim] = useState("");
   const [scId, setScId] = useState("");
   const [lim, setLim] = useState("");
   const [err, setErr] = useState("");
@@ -48,6 +52,18 @@ function Devoirs({ team, membres, scs, onChange }) {
     if (dev.some((x) => x.scId === scId)) return setErr("Cet exercice est déjà dans la liste.");
     try { await ajouterDevoir(team, { scId, titre: sc.titre, limite: limiteDepuisInput(lim) }); setScId(""); setLim(""); onChange(); } catch (x) { setErr(x.message); }
   };
+  const assigner = async (e) => {
+    e.preventDefault(); setErr("");
+    const pc = pcs.find((x) => x.id === pcId);
+    if (!pc) return setErr("Choisis un parcours.");
+    if (!pcLim) return setErr("Indique une date limite.");
+    try {
+      const n = await assignerParcours(team, pc, scs, limiteDepuisInput(pcLim));
+      if (!n) return setErr("Tous ces exercices sont déjà dans la liste.");
+      setPcId(""); setPcLim(""); onChange();
+    } catch (x) { setErr(x.message); }
+  };
+  const pcIds = [...new Set(dev.filter((x) => x.pc).map((x) => x.pc))];
   return (
     <div style={{ marginTop: 12 }}>
       <h3>Exercices à rendre</h3>
@@ -67,7 +83,7 @@ function Devoirs({ team, membres, scs, onChange }) {
               const r = membres.filter((u) => statutDevoir(d, u.bilans, now) === "retard").length;
               return (
                 <tr key={d.scId}>
-                  <td>{d.titre}</td><td>{fmtLimite(d.limite)}</td><td>{ok}/{membres.length}</td>
+                  <td>{d.pc ? `${(d.rg || 0) + 1}. ` : ""}{d.titre}{d.pcT && <div className="muted" style={{ fontSize: ".8rem" }}>Parcours « {d.pcT} »</div>}</td><td>{fmtLimite(d.limite)}</td><td>{ok}/{membres.length}</td>
                   <td>{r > 0 ? <span className="tag late">{r}</span> : "0"}</td>
                   <td><button className="btn danger" onClick={() => retirerDevoir(team, d.scId).then(onChange)}>Retirer</button></td>
                 </tr>
@@ -76,6 +92,21 @@ function Devoirs({ team, membres, scs, onChange }) {
           </tbody>
         </table>
       )}
+      {pcIds.length > 0 && (
+        <div className="row item" style={{ marginTop: 8 }}>
+          {pcIds.map((id) => (
+            <button key={id} className="btn danger" onClick={() => retirerParcours(team, id).then(onChange)}>Retirer le parcours « {dev.find((x) => x.pc === id)?.pcT} »</button>
+          ))}
+        </div>
+      )}
+      <form className="row item" onSubmit={assigner} style={{ marginTop: 8 }}>
+        <select className="grow" value={pcId} onChange={(e) => setPcId(e.target.value)}>
+          <option value="">Assigner un parcours…</option>
+          {pcs.map((x) => <option key={x.id} value={x.id}>{x.titre} ({(x.scIds || []).length})</option>)}
+        </select>
+        <input type="date" value={pcLim} onChange={(e) => setPcLim(e.target.value)} style={{ width: "auto" }} />
+        <button className="btn primary">Assigner</button>
+      </form>
       <form className="row item" onSubmit={add} style={{ marginTop: 8 }}>
         <select value={scId} onChange={(e) => setScId(e.target.value)}>
           <option value="">Exercice à ajouter…</option>
@@ -89,7 +120,7 @@ function Devoirs({ team, membres, scs, onChange }) {
   );
 }
 
-function Equipe({ team, autres, scs, onChange }) {
+function Equipe({ team, autres, scs, pcs, onChange }) {
   const { profil } = useAuth();
   const [m, setM] = useState(null);
   const [open, setOpen] = useState(null);
@@ -120,7 +151,7 @@ function Equipe({ team, autres, scs, onChange }) {
         </div>
       </div>
       {err && <p className="err">{err}</p>}
-      {m && <Devoirs team={team} membres={m} scs={scs} onChange={onChange} />}
+      {m && <Devoirs team={team} membres={m} scs={scs} pcs={pcs} onChange={onChange} />}
       {m && m.length === 0 && <p className="muted">Aucun membre. Donne le code aux stagiaires : ils le saisissent dans « Mon équipe ».</p>}
       {m && m.length > 0 && (
         <table className="cmp" style={{ marginTop: 10 }}>
@@ -221,6 +252,9 @@ export default function Gestion() {
   const [nom, setNom] = useState("");
   const [err, setErr] = useState("");
   const [scs, setScs] = useState([]);
+  const [pcs, setPcs] = useState([]);
+  const loadPcs = () => listParcours(user.uid, isAdmin).then(setPcs).catch(() => {});
+  useEffect(() => { if (user) loadPcs(); }, [user?.uid, isAdmin]); // eslint-disable-line
   useEffect(() => { if (user) listScenarios(true, { uid: user.uid, equipeId: profil?.equipeId }).then(setScs).catch(() => {}); }, [user?.uid]); // eslint-disable-line
   const ok = Boolean(profil?.gestionnaire || isAdmin);
   const load = () => listMesEquipes(user.uid).then(setTeams).catch((e) => setErr(e.message));
@@ -248,7 +282,8 @@ export default function Gestion() {
       {err && <div className="card warn">Erreur : {err} (les règles Firestore sont-elles republiées ?)</div>}
       {!teams && !err && <p>Chargement…</p>}
       {teams && teams.length === 0 && <div className="card">Aucune équipe. Crée-en une : un code d'accès est généré.</div>}
-      {(teams || []).map((t) => <Equipe key={t.id} team={t} autres={teams.filter((x) => x.id !== t.id)} scs={scs} onChange={load} />)}
+      {(teams || []).map((t) => <Equipe key={t.id} team={t} autres={teams.filter((x) => x.id !== t.id)} scs={scs} pcs={pcs} onChange={load} />)}
+      <Parcours user={user} profil={profil} isAdmin={isAdmin} scs={scs} pcs={pcs} onChange={loadPcs} />
       <SalleCard scs={scs} />
       <DemandeScenario user={user} profil={profil} />
     </Layout>

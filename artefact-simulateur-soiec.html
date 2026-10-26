@@ -390,14 +390,39 @@ const dvStatut=(d,bs)=>(bs||{})[d.scId]?"ok":d.limite&&d.limite<Date.now()?"reta
 const dvDate=ms=>ms?new Date(ms).toLocaleDateString("fr-FR"):"—";
 const dvMine=()=>{const t=myTeam();return((t&&t.devoirs)||[]).map(d=>({...d,statut:dvStatut(d,me&&me.bilans)})).sort((a,b)=>(a.limite||0)-(b.limite||0))};
 const dvTag=st=>st==="ok"?'<span class="tag ok">Rendu</span>':st==="retard"?'<span class="tag" style="background:#c42a1c;border-color:#c42a1c;color:#fff">En retard</span>':'<span class="tag">À rendre</span>';
-function dvBanner(){const l=dvMine().filter(d=>d.statut!=="ok");if(!l.length)return"";const late=l.some(d=>d.statut==="retard");
- return `<div class="card" style="${late?"border-left:5px solid #c42a1c":""}"><b>${late?"Exercices en retard":"Exercices à rendre"}</b>${l.map(d=>`<div><a href="#" data-act="play" data-arg="${d.scId}">${esc(d.titre)}</a> — avant le ${dvDate(d.limite)} ${d.statut==="retard"?dvTag("retard"):""}</div>`).join("")}</div>`}
+/* ---- parcours (séquences d'exercices assignables à une équipe) ---- */
+let parcours=[],pcEd=null;
+const pcAll=()=>parcours.filter(p=>p.owner===myId||p.partage||canAdmin).sort((a,b)=>(a.titre||"").localeCompare(b.titre||"","fr"));
+const pcTitre=id=>{const x=allList.find(y=>y.id===id);return x?x.titre:"(scénario supprimé)"};
+function pcSync(){if(!pcEd)return;const g=i=>document.getElementById(i);if(g("pct"))pcEd.titre=g("pct").value;if(g("pcd"))pcEd.description=g("pcd").value;if(g("pco"))pcEd.ordre=g("pco").checked;if(g("pcp"))pcEd.partage=g("pcp").checked}
+function parcoursHtml(){
+ let h=`<div class="card"><div class="row between"><h2 style="margin:0">Parcours</h2>${pcEd?"":`<button class="btn pri" data-act="pcnew">Nouveau parcours</button>`}</div><p class="muted">Un parcours regroupe plusieurs exercices dans un ordre précis (ex. « FMPA chef d'agrès »). Assigne-le ensuite à une équipe avec une date limite, depuis le bloc « Exercices à rendre » de l'équipe.</p>`;
+ if(pcEd){const e=pcEd,pub=list.filter(x=>x.publie&&!(e.scIds||[]).includes(x.id));
+  h+=`<div class="form"><label>Nom du parcours</label><input id="pct" maxlength="80" value="${esc(e.titre||"")}" placeholder="Ex. FMPA chef d'agrès"><label>Description (facultatif)</label><textarea id="pcd" rows="2" maxlength="400">${esc(e.description||"")}</textarea>
+  <label class="ck"><input type="checkbox" id="pco"${e.ordre?" checked":""}> Ordre imposé (la prochaine étape est mise en avant, les suivantes restent grisées)</label>
+  <label class="ck"><input type="checkbox" id="pcp"${e.partage?" checked":""}> Partager avec les autres gestionnaires</label>
+  <label>Exercices du parcours (dans l'ordre)</label>${(e.scIds||[]).length?`<ol style="margin:4px 0 8px;padding-left:22px">${e.scIds.map((id,i)=>`<li style="margin:4px 0">${esc(pcTitre(id))} <span class="row" style="display:inline-flex;gap:4px;margin-left:6px"><button class="btn" data-act="pcmv" data-arg="${i}|-1" ${i?"":"disabled"}>↑</button><button class="btn" data-act="pcmv" data-arg="${i}|1" ${i<e.scIds.length-1?"":"disabled"}>↓</button><button class="btn dng" data-act="pcrm" data-arg="${i}">✕</button></span></li>`).join("")}</ol>`:`<p class="muted">Aucun exercice pour l'instant.</p>`}
+  <div class="row"><select id="pcsc" class="grow"><option value="">Ajouter un exercice…</option>${pub.map(x=>`<option value="${x.id}">${esc(x.titre)}</option>`).join("")}</select><button class="btn" data-act="pcadd">Ajouter</button></div>
+  <div class="row" style="margin-top:12px"><button class="btn pri" data-act="pcsave">Enregistrer le parcours</button><button class="btn" data-act="pccancel">Annuler</button></div></div>`}
+ else{const l=pcAll();h+=l.length?l.map(p=>{const mine=p.owner===myId||canAdmin;return `<div class="card" style="margin:8px 0"><div class="row between"><div><b>${esc(p.titre)}</b> ${p.ordre?`<span class="tag">Ordre imposé</span>`:""} ${p.partage?`<span class="tag">Partagé</span>`:""}<div class="muted">${(p.scIds||[]).length} exercice(s)${p.owner!==myId?` · par ${esc(p.ownerNom||"un gestionnaire")}`:""}</div>${p.description?`<div class="muted">${esc(p.description)}</div>`:""}</div><div class="row">${mine?`<button class="btn" data-act="pcedit" data-arg="${p.id}">Modifier</button>`:""}<button class="btn" data-act="pcdup" data-arg="${p.id}">Dupliquer</button>${mine?(confirmKey==="pd:"+p.id?`<button class="btn dng" data-act="pcdel" data-arg="${p.id}">Confirmer ?</button>`:`<button class="btn dng" data-act="uask" data-arg="pd:${p.id}">Supprimer</button>`):""}</div></div></div>`}).join(""):`<p class="muted">Aucun parcours. Crée le premier.</p>`}
+ return h+`</div>`}
+const pcGroups=dev=>{const g=new Map();dev.forEach(d=>{const k=d.pc||"";if(!g.has(k))g.set(k,[]);g.get(k).push(d)});return g};
+function dvBanner(){const all=dvMine(),l=all.filter(d=>d.statut!=="ok");if(!l.length)return"";const late=l.some(d=>d.statut==="retard");
+ const line=(d,nxt,dim)=>`<div${dim?' style="opacity:.55"':""}>${d.pc&&d.rg!==undefined?`${d.rg+1}. `:""}<a href="#" data-act="play" data-arg="${d.scId}">${esc(d.titre)}</a> — avant le ${dvDate(d.limite)} ${d.statut==="retard"?dvTag("retard"):""}${nxt?` <span class="tag">Prochaine étape</span>`:""}</div>`;
+ let body="";for(const[k,it]of pcGroups(all)){const rest=it.filter(d=>d.statut!=="ok");if(!rest.length)continue;
+  if(!k){body+=rest.map(d=>line(d,false,false)).join("");continue}
+  const ord=it.some(d=>d.pcO),srt=[...it].sort((a,b)=>(a.rg||0)-(b.rg||0)),done=it.length-rest.length,nx=ord?srt.find(d=>d.statut!=="ok"):null;
+  body+=`<div style="margin:8px 0 4px"><b>Parcours « ${esc(it[0].pcT||"")} »</b> <span class="muted">${done}/${it.length} terminé(s)</span><div style="height:6px;background:var(--line);border-radius:9px;overflow:hidden;margin:4px 0"><i style="display:block;height:100%;width:${Math.round(done/it.length*100)}%;background:#2e9e5b"></i></div>${srt.filter(d=>d.statut!=="ok").map(d=>line(d,nx&&d.scId===nx.scId,nx&&d.scId!==nx.scId)).join("")}</div>`}
+ return `<div class="card" style="${late?"border-left:5px solid #c42a1c":""}"><b>${late?"Exercices en retard":"Exercices à rendre"}</b>${body}</div>`}
 function devoirsHtml(t,m){const dev=t.devoirs||[],pub=list.filter(x=>x.publie);
  const ret=dev.flatMap(d=>m.filter(u=>dvStatut(d,u.bilans)==="retard").map(u=>({u,d})));
  let h=`<h3>Exercices à rendre</h3>`;
  if(ret.length)h+=`<div class="card" style="border-left:5px solid #c42a1c"><b>Retards (${ret.length})</b>${ret.map(({u,d})=>`<div>${esc(u.nom||"—")} — « ${esc(d.titre)} » (échéance ${dvDate(d.limite)})</div>`).join("")}</div>`;
  if(!dev.length)h+=`<p class="muted">Aucun exercice imposé. La liste est obligatoire pour les membres de l'équipe, avec une date limite.</p>`;
- else h+=`<table class="cmp" style="min-width:0"><thead><tr><th>Exercice</th><th>Échéance</th><th>Rendus</th><th>En retard</th><th></th></tr></thead><tbody>${dev.map(d=>{const ok=m.filter(u=>dvStatut(d,u.bilans)==="ok").length,r=m.filter(u=>dvStatut(d,u.bilans)==="retard").length;return `<tr><td>${esc(d.titre)}</td><td>${dvDate(d.limite)}</td><td>${ok}/${m.length}</td><td>${r?dvTag("retard").replace("En retard",r):"0"}</td><td><button class="btn dng" data-act="devrm" data-arg="${t.id}|${d.scId}">Retirer</button></td></tr>`}).join("")}</tbody></table>`;
+ else h+=`<table class="cmp" style="min-width:0"><thead><tr><th>Exercice</th><th>Échéance</th><th>Rendus</th><th>En retard</th><th></th></tr></thead><tbody>${dev.map(d=>{const ok=m.filter(u=>dvStatut(d,u.bilans)==="ok").length,r=m.filter(u=>dvStatut(d,u.bilans)==="retard").length;return `<tr><td>${d.pc?`${(d.rg||0)+1}. `:""}${esc(d.titre)}${d.pcT?`<div class="muted" style="font-size:.8rem">Parcours « ${esc(d.pcT)} »</div>`:""}</td><td>${dvDate(d.limite)}</td><td>${ok}/${m.length}</td><td>${r?dvTag("retard").replace("En retard",r):"0"}</td><td><button class="btn dng" data-act="devrm" data-arg="${t.id}|${d.scId}">Retirer</button></td></tr>`}).join("")}</tbody></table>`;
+ {const ids=[...new Set(dev.filter(d=>d.pc).map(d=>d.pc))];const pl=pcAll();
+  if(ids.length)h+=`<div class="row" style="margin-top:8px">${ids.map(id=>`<button class="btn dng" data-act="pcretire" data-arg="${t.id}|${id}">Retirer le parcours « ${esc((dev.find(d=>d.pc===id)||{}).pcT||"")} »</button>`).join("")}</div>`;
+  h+=`<div class="row" style="margin-top:8px"><select id="pcas${t.id}" class="grow"><option value="">Assigner un parcours…</option>${pl.map(p=>`<option value="${p.id}">${esc(p.titre)} (${(p.scIds||[]).length})</option>`).join("")}</select><input type="date" id="pcad${t.id}" style="width:auto"><button class="btn pri" data-act="pcassign" data-arg="${t.id}">Assigner</button></div>`}
  h+=`<div class="row" style="margin-top:8px"><select id="dvsc${t.id}"><option value="">Exercice à ajouter…</option>${pub.map(x=>`<option value="${x.id}">${esc(x.titre)}</option>`).join("")}</select><input type="date" id="dvdt${t.id}" style="width:auto"><button class="btn pri" data-act="devadd" data-arg="${t.id}">Ajouter</button></div>`;
  return h}
 
@@ -559,7 +584,7 @@ function gestionHtml(){
   return `<div class="card"><div class="row between"><div><h2 style="margin:0">${esc(t.nom)}</h2><div class="muted">${m.length} membre(s) · ${tot} exercice(s) terminé(s)</div></div><div class="row"><span class="muted">Code d'accès</span><b style="font-size:1.3rem;letter-spacing:.15em;font-family:monospace">${esc(t.code)}</b><button class="btn" data-act="pdfeq" data-arg="${t.id}">Export PDF</button>${two("rg:"+t.id,"Nouveau code","eqcode",t.id)}${two("ed:"+t.id,"Supprimer l'équipe","eqdel",t.id,"dng")}</div></div>
   ${devoirsHtml(t,m)}
   ${m.length?`<table class="cmp" style="min-width:0;margin-top:10px"><thead><tr><th>Stagiaire</th><th>Terminés</th><th>Temps moyen</th><th>Essentielles</th><th>Dernière synchro</th><th></th></tr></thead><tbody>${m.map(u=>{const st=statsOf(u.bilans||{});return `<tr><td><b>${esc(u.nom||"—")}</b><div class="muted" style="font-size:.82rem">${esc([u.grade,u.cis].filter(Boolean).join(" · "))}</div></td><td>${st.n}</td><td>${st.n?fmt(st.tmoy):"—"}</td><td>${st.ess===null?"—":st.ess+" %"}</td><td>${dt(u.maj||u.rejoint)}</td><td><div class="row">${mine.length>1?`<select data-mv="${t.id}|${u.id}"><option value="">Déplacer vers…</option>${mine.filter(x=>x.id!==t.id).map(x=>`<option value="${x.id}">${esc(x.nom)}</option>`).join("")}</select>`:""}<button class="btn" data-act="eqview" data-arg="${t.id}|${u.id}">${eqo===t.id+"|"+u.id?"Masquer":"Suivi"}</button>${two("rm:"+t.id+"|"+u.id,"Retirer","eqrm",t.id+"|"+u.id,"dng")}</div></td></tr>${eqo===t.id+"|"+u.id?`<tr><td colspan="6">${memDetail(t,u)}</td></tr>`:""}`}).join("")}</tbody></table>`:`<p class="muted">Aucun membre. Donne le code aux stagiaires : ils le saisissent dans « Mon équipe ».</p>`}</div>`}).join("");
- h+=salleGestCard()+dem;
+ h+=parcoursHtml()+salleGestCard()+dem;
  return h}
 
 /* ---- utilisateurs (admin) ---- */
@@ -786,6 +811,24 @@ const A={
  sugt(){sugOpen=!sugOpen;render()},
  sug(id){const x=P.sc.qa.find(q=>q.id===id);if(!x||!P.who)return;P.sess.log.push({id:uid(),who:P.who,question:x.intitule,answer:x.reponse,qaId:x.id});sPost(P.who,x.intitule,x.reponse,x.id);saveSess();render()},
  users(){route="users";confirmKey=null;render()},
+ pcnew(){pcEd={id:null,titre:"",description:"",ordre:false,partage:false,scIds:[]};render()},
+ pcedit(id){const p=parcours.find(x=>x.id===id);if(!p)return;pcEd={id:p.id,titre:p.titre||"",description:p.description||"",ordre:!!p.ordre,partage:!!p.partage,scIds:[...(p.scIds||[])]};render()},
+ pccancel(){pcEd=null;render()},
+ pcadd(){pcSync();const v=$("#pcsc").value;if(!v)return toast("Choisis un exercice.",true);pcEd.scIds.push(v);render()},
+ pcmv(k){pcSync();const[i,d]=String(k).split("|").map(Number),a=pcEd.scIds,j=i+d;if(j<0||j>=a.length)return;[a[i],a[j]]=[a[j],a[i]];render()},
+ pcrm(i){pcSync();pcEd.scIds.splice(Number(i),1);render()},
+ async pcsave(){pcSync();const e=pcEd;if(!e.titre.trim())return toast("Donne un nom au parcours.",true);if(!e.scIds.length)return toast("Ajoute au moins un exercice.",true);
+  const id=e.id||"p"+Date.now().toString(36)+Math.random().toString(36).slice(2,6),old=parcours.find(x=>x.id===id);
+  try{await db.collection("parcours").doc(id).set({titre:e.titre.trim(),description:e.description.trim(),ordre:!!e.ordre,partage:!!e.partage,scIds:e.scIds,owner:old?old.owner:myId,ownerNom:old?old.ownerNom:(me&&me.nom)||"",maj:Date.now()});pcEd=null;toast("Parcours enregistré.")}catch(x){toast("Erreur : "+(x.message||x.code),true)}},
+ async pcdup(id){const p=parcours.find(x=>x.id===id);if(!p)return;const n="p"+Date.now().toString(36)+Math.random().toString(36).slice(2,6);try{await db.collection("parcours").doc(n).set({...(({id:_i,...r})=>r)(p),titre:(p.titre||"")+" (copie)",partage:false,owner:myId,ownerNom:(me&&me.nom)||"",maj:Date.now()});toast("Parcours dupliqué.")}catch(x){toast("Erreur : "+(x.message||x.code),true)}},
+ async pcdel(id){confirmKey=null;try{await db.collection("parcours").doc(id).delete();toast("Parcours supprimé.")}catch(x){toast("Erreur : "+(x.message||x.code),true)}render()},
+ async pcassign(tid){const t=eqs.find(x=>x.id===tid),pid=$("#pcas"+tid).value,dt0=$("#pcad"+tid).value,p=parcours.find(x=>x.id===pid);if(!t)return;
+  if(!p)return toast("Choisis un parcours.",true);if(!dt0)return toast("Indique une date limite.",true);
+  const lim=new Date(dt0+"T23:59:59").getTime(),have=new Set((t.devoirs||[]).map(d=>d.scId)),add=[];
+  (p.scIds||[]).forEach((sc,i)=>{const x=allList.find(y=>y.id===sc);if(x&&!have.has(sc))add.push({scId:sc,titre:x.titre,limite:lim,pc:p.id,pcT:p.titre,rg:i,pcO:p.ordre?1:0})});
+  if(!add.length)return toast("Tous ces exercices sont déjà dans la liste.",true);
+  try{await db.collection("equipes").doc(tid).update({devoirs:[...(t.devoirs||[]),...add]});toast(add.length+" exercice(s) ajouté(s).")}catch(x){toast("Erreur : "+(x.message||x.code),true)}},
+ async pcretire(k){const[tid,pid]=String(k).split("|"),t=eqs.find(x=>x.id===tid);if(!t)return;try{await db.collection("equipes").doc(tid).update({devoirs:(t.devoirs||[]).filter(d=>d.pc!==pid)});toast("Parcours retiré de l'équipe.")}catch(x){toast("Erreur : "+(x.message||x.code),true)}},
  uask(k){confirmKey=k;render()},
  suivi(){route="suivi";render()},
  profil(){pf=null;route="profil";render()},
@@ -939,6 +982,7 @@ render();
   else loaded=true;
   if(db)db.collection("nouveautes").onSnapshot(q=>{nouvDb=q.docs.map(d=>({id:d.id,...d.data()}));if(route==="nouveautes"&&!nouvEd)render()},()=>{});
   if(db&&u){myId=await u.id();
+   db.collection("parcours").onSnapshot(q=>{parcours=q.docs.map(d=>({id:d.id,...d.data()}));if(route==="gestion"&&!pcEd)render()},()=>{});
    db.collection("tkx").doc(myId).onSnapshot(sn=>{tkxMine=sn.exists?sn.data():{items:[]};tkRefresh()},()=>{});
    db.collection("stats").onSnapshot(q=>{stats=q.docs.map(d=>({id:d.id,...d.data()}));cntUpdate();if(route==="carte")render()},()=>{});setInterval(cntUpdate,30000);setInterval(()=>{if(!document.hidden)statPing()},120000);
    db.collection("salles").onSnapshot(q=>{sallesList=q.docs.map(d=>({id:d.id,...d.data()}));if(route==="salle")render()},()=>{});

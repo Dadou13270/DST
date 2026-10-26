@@ -7,7 +7,7 @@ import { configured } from "../firebase";
 import { listScenarios } from "../lib/db";
 import { useAuth } from "../lib/auth";
 import { useDevoirs } from "../lib/useDevoirs";
-import { fmtLimite } from "../lib/devoirs";
+import DevoirsCard from "../components/DevoirsCard";
 import { etatExercice } from "../lib/etat";
 import { rubriquesDe } from "../lib/model";
 
@@ -63,17 +63,7 @@ export default function Home() {
       }
     >
       <StagiaireNav />
-      {devoirs.filter((d) => d.statut !== "ok").length > 0 && (
-        <div className={"card" + (devoirs.some((d) => d.statut === "retard") ? " alerte" : "")}>
-          <strong>{devoirs.some((d) => d.statut === "retard") ? "Exercices en retard" : "Exercices à rendre"}</strong>
-          {devoirs.filter((d) => d.statut !== "ok").map((d) => (
-            <div key={d.scId}>
-              <Link to={`/scenario/${d.scId}`}>{d.titre}</Link> — avant le {fmtLimite(d.limite)}{" "}
-              {d.statut === "retard" && <span className="tag late">En retard</span>}
-            </div>
-          ))}
-        </div>
-      )}
+      {devoirs.filter((d) => d.statut !== "ok").length > 0 && <DevoirsCard devoirs={devoirs} />}
       {profil?.mdpProvisoire && <div className="card alerte"><strong>Mot de passe provisoire.</strong> Change-le dans <Link to="/profil">Mon profil</Link>.</div>}
       <SalleJoin />
       <h1>Choisis un scénario</h1>

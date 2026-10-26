@@ -154,6 +154,13 @@ service cloud.firestore {
       }
     }
 
+    // Parcours (séquences d'exercices) : lecture par le propriétaire ou si partagé ; écriture par les gestionnaires
+    match /parcours/{id} {
+      allow read: if request.auth != null && (isAdmin() || resource.data.owner == request.auth.uid || resource.data.get("partage", false) == true);
+      allow create: if isGest() && request.resource.data.owner == request.auth.uid;
+      allow update, delete: if isAdmin() || (isGest() && resource.data.owner == request.auth.uid);
+    }
+
     match /nouveautes/{id} {
       allow read: if request.auth != null;
       allow write: if isAdmin();
