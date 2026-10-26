@@ -13,6 +13,7 @@ import AdminStats from "./pages/AdminStats";
 import AdminUsers from "./pages/AdminUsers";
 import Login from "./pages/Login";
 import Contact from "./pages/Contact";
+import Seance from "./pages/Seance";
 import Equipe from "./pages/Equipe";
 import Gestion from "./pages/Gestion";
 import Profil from "./pages/Profil";
@@ -47,6 +48,7 @@ export default function App() {
         <Route path="/cgu" element={<Cgu />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="/equipe" element={<RequireUser><Equipe /></RequireUser>} />
+        <Route path="/seance" element={<RequireUser><Seance /></RequireUser>} />
         <Route path="/gestion" element={<RequireUser><Gestion /></RequireUser>} />
         <Route path="/gestion/salle/:code" element={<RequireUser><Salle /></RequireUser>} />
         <Route path="/gestion/salle/:code/projection" element={<RequireUser><SalleProjection /></RequireUser>} />

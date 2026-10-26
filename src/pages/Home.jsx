@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import SalleJoin from "../components/SalleJoin";
 import Dominantes from "../components/Dominantes";
 import Layout from "../components/Layout";
 import { configured } from "../firebase";
@@ -18,6 +17,7 @@ export function StagiaireNav() {
       <Link to="/" className="tablink" title="Tous les scénarios"><button className={pathname === "/" ? "on" : ""}>Exercices</button></Link>
       <Link to="/suivi" className="tablink" title="Tes résultats et commentaires du formateur"><button className={pathname === "/suivi" ? "on" : ""}>Mon suivi</button></Link>
       <Link to="/equipe" className="tablink" title="Rejoindre une équipe avec un code"><button className={pathname === "/equipe" ? "on" : ""}>Mon équipe</button></Link>
+      <Link to="/seance" className="tablink" title="Rejoindre une séance en salle avec un code"><button className={pathname === "/seance" ? "on" : ""}>Séance en salle</button></Link>
       <Link to="/profil" className="tablink" title="Tes informations, e-mail et mot de passe"><button className={pathname === "/profil" ? "on" : ""}>Mon profil</button></Link>
     </div>
   );
@@ -65,7 +65,6 @@ export default function Home() {
       <StagiaireNav />
       {devoirs.filter((d) => d.statut !== "ok").length > 0 && <DevoirsCard devoirs={devoirs} />}
       {profil?.mdpProvisoire && <div className="card alerte"><strong>Mot de passe provisoire.</strong> Change-le dans <Link to="/profil">Mon profil</Link>.</div>}
-      <SalleJoin />
       <h1>Choisis un scénario</h1>
       <p className="muted">
         Observe la photo, interroge les personnes présentes, puis construis ton SOIEC et ton message.

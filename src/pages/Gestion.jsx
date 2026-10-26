@@ -9,6 +9,7 @@ import { listScenarios } from "../lib/db";
 import { ajouterDevoir, retirerDevoir, statutDevoir, fmtLimite, limiteDepuisInput, assignerParcours, retirerParcours } from "../lib/devoirs";
 import { listParcours } from "../lib/parcours";
 import Parcours from "../components/Parcours";
+import TableauBord from "../components/TableauBord";
 import SalleCard from "../components/SalleCard";
 import { pdfEquipe } from "../lib/pdf";
 import DemandeScenario from "../components/DemandeScenario";
@@ -267,7 +268,7 @@ export default function Gestion() {
     setErr("");
     try { await createEquipe(user.uid, profil.nom, nom.trim()); setNom(""); await load(); } catch (x) { setErr(x.message); }
   };
-  const onglets = [["eq", "Équipes"], ["pc", "Parcours pédagogiques"], ["sa", "Séance en salle"], ["dm", "Demande de scénario"]];
+  const onglets = [["eq", "Équipes"], ["tb", "Tableau de bord"], ["pc", "Parcours pédagogiques"], ["sa", "Séance en salle"], ["dm", "Demande de scénario"]];
   return (
     <Layout>
       <h1>Espace gestionnaire</h1>
@@ -292,6 +293,7 @@ export default function Gestion() {
       {(teams || []).map((t) => <Equipe key={t.id} team={t} autres={teams.filter((x) => x.id !== t.id)} scs={scs} pcs={pcs} onChange={load} />)}
         </>
       )}
+      {onglet === "tb" && <TableauBord teams={teams || []} scs={scs} />}
       {onglet === "pc" && <Parcours user={user} profil={profil} isAdmin={isAdmin} scs={scs} pcs={pcs} onChange={loadPcs} />}
       {onglet === "sa" && <SalleCard scs={scs} />}
       {onglet === "dm" && <DemandeScenario user={user} profil={profil} />}

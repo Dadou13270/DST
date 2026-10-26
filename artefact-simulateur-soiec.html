@@ -203,7 +203,7 @@ async function tkReply(){const el=$("#tkr"),t=(el&&el.value||"").trim();if(!t||!
   await tkPatch(u,id,role==="admin"?{maj:now,nonLuUser:true,statut:cur.statut==="ouvert"?"encours":cur.statut}:{maj:now,nonLuAdmin:true})}catch(e){toast("Erreur : "+(e.message||e.code),true)}}
 document.addEventListener("submit",e=>{if(e.target.id!=="tkform")return;e.preventDefault();tkReply()});
 function subNav(){
- if(route==="home"||route==="suivi"||route==="equipe"||route==="profil")return `<div class="tabs" style="margin-bottom:14px"><button data-act="home" title="Tous les scénarios" class="${route==="home"?"on":""}">Exercices</button><button data-act="suivi" title="Tes résultats et commentaires du formateur" class="${route==="suivi"?"on":""}">Mon suivi</button><button data-act="equipe" title="Rejoindre une équipe avec un code" class="${route==="equipe"?"on":""}">Mon équipe</button><button data-act="profil" title="Tes informations personnelles" class="${route==="profil"?"on":""}">Mon profil</button></div>`;
+ if(route==="home"||route==="suivi"||route==="equipe"||route==="profil"||route==="seance")return `<div class="tabs" style="margin-bottom:14px"><button data-act="home" title="Tous les scénarios" class="${route==="home"?"on":""}">Exercices</button><button data-act="suivi" title="Tes résultats et commentaires du formateur" class="${route==="suivi"?"on":""}">Mon suivi</button><button data-act="equipe" title="Rejoindre une équipe avec un code" class="${route==="equipe"?"on":""}">Mon équipe</button><button data-act="seance" title="Rejoindre une séance en salle avec un code" class="${route==="seance"?"on":""}">Séance en salle</button><button data-act="profil" title="Tes informations personnelles" class="${route==="profil"?"on":""}">Mon profil</button></div>`;
  if(!canAdmin)return"";
  return `<div class="tabs" style="margin-bottom:14px"><button data-act="admin" class="${route==="users"||route==="stats"||route==="params"||route==="tkadmin"?"":"on"}">Scénarios</button><button data-act="users" class="${route==="users"?"on":""}">Utilisateurs</button><button data-act="stats" class="${route==="stats"?"on":""}">Statistiques</button><button data-act="params" class="${route==="params"?"on":""}">Paramètres${reqNew()?` (${reqNew()})`:""}</button><button data-act="tkadmin" class="${route==="tkadmin"?"on":""}">Tickets${tkUnread()?` (${tkUnread()})`:""}</button></div>`}
 function render0(){
@@ -226,6 +226,7 @@ function render0(){
  else if(route==="apropos")a.innerHTML=shell(aproposHtml(),navHtml());
  else if(route==="aidesalle")a.innerHTML=shell(aideSalleHtml(),navHtml());
  else if(route==="profil")a.innerHTML=shell(subNav()+profilHtml(),navHtml());
+ else if(route==="seance")a.innerHTML=shell(subNav()+`<h1>Séance en salle</h1><p class="muted">Ton formateur projette un scénario et te donne un code : saisis-le pour interroger les intervenants depuis ton appareil.</p>`+(salleCard()||`<div class="card warn">Base de données indisponible.</div>`),navHtml());
  else if(route==="equipe")a.innerHTML=shell(subNav()+equipeHtml(),navHtml());
  else if(route==="gestion")a.innerHTML=shell(gestionHtml(),navHtml());
  else if(route==="salle")a.innerHTML=shell(salleHtml(),navHtml());
@@ -259,7 +260,6 @@ function homeHtml(){
  else if(!loaded)h+=`<p class="muted">Chargement…</p>`;
  else if(!pubAll.length&&scnErr)h+=`<div class="card warn">Impossible de charger les scénarios (${esc(scnErr)}). <button class="btn" data-act="reload">Réessayer</button></div>`;
  else if(!pubAll.length)h+=`<div class="card">Aucun scénario publié.${canAdmin?` Crée-en un dans <b>Paramètres</b>.`:""}</div>`;
- h+=salleCard();
  if(db&&loaded&&pubAll.length)h+=`<div class="row" style="margin:10px 0"><input id="hq" class="grow" type="search" placeholder="Rechercher un scénario…" value="${esc(hq)}" aria-label="Rechercher"><select id="hr" aria-label="Rubrique"><option value="">Toutes les rubriques</option>${allRub().filter(r=>pubAll.some(x=>x.rubrique===r)).map(r=>`<option${hr===r?" selected":""}>${esc(r)}</option>`).join("")}${pubAll.some(x=>!x.rubrique)?`<option value="__aucune"${hr==="__aucune"?" selected":""}>Autres</option>`:""}</select><select id="hd" aria-label="Durée"><option value="">Toutes durées</option><option value="10"${hd==="10"?" selected":""}>10 min ou moins</option><option value="20"${hd==="20"?" selected":""}>11 à 20 min</option><option value="21"${hd==="21"?" selected":""}>Plus de 20 min</option></select><select id="he" aria-label="État"><option value="">Tous les états</option><option value="nouveau"${he==="nouveau"?" selected":""}>Non commencés</option><option value="encours"${he==="encours"?" selected":""}>En cours</option><option value="termine"${he==="termine"?" selected":""}>Terminés</option></select>${filtre?`<button class="btn" data-act="hreset">Réinitialiser</button><span class="muted">${pub.length} sur ${pubAll.length}</span>`:""}</div>`;
  if(db&&loaded&&filtre&&pubAll.length&&!pub.length)h+=`<div class="card">Aucun scénario ne correspond à ces filtres.</div>`;
  if(db&&loaded&&pubAll.length&&!filtre)h+=`<p><b>${pub.length}</b> scénario${pub.length>1?"s":""} disponible${pub.length>1?"s":""} · ${rubsCount(pub)}</p>`;
@@ -407,6 +407,25 @@ function parcoursHtml(){
  else{const l=pcAll();h+=l.length?l.map(p=>{const mine=p.owner===myId||canAdmin;return `<div class="card" style="margin:8px 0"><div class="row between"><div><b>${esc(p.titre)}</b> ${p.ordre?`<span class="tag">Ordre imposé</span>`:""} ${p.partage?`<span class="tag">Partagé</span>`:""}<div class="muted">${(p.scIds||[]).length} exercice(s)${p.owner!==myId?` · par ${esc(p.ownerNom||"un gestionnaire")}`:""}</div>${p.description?`<div class="muted">${esc(p.description)}</div>`:""}</div><div class="row">${mine?`<button class="btn" data-act="pcedit" data-arg="${p.id}">Modifier</button>`:""}<button class="btn" data-act="pcdup" data-arg="${p.id}">Dupliquer</button>${mine?(confirmKey==="pd:"+p.id?`<button class="btn dng" data-act="pcdel" data-arg="${p.id}">Confirmer ?</button>`:`<button class="btn dng" data-act="uask" data-arg="pd:${p.id}">Supprimer</button>`):""}</div></div></div>`}).join(""):`<p class="muted">Aucun parcours. Crée le premier.</p>`}
  return h+`</div>`}
 const pcGroups=dev=>{const g=new Map();dev.forEach(d=>{const k=d.pc||"";if(!g.has(k))g.set(k,[]);g.get(k).push(d)});return g};
+/* ---- tableau de bord d'équipe ---- */
+let gdt="",gdj=14;
+function dashHtml(){
+ const mine=eqs.filter(t=>t.owner===myId).sort((a,b)=>(a.nom||"").localeCompare(b.nom||"","fr"));
+ if(!mine.length)return `<div class="card">Aucune équipe. Crée-en une dans l'onglet Équipes.</div>`;
+ const t=mine.find(x=>x.id===gdt)||mine[0],now=Date.now(),J=864e5,dev=t.devoirs||[],nPub=list.filter(x=>x.publie).length;
+ const m=Object.entries(t.membres||{}).map(([id,u])=>{const bs=u.bilans||{},n=Object.keys(bs).length,rendus=dev.filter(d=>bs[d.scId]).length,retards=dev.filter(d=>dvStatut(d,bs)==="retard").length,pct=dev.length?rendus/dev.length:nPub?Math.min(1,n/nPub):0,last=Math.max(Number(u.maj)||0,Number(u.rejoint)||0,...Object.values(bs).map(b=>Number(b.fin)||0));return{id,u,n,rendus,retards,pct,last}});
+ const bar=(p,c="#2e9e5b")=>`<div style="height:8px;background:var(--line);border-radius:9px;overflow:hidden"><i style="display:block;height:100%;width:${Math.round(p)}%;background:${c}"></i></div>`;
+ let h=`<div class="chips" style="margin-bottom:10px">${mine.length>1?mine.map(x=>`<button class="chip ${x.id===t.id?"on":""}" data-act="gdteam" data-arg="${x.id}">${esc(x.nom)}</button>`).join(""):""}<span class="muted">${esc(t.nom)} · ${m.length} membre(s)</span></div>`;
+ if(!m.length)return h+`<div class="card">Aucun membre dans cette équipe.</div>`;
+ const moy=Math.round(m.reduce((a,x)=>a+x.pct,0)/m.length*100);
+ h+=`<div class="card"><h2 style="margin:0">Progression de l'équipe : ${moy} %</h2><div class="muted">${dev.length?`Sur ${dev.length} exercice(s) à rendre.`:`Aucun exercice imposé : progression calculée sur les ${nPub} exercices disponibles.`}</div><table class="cmp" style="min-width:0;margin-top:8px"><thead><tr><th>Stagiaire</th><th>Progression</th><th>Terminés</th>${dev.length?"<th>Rendus</th>":""}<th>Retards</th></tr></thead><tbody>${[...m].sort((a,b)=>a.pct-b.pct).map(x=>`<tr><td>${esc(x.u.nom||"—")}</td><td style="min-width:140px">${bar(x.pct*100)}<span class="muted">${Math.round(x.pct*100)} %</span></td><td>${x.n}</td>${dev.length?`<td>${x.rendus}/${dev.length}</td>`:""}<td>${x.retards?dvTag("retard").replace("En retard",x.retards):"0"}</td></tr>`).join("")}</tbody></table></div>`;
+ const agg={};m.forEach(x=>Object.entries(x.u.bilans||{}).forEach(([id,b])=>{const a=agg[id]=agg[id]||{id,titre:b.titre,n:0,ok:0,tot:0};a.n++;a.ok+=b.essOk||0;a.tot+=b.essTot||0}));
+ const rates=Object.values(agg).filter(a=>a.tot>0).map(a=>({...a,taux:Math.round(a.ok/a.tot*100)})).sort((a,b)=>a.taux-b.taux).slice(0,5);
+ const rd=dev.map(d=>({d,r:m.filter(x=>dvStatut(d,x.u.bilans)==="retard").length})).filter(x=>x.r>0).sort((a,b)=>b.r-a.r);
+ h+=`<div class="card"><h2 style="margin:0">Scénarios les plus ratés</h2><div class="muted">Part des questions essentielles posées par les stagiaires (la plus faible en premier).</div>${rates.length?rates.map(a=>`<div style="margin:8px 0"><div class="row between"><span>${esc(a.titre)}</span><span class="muted">${a.taux} % · ${a.n} stagiaire(s)</span></div>${bar(a.taux,a.taux<50?"#c42a1c":"#e8a81c")}</div>`).join(""):`<p class="muted">Pas encore de résultat.</p>`}${rd.length?`<h3>Exercices les plus en retard</h3>${rd.map(({d,r})=>`<div>${esc(d.titre)} — ${r} en retard (échéance ${dvDate(d.limite)})</div>`).join("")}`:""}</div>`;
+ const ina=m.filter(x=>!x.last||now-x.last>gdj*J).sort((a,b)=>a.last-b.last),since=l=>l?`il y a ${Math.floor((now-l)/J)} j`:"jamais";
+ h+=`<div class="card"><div class="row between"><h2 style="margin:0">Stagiaires inactifs</h2><div class="chips" style="margin:0">${[7,14,30].map(j=>`<button class="chip ${gdj===j?"on":""}" data-act="gdj" data-arg="${j}">${j} jours</button>`).join("")}</div></div>${ina.length?ina.map(x=>`<div>${esc(x.u.nom||"—")} — dernière activité : ${since(x.last)} · ${x.n} exercice(s) terminé(s)</div>`).join(""):`<p class="muted">Tous les stagiaires ont été actifs récemment.</p>`}</div>`;
+ return h}
 function dvBanner(){const all=dvMine(),l=all.filter(d=>d.statut!=="ok");if(!l.length)return"";const late=l.some(d=>d.statut==="retard");
  const line=(d,nxt,dim)=>`<div${dim?' style="opacity:.55"':""}>${d.pc&&d.rg!==undefined?`${d.rg+1}. `:""}<a href="#" data-act="play" data-arg="${d.scId}">${esc(d.titre)}</a> — avant le ${dvDate(d.limite)} ${d.statut==="retard"?dvTag("retard"):""}${nxt?` <span class="tag">Prochaine étape</span>`:""}</div>`;
  let body="";for(const[k,it]of pcGroups(all)){const rest=it.filter(d=>d.statut!=="ok");if(!rest.length)continue;
@@ -584,9 +603,9 @@ function gestionHtml(){
   return `<div class="card"><div class="row between"><div><h2 style="margin:0">${esc(t.nom)}</h2><div class="muted">${m.length} membre(s) · ${tot} exercice(s) terminé(s)</div></div><div class="row"><span class="muted">Code d'accès</span><b style="font-size:1.3rem;letter-spacing:.15em;font-family:monospace">${esc(t.code)}</b><button class="btn" data-act="pdfeq" data-arg="${t.id}">Export PDF</button>${two("rg:"+t.id,"Nouveau code","eqcode",t.id)}${two("ed:"+t.id,"Supprimer l'équipe","eqdel",t.id,"dng")}</div></div>
   ${devoirsHtml(t,m)}
   ${m.length?`<table class="cmp" style="min-width:0;margin-top:10px"><thead><tr><th>Stagiaire</th><th>Terminés</th><th>Temps moyen</th><th>Essentielles</th><th>Dernière synchro</th><th></th></tr></thead><tbody>${m.map(u=>{const st=statsOf(u.bilans||{});return `<tr><td><b>${esc(u.nom||"—")}</b><div class="muted" style="font-size:.82rem">${esc([u.grade,u.cis].filter(Boolean).join(" · "))}</div></td><td>${st.n}</td><td>${st.n?fmt(st.tmoy):"—"}</td><td>${st.ess===null?"—":st.ess+" %"}</td><td>${dt(u.maj||u.rejoint)}</td><td><div class="row">${mine.length>1?`<select data-mv="${t.id}|${u.id}"><option value="">Déplacer vers…</option>${mine.filter(x=>x.id!==t.id).map(x=>`<option value="${x.id}">${esc(x.nom)}</option>`).join("")}</select>`:""}<button class="btn" data-act="eqview" data-arg="${t.id}|${u.id}">${eqo===t.id+"|"+u.id?"Masquer":"Suivi"}</button>${two("rm:"+t.id+"|"+u.id,"Retirer","eqrm",t.id+"|"+u.id,"dng")}</div></td></tr>${eqo===t.id+"|"+u.id?`<tr><td colspan="6">${memDetail(t,u)}</td></tr>`:""}`}).join("")}</tbody></table>`:`<p class="muted">Aucun membre. Donne le code aux stagiaires : ils le saisissent dans « Mon équipe ».</p>`}</div>`}).join("");
- const tabs=[["eq","Équipes"],["pc","Parcours pédagogiques"],["sa","Séance en salle"],["dm","Demande de scénario"]];
+ const tabs=[["eq","Équipes"],["tb","Tableau de bord"],["pc","Parcours pédagogiques"],["sa","Séance en salle"],["dm","Demande de scénario"]];
  const bar=`<div class="tabs" style="margin-bottom:14px">${tabs.map(([k,l])=>`<button data-act="gtab" data-arg="${k}" class="${gtab===k?"on":""}">${l}</button>`).join("")}</div>`;
- return `<h1>Espace gestionnaire</h1>${bar}${gtab==="pc"?parcoursHtml():gtab==="sa"?salleGestCard():gtab==="dm"?dem:h}`}
+ return `<h1>Espace gestionnaire</h1>${bar}${gtab==="tb"?dashHtml():gtab==="pc"?parcoursHtml():gtab==="sa"?salleGestCard():gtab==="dm"?dem:h}`}
 
 /* ---- utilisateurs (admin) ---- */
 function usersHtml(){
@@ -812,6 +831,7 @@ const A={
  sugt(){sugOpen=!sugOpen;render()},
  sug(id){const x=P.sc.qa.find(q=>q.id===id);if(!x||!P.who)return;P.sess.log.push({id:uid(),who:P.who,question:x.intitule,answer:x.reponse,qaId:x.id});sPost(P.who,x.intitule,x.reponse,x.id);saveSess();render()},
  users(){route="users";confirmKey=null;render()},
+ gdteam(id){gdt=id;render()},gdj(j){gdj=Number(j);render()},
  gtab(k){pcSync();gtab=k;render();scrollTo(0,0)},
  pcnew(){pcEd={id:null,titre:"",description:"",ordre:false,partage:false,scIds:[]};render()},
  pcedit(id){const p=parcours.find(x=>x.id===id);if(!p)return;pcEd={id:p.id,titre:p.titre||"",description:p.description||"",ordre:!!p.ordre,partage:!!p.partage,scIds:[...(p.scIds||[])]};render()},
@@ -895,6 +915,7 @@ const A={
    {head:["Information","Valeur"],w:[180,335],rows:[["Nom",me.nom||"—"],["Grade",me.grade||"—"],["CIS",me.cis||"—"],["Département",me.departement||"—"],["Équipe",t?t.nom:"—"],["Exercices terminés",String(st.n)],["Temps moyen",st.n?fmt(st.tmoy):"—"],["Questions essentielles",st.ess===null?"—":st.ess+" %"]]},
    {h:"Exercices",head:PDFH,w:PDFW,rows:Object.values(bs).map(b=>[b.titre,dt(b.fin),fmt(b.duree||0),String(b.nbQ),b.essTot?b.essOk+"/"+b.essTot:"—",String(b.nb||1)])},
    ...(()=>{const cm=t&&t.commentaires&&t.commentaires[myId]||{},ks=Object.keys(cm);return ks.length?[{h:"Commentaires du formateur",head:["Exercice","Commentaire"],w:[160,355],rows:ks.map(i=>[(bs[i]||{}).titre||i,cm[i].texte+" ("+(cm[i].auteur||"")+", "+dt(cm[i].le)+")"])}]:[]})()])},
+ seance(){route="seance";confirmKey=null;render()},
  equipe(){route="equipe";confirmKey=null;render()},gestion(){route="gestion";confirmKey=null;render()},
  async ugest(id){confirmKey=null;const on=!(mods[id]||{}).gestionnaire;try{await db.collection("moderation").doc(id).set({...(mods[id]||{}),gestionnaire:on});toast(on?"Compte promu gestionnaire.":"Rôle gestionnaire retiré.")}catch(e){toast("Erreur : "+e.message,true)}},
  async eqnew(){const n=($("#eqnom").value||"").trim();if(n.length<2)return toast("Donne un nom à l'équipe.",true);
