@@ -8,13 +8,14 @@ import { useAuth } from "../lib/auth";
 import { useDevoirs } from "../lib/useDevoirs";
 import DevoirsCard from "../components/DevoirsCard";
 import { etatExercice } from "../lib/etat";
-import { rubriquesDe } from "../lib/model";
+import { rubriquesDe, RI } from "../lib/model";
+import { listCalculs } from "../lib/calculs";
 
 export function StagiaireNav() {
   const { pathname } = useLocation();
   return (
     <div className="tabs">
-      <Link to="/" className="tablink" title="Tous les scénarios"><button className={pathname === "/" ? "on" : ""}>Exercices</button></Link>
+      <Link to="/" className="tablink" title="Tous les scénarios"><button className={pathname === "/" || pathname.startsWith("/calculs") ? "on" : ""}>Exercices</button></Link>
       <Link to="/suivi" className="tablink" title="Tes résultats et commentaires du formateur"><button className={pathname === "/suivi" ? "on" : ""}>Mon suivi</button></Link>
       <Link to="/equipe" className="tablink" title="Rejoindre une équipe avec un code"><button className={pathname === "/equipe" ? "on" : ""}>Mon équipe</button></Link>
       <Link to="/seance" className="tablink" title="Rejoindre une séance en salle avec un code"><button className={pathname === "/seance" ? "on" : ""}>Séance en salle</button></Link>
@@ -27,6 +28,8 @@ export default function Home() {
   const { user, profil, isAdmin, logout } = useAuth();
   const devoirs = useDevoirs(profil);
   const [list, setList] = useState(null);
+  const [calcEx, setCalcEx] = useState([]);
+  useEffect(() => { if (configured) listCalculs(isAdmin).then(setCalcEx).catch(() => {}); }, [isAdmin]);
   const [err, setErr] = useState("");
   const [q, setQ] = useState("");
   const [rub, setRub] = useState("");
@@ -44,6 +47,14 @@ export default function Home() {
     return true;
   });
   const filtre = Boolean(q || rub || dur || etat);
+  const essaisDe = (id) => (profil?.calculs || {})[id] || [];
+  const calcs = calcEx.filter((ex) => {
+    if (rub && (ex.rubrique || "") !== (rub === "__aucune" ? "" : rub)) return false;
+    if (dur) return false;
+    if (q && !norm(`${ex.titre} ${ex.contexte}`).includes(norm(q))) return false;
+    if (etat && etat !== (essaisDe(ex.id).length ? "termine" : "nouveau")) return false;
+    return true;
+  });
 
   useEffect(() => {
     if (!configured) return;
@@ -75,8 +86,8 @@ export default function Home() {
       )}
       {list && list.length > 0 && (
         <p>
-          <strong>{list.length}</strong> scénario{list.length > 1 ? "s" : ""} disponible{list.length > 1 ? "s" : ""} ·{" "}
-          {new Set(list.map((s) => s.rubrique || "")).size} rubrique{new Set(list.map((s) => s.rubrique || "")).size > 1 ? "s" : ""}
+          <strong>{list.length + calcEx.length}</strong> exercice{list.length + calcEx.length > 1 ? "s" : ""} disponible{list.length + calcEx.length > 1 ? "s" : ""} ·{" "}
+          {new Set([...list, ...calcEx].map((s) => s.rubrique || "")).size} rubrique{new Set([...list, ...calcEx].map((s) => s.rubrique || "")).size > 1 ? "s" : ""}
         </p>
       )}
       {list && list.length > 0 && (
@@ -84,8 +95,8 @@ export default function Home() {
           <input type="search" placeholder="Rechercher un scénario…" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Rechercher" />
           <select value={rub} onChange={(e) => setRub(e.target.value)} aria-label="Rubrique">
             <option value="">Toutes les rubriques</option>
-            {rubriquesDe(list).filter((r) => list.some((s) => s.rubrique === r)).map((r) => <option key={r}>{r}</option>)}
-            {list.some((s) => !s.rubrique) && <option value="__aucune">Autres</option>}
+            {rubriquesDe([...(list || []), ...calcEx]).filter((r) => list.some((s) => s.rubrique === r) || calcEx.some((c) => c.rubrique === r)).map((r) => <option key={r}>{r}</option>)}
+            {(list.some((s) => !s.rubrique) || calcEx.some((c) => !c.rubrique)) && <option value="__aucune">Autres</option>}
           </select>
           <select value={dur} onChange={(e) => setDur(e.target.value)} aria-label="Durée">
             <option value="">Toutes durées</option><option value="10">10 min ou moins</option><option value="20">11 à 20 min</option><option value="21">Plus de 20 min</option>
@@ -94,20 +105,34 @@ export default function Home() {
             <option value="">Tous les états</option><option value="nouveau">Non commencés</option><option value="encours">En cours</option><option value="termine">Terminés</option>
           </select>
           {filtre && <button className="btn" onClick={() => { setQ(""); setRub(""); setDur(""); setEtat(""); }}>Réinitialiser</button>}
-          {filtre && <span className="muted">{vue.length} sur {list.length}</span>}
+          {filtre && <span className="muted">{vue.length + calcs.length} sur {list.length + calcEx.length}</span>}
         </div>
       )}
-      {filtre && list && vue.length === 0 && <div className="card">Aucun scénario ne correspond à ces filtres.</div>}
+      {filtre && list && vue.length === 0 && calcs.length === 0 && <div className="card">Aucun scénario ne correspond à ces filtres.</div>}
       {err && <div className="card warn">Erreur : {err}</div>}
       {configured && !list && !err && <p>Chargement…</p>}
       {list && list.length === 0 && <div className="card">Aucun scénario publié pour le moment.</div>}
 
-      {[...rubriquesDe(list).filter((r) => vue.some((s) => s.rubrique === r)), ...(vue.some((s) => !s.rubrique) ? [""] : [])].map((r) => {
+      {[...rubriquesDe([...(list || []), ...calcEx]).filter((r) => vue.some((s) => s.rubrique === r) || calcs.some((c) => c.rubrique === r)), ...(vue.some((s) => !s.rubrique) || calcs.some((c) => !c.rubrique) ? [""] : [])].map((r) => {
         const g = vue.filter((s) => (s.rubrique || "") === r);
         return (
           <section key={r || "autres"}>
-            <h3 className="rub">{r || "Autres"} <span className="muted">({g.length})</span></h3>
+            <h3 className="rub">{r || "Autres"} <span className="muted">({g.length + calcs.filter((c) => (c.rubrique || "") === r).length})</span></h3>
             <div className="grid">
+              {calcs.filter((c) => (c.rubrique || "") === r).map((ex) => {
+                const l = essaisDe(ex.id), last = l[l.length - 1];
+                return (
+                  <Link key={ex.id} to={`/calculs/${ex.id}`} className="card scn">
+                    <div className="ph" style={{ display: "flex", alignItems: "center", justifyContent: "center", fontSize: "2rem" }}>🧮</div>
+                    <div className="scn-body">
+                      <h3>{ex.titre}</h3>
+                      <p className="muted">{ex.contexte}</p>
+                      <div><span className="tag">Calcul LIF</span> <span className="tag">{ex.niveau}</span></div>
+                      <div className="ft"><span className="muted">{last ? `${l.length} essai(s) · dernier ${last.ok}/${last.tot}` : "Non commencé"}</span><span className="btn pri">{last ? "Refaire" : "Démarrer"}</span></div>
+                    </div>
+                  </Link>
+                );
+              })}
               {g.map((s) => (
                 <Link key={s.id} to={`/scenario/${s.id}`} className="card scn">
                   {s.vignette ? <img src={s.vignette} alt="" /> : <div className="ph">Pas de photo</div>}

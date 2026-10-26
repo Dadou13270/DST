@@ -34,7 +34,7 @@ service cloud.firestore {
             || get(/databases/$(database)/documents/codes/$(request.resource.data.equipeCode)).data.teamId == request.resource.data.equipeId);
       allow update: if isAdmin()
         || (request.auth.uid == uid
-            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["derniereConnexion", "email", "nom", "bilans", "encours", "equipeId", "equipeNom", "equipeCode", "equipeGest", "grade", "cis", "departement", "mdpProvisoire", "reponses"])
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["derniereConnexion", "email", "nom", "bilans", "encours", "equipeId", "equipeNom", "equipeCode", "equipeGest", "grade", "cis", "departement", "mdpProvisoire", "reponses", "calculs"])
             && (request.resource.data.get("equipeId", null) == resource.data.get("equipeId", null)
                 || request.resource.data.get("equipeId", null) == null
                 || get(/databases/$(database)/documents/codes/$(request.resource.data.equipeCode)).data.teamId == request.resource.data.equipeId))
@@ -162,6 +162,11 @@ service cloud.firestore {
     }
 
     match /nouveautes/{id} {
+      allow read: if request.auth != null;
+      allow write: if isAdmin();
+    }
+
+    match /exercicesCalcul/{id} {
       allow read: if request.auth != null;
       allow write: if isAdmin();
     }

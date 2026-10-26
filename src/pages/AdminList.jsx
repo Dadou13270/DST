@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import { rubriquesDe } from "../lib/model";
+import { listCalculs, deleteCalcul, dupCalcul, seedCalculs } from "../lib/calculs";
 import Dominantes from "../components/Dominantes";
 import { Link, useNavigate } from "react-router-dom";
 import { listScenarios, deleteScenario, duplicateScenario, saveScenario, updateScenarioChamps } from "../lib/db";
@@ -9,6 +11,9 @@ export default function AdminList() {
   const [err, setErr] = useState("");
   const [info, setInfo] = useState("");
   const [rub, setRub] = useState("all");
+  const [calcEx, setCalcEx] = useState(null);
+  const refreshCalc = () => listCalculs(true).then(setCalcEx).catch(() => setCalcEx([]));
+  useEffect(() => { refreshCalc(); }, []);
 
   // Import de fichiers JSON (dossier seeds/) : un fichier = un scénario, ignoré s'il existe déjà (même titre).
   const importer = async (e) => {
@@ -69,7 +74,9 @@ export default function AdminList() {
     refresh();
   };
 
-  const rubs = [...new Set((list || []).map((x) => x.rubrique || "Sans rubrique"))].sort((a, b) => a.localeCompare(b, "fr"));
+  const ce = calcEx || [];
+  const nRub = (r) => (list || []).filter((x) => (x.rubrique || "Sans rubrique") === r).length + ce.filter((x) => (x.rubrique || "Sans rubrique") === r).length;
+  const rubs = [...new Set([...(list || []).map((x) => x.rubrique || "Sans rubrique"), ...ce.map((x) => x.rubrique || "Sans rubrique")])].sort((a, b) => a.localeCompare(b, "fr"));
   const rubOk = rub === "all" || rubs.includes(rub) ? rub : "all";
   const shown = (list || []).filter((x) => rubOk === "all" || (x.rubrique || "Sans rubrique") === rubOk);
 
@@ -82,6 +89,7 @@ export default function AdminList() {
             Importer des scénarios (.json)
             <input type="file" accept=".json,application/json" multiple hidden onChange={importer} />
           </label>
+          <button className="btn" onClick={() => nav("/admin/calcul/nouveau")}>+ Exercice de calcul</button>
           <button className="btn primary" onClick={() => nav("/admin/scenario/nouveau")}>
             + Nouveau scénario
           </button>
@@ -92,17 +100,43 @@ export default function AdminList() {
       {!list && !err && <p>Chargement…</p>}
       {list && list.length === 0 && <div className="card">Aucun scénario. Crée le premier.</div>}
 
-      {list && list.length > 0 && (
+      {list && (
         <div className="row" style={{ margin: "8px 0" }}>
           <label htmlFor="admrub" className="muted">Rubrique</label>
           <select id="admrub" value={rubOk} onChange={(e) => setRub(e.target.value)}>
-            <option value="all">Toutes ({list.length})</option>
+            <option value="all">Toutes ({list.length + ce.length})</option>
             {rubs.map((r) => (
-              <option key={r} value={r}>{r} ({list.filter((x) => (x.rubrique || "Sans rubrique") === r).length})</option>
+              <option key={r} value={r}>{r} ({nRub(r)})</option>
             ))}
           </select>
         </div>
       )}
+
+      {calcEx && calcEx.length === 0 && (
+        <div className="card">Aucun exercice de calcul. <button className="btn" onClick={() => seedCalculs().then(refreshCalc)}>Importer les 6 exercices de calcul LIF</button></div>
+      )}
+      {list && ce.filter((x) => rubOk === "all" || (x.rubrique || "Sans rubrique") === rubOk).map((ex) => (
+        <div className="card row between item" key={ex.id}>
+          <div className="row">
+            <div className="thumb ph" style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>🧮</div>
+            <div>
+              <strong>{ex.titre}</strong>
+              <div className="meta">
+                <span className={"st " + (ex.publie ? "ok" : "br")}>● {ex.publie ? "Publié" : "Brouillon"}</span>
+                <span><span className="muted">Rubrique :</span> <b>{ex.rubrique || "—"}</b></span>
+                <span className="tag">Exercice de calcul</span>
+              </div>
+              <div className="muted">{ex.niveau} · {ex.S} m² · {ex.miscible ? "miscible" : "non miscible"} · C = {ex.C} %</div>
+            </div>
+          </div>
+          <div className="row">
+            <Link className="btn" to={`/calculs/${ex.id}`}>Tester</Link>
+            <Link className="btn" to={`/admin/calcul/${ex.id}`}>Modifier</Link>
+            <button className="btn" onClick={() => dupCalcul(ex).then(refreshCalc)}>Dupliquer</button>
+            <button className="btn danger" onClick={() => { if (window.confirm(`Supprimer définitivement « ${ex.titre} » ?`)) deleteCalcul(ex.id).then(refreshCalc); }}>Supprimer</button>
+          </div>
+        </div>
+      ))}
 
       {shown.map((s) => (
         <div className="card row between item" key={s.id}>

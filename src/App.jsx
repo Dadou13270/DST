@@ -14,6 +14,8 @@ import AdminUsers from "./pages/AdminUsers";
 import Login from "./pages/Login";
 import Contact from "./pages/Contact";
 import Seance from "./pages/Seance";
+import AdminCalcul from "./pages/AdminCalcul";
+import { CalculExercice } from "./pages/Calculs";
 import Equipe from "./pages/Equipe";
 import Gestion from "./pages/Gestion";
 import Profil from "./pages/Profil";
@@ -49,6 +51,8 @@ export default function App() {
         <Route path="/contact" element={<Contact />} />
         <Route path="/equipe" element={<RequireUser><Equipe /></RequireUser>} />
         <Route path="/seance" element={<RequireUser><Seance /></RequireUser>} />
+        <Route path="/calculs" element={<Navigate to="/" replace />} />
+        <Route path="/calculs/:id" element={<RequireUser><CalculExercice /></RequireUser>} />
         <Route path="/gestion" element={<RequireUser><Gestion /></RequireUser>} />
         <Route path="/gestion/salle/:code" element={<RequireUser><Salle /></RequireUser>} />
         <Route path="/gestion/salle/:code/projection" element={<RequireUser><SalleProjection /></RequireUser>} />
@@ -59,6 +63,7 @@ export default function App() {
         <Route path="/admin" element={<AdminGate />}>
           <Route index element={<AdminList />} />
           <Route path="scenario/:id" element={<AdminEditor />} />
+          <Route path="calcul/:id" element={<AdminCalcul />} />
           <Route path="utilisateurs" element={<AdminUsers />} />
           <Route path="stats" element={<AdminStats />} />
           <Route path="parametres" element={<Parametres />} />

@@ -1,3 +1,4 @@
+import { listCalculs } from "../lib/calculs";
 import { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
 import Layout from "../components/Layout";
@@ -138,6 +139,8 @@ function Equipe({ team, autres, scs, pcs, onChange }) {
   const [err, setErr] = useState("");
   const [copie, setCopie] = useState(false);
   const load = () => listMembres(team.id).then(setM).catch((e) => setErr(e.message));
+  const [calcEx, setCalcEx] = useState([]);
+  useEffect(() => { listCalculs(true).then(setCalcEx).catch(() => {}); }, []);
   useEffect(() => { load(); }, [team.id]); // eslint-disable-line
   const run = async (fn) => { setErr(""); setConf(""); try { await fn(); } catch (e) { setErr(e.message); } };
   const two = (k, label, fn, cls = "") =>
@@ -195,6 +198,12 @@ function Equipe({ team, autres, scs, pcs, onChange }) {
                           <tr key={scId}><td>{b.titre}</td><td>{fmtDate(b.fin)}</td><td>{fmtDuree(b.duree || 0)}</td><td>{b.nbQ}</td><td>{b.essTot ? `${b.essOk}/${b.essTot}` : "—"}</td><td>{b.nb || 1}</td></tr>,
                           <tr key={scId + "c"}><td colSpan={6}><Commentaire u={u} scId={scId} auteur={profil?.nom || "Formateur"} onSaved={load} /></td></tr>,
                         ])}</tbody>
+                      </table>
+                    )}
+                    {Object.keys(u.calculs || {}).length > 0 && (
+                      <table className="cmp" style={{ marginTop: 8 }}>
+                        <thead><tr><th>Calcul LIF</th><th>Essais</th><th>Dernier</th><th>Meilleur</th><th>Date</th></tr></thead>
+                        <tbody>{Object.entries(u.calculs).map(([id, l]) => { const e = calcEx.find((x) => x.id === id); const d = l[l.length - 1]; return <tr key={id}><td>{e ? e.titre : id}</td><td>{l.length}</td><td>{d.ok}/{d.tot}</td><td>{Math.max(...l.map((x) => x.ok))}/{d.tot}</td><td>{fmtDate(d.le)}</td></tr>; })}</tbody>
                       </table>
                     )}
                   </td></tr>

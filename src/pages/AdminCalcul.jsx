@@ -1,0 +1,57 @@
+import { useEffect, useState } from "react";
+import { Link, useNavigate, useParams } from "react-router-dom";
+import { listCalculs, saveCalcul, attendu, CALC_Q } from "../lib/calculs";
+import { RUBRIQUES } from "../lib/model";
+
+const VIDE = { titre: "", contexte: "", niveau: "Initiation", rubrique: "Risques industriels", publie: false, S: 100, miscible: false, C: 3, Qref: 1000, reseau: 3000, F: 7, h: 0.15 };
+const NIV = ["Initiation", "Intermédiaire", "Avancé"];
+const fnum = (n) => Number(n).toLocaleString("fr-FR");
+
+export default function AdminCalcul() {
+  const { id } = useParams();
+  const nav = useNavigate();
+  const [e, setE] = useState(id === "nouveau" ? VIDE : null);
+  const [err, setErr] = useState("");
+  useEffect(() => {
+    if (id !== "nouveau") listCalculs(true).then((l) => setE(l.find((x) => x.id === id) || VIDE));
+  }, [id]);
+  if (!e) return <p>Chargement…</p>;
+  const set = (k, v) => setE({ ...e, [k]: v });
+  const num = (k, label, step = 1) => (
+    <div><label>{label}</label><input type="number" step={step} value={e[k]} onChange={(ev) => set(k, Number(ev.target.value))} /></div>
+  );
+  const enregistrer = async () => {
+    setErr("");
+    if ((e.titre || "").trim().length < 3) return setErr("Indique un titre.");
+    if (!(e.S > 0 && e.C > 0 && e.Qref >= 0 && e.reseau >= 0 && e.h > 0)) return setErr("Vérifie les valeurs numériques.");
+    try { await saveCalcul(id === "nouveau" ? "" : id, { ...e, titre: e.titre.trim() }); nav("/admin"); } catch (x) { setErr(x.message); }
+  };
+  const att = id !== "nouveau" ? attendu(e) : null;
+  return (
+    <>
+      <div className="row between"><h1>{id === "nouveau" ? "Nouvel" : "Modifier l'"} exercice de calcul</h1><Link className="btn" to="/admin">Retour</Link></div>
+      <div className="card form">
+        <label>Titre</label><input maxLength={100} value={e.titre} onChange={(ev) => set("titre", ev.target.value)} />
+        <label>Énoncé (contexte)</label><textarea rows={3} maxLength={600} value={e.contexte} onChange={(ev) => set("contexte", ev.target.value)} />
+        <div className="row">
+          <div><label>Niveau</label><select value={e.niveau} onChange={(ev) => set("niveau", ev.target.value)}>{NIV.map((n) => <option key={n}>{n}</option>)}</select></div>
+          <div><label>Rubrique</label><select value={e.rubrique || ""} onChange={(ev) => set("rubrique", ev.target.value)}><option value="">— Aucune —</option>{RUBRIQUES.map((r) => <option key={r}>{r}</option>)}</select></div>
+          <label className="ck"><input type="checkbox" checked={!!e.publie} onChange={(ev) => set("publie", ev.target.checked)} /> Publié (visible des stagiaires)</label>
+        </div>
+        <h3>Données de l'exercice</h3>
+        <div className="row">
+          {num("S", "Surface en feu S (m²)")}
+          <div><label>Type de LIF</label><select value={e.miscible ? "1" : "0"} onChange={(ev) => set("miscible", ev.target.value === "1")}><option value="0">Non miscible (10 l/min/m²)</option><option value="1">Miscible (20 l/min/m²)</option></select></div>
+          {num("C", "Concentration C (%)", 0.1)}
+          {num("Qref", "Refroidissement Qref (l/min)")}
+          {num("reseau", "Débit réseau (l/min)")}
+          {num("F", "Foisonnement F")}
+          {num("h", "Hauteur tapis h (m)", 0.01)}
+        </div>
+        {att && (<><h4>Résultats attendus (valeurs actuelles)</h4><table className="cmp" style={{ minWidth: 0 }}><tbody>{CALC_Q.map(([k, l, u]) => <tr key={k}><td>{l}</td><td><b>{fnum(att[k])}</b> {u}</td></tr>)}</tbody></table></>)}
+        {err && <p className="err">{err}</p>}
+        <div className="row" style={{ marginTop: 12 }}><button className="btn primary" onClick={enregistrer}>Enregistrer</button><Link className="btn" to="/admin">Annuler</Link></div>
+      </div>
+    </>
+  );
+}

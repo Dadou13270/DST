@@ -118,8 +118,8 @@ const uid=()=>Math.random().toString(36).slice(2,9);
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const $=s=>document.querySelector(s);
 const rubsCount=p=>{const n=new Set(p.map(x=>x.rubrique||"")).size;return n+" rubrique"+(n>1?"s":"")};
-const RUBRIQUES=["Incendie","Secours à personne","Secours routier","Opérations diverses"];let newRub=false;
-const allRub=()=>{const x=[...RUBRIQUES];list.forEach(s=>{if(s.rubrique&&!x.includes(s.rubrique))x.push(s.rubrique)});return x};
+const RI="Risques industriels",RUBRIQUES=["Incendie","Secours à personne","Secours routier","Opérations diverses",RI];let newRub=false;
+const allRub=()=>{const x=[...RUBRIQUES];[...list,...calcEx].forEach(s=>{if(s.rubrique&&!x.includes(s.rubrique))x.push(s.rubrique)});return x};
 const CUB=[["1","Victimes, enjeux humains"],["2","Construction"],["3","Public et résidents"],["4","Surfaces, hauteurs, forme de la zone sinistrée"],["5","Moyens de secours du site"],["6","Ressources en eau"],["7","Conditions météorologiques"],["8","Accès, circulation, affluence"],["9","Personnels et moyens"],["10","Localisation et développement du feu"],["11","Risques particuliers et surprises"]];
 const cubStat=(sc,asked)=>CUB.map(([c,l])=>{const q=sc.qa.filter(x=>x.cub===c);return{c,l,q,ok:q.some(x=>asked.has(x.id))}});
 const DOMS=["Reconnaissance cubique","Positionnement échelle","Sauvetage","Risque d'explosion","Risque d'effondrement","TMD","Milieu industriel","Hydrocarbures","Risque électrique","Fumées / désenfumage","ERP / évacuation","Lever de doute","Véhicule","Victimes multiples","Commandement"];
@@ -166,7 +166,7 @@ const interName=(sc,id)=>id===TOUS?"Tous":(sc.interlocuteurs.find(i=>i.id===id)|
 function shell(inner,right=""){
  return `<div class="bar"><span class="brand" style="display:inline-flex;align-items:center;gap:8px">${LOGO(36)}Op'Training</span>${cntHtml()}<nav>${right}</nav></div><main class="pg-${route}">${inner}</main>${foot()}${avisOpen?avisHtml():""}${tkOpen?tkModal():""}`}
 function navHtml(){
- const adm=route==="admin"||route==="edit"||route==="users"||route==="stats"||route==="params"||route==="tkadmin",gs=route==="gestion"||route==="salle"||route==="salleproj";
+ const adm=route==="admin"||route==="edit"||route==="calcedit"||route==="users"||route==="stats"||route==="params"||route==="tkadmin",gs=route==="gestion"||route==="salle"||route==="salleproj";
  let h=`<button data-act="home" class="${adm||gs?"":"on"}">Espace stagiaire</button>`;
  if(isGest())h+=`<button data-act="gestion" class="${gs?"on":""}">Espace gestionnaire</button>`;
  if(canAdmin)h+=`<button data-act="admin" class="${adm?"on":""}">Espace admin</button>`;
@@ -203,7 +203,7 @@ async function tkReply(){const el=$("#tkr"),t=(el&&el.value||"").trim();if(!t||!
   await tkPatch(u,id,role==="admin"?{maj:now,nonLuUser:true,statut:cur.statut==="ouvert"?"encours":cur.statut}:{maj:now,nonLuAdmin:true})}catch(e){toast("Erreur : "+(e.message||e.code),true)}}
 document.addEventListener("submit",e=>{if(e.target.id!=="tkform")return;e.preventDefault();tkReply()});
 function subNav(){
- if(route==="home"||route==="suivi"||route==="equipe"||route==="profil"||route==="seance")return `<div class="tabs" style="margin-bottom:14px"><button data-act="home" title="Tous les scénarios" class="${route==="home"?"on":""}">Exercices</button><button data-act="suivi" title="Tes résultats et commentaires du formateur" class="${route==="suivi"?"on":""}">Mon suivi</button><button data-act="equipe" title="Rejoindre une équipe avec un code" class="${route==="equipe"?"on":""}">Mon équipe</button><button data-act="seance" title="Rejoindre une séance en salle avec un code" class="${route==="seance"?"on":""}">Séance en salle</button><button data-act="profil" title="Tes informations personnelles" class="${route==="profil"?"on":""}">Mon profil</button></div>`;
+ if(route==="home"||route==="suivi"||route==="equipe"||route==="profil"||route==="seance"||route==="calc")return `<div class="tabs" style="margin-bottom:14px"><button data-act="home" title="Tous les scénarios" class="${route==="home"||route==="calc"?"on":""}">Exercices</button><button data-act="suivi" title="Tes résultats et commentaires du formateur" class="${route==="suivi"?"on":""}">Mon suivi</button><button data-act="equipe" title="Rejoindre une équipe avec un code" class="${route==="equipe"?"on":""}">Mon équipe</button><button data-act="seance" title="Rejoindre une séance en salle avec un code" class="${route==="seance"?"on":""}">Séance en salle</button><button data-act="profil" title="Tes informations personnelles" class="${route==="profil"?"on":""}">Mon profil</button></div>`;
  if(!canAdmin)return"";
  return `<div class="tabs" style="margin-bottom:14px"><button data-act="admin" class="${route==="users"||route==="stats"||route==="params"||route==="tkadmin"?"":"on"}">Scénarios</button><button data-act="users" class="${route==="users"?"on":""}">Utilisateurs</button><button data-act="stats" class="${route==="stats"?"on":""}">Statistiques</button><button data-act="params" class="${route==="params"?"on":""}">Paramètres${reqNew()?` (${reqNew()})`:""}</button><button data-act="tkadmin" class="${route==="tkadmin"?"on":""}">Tickets${tkUnread()?` (${tkUnread()})`:""}</button></div>`}
 function render0(){
@@ -228,6 +228,8 @@ function render0(){
  else if(route==="profil")a.innerHTML=shell(subNav()+profilHtml(),navHtml());
  else if(route==="seance")a.innerHTML=shell(subNav()+`<h1>Séance en salle</h1><p class="muted">Ton formateur projette un scénario et te donne un code : saisis-le pour interroger les intervenants depuis ton appareil.</p>`+(salleCard()||`<div class="card warn">Base de données indisponible.</div>`),navHtml());
  else if(route==="equipe")a.innerHTML=shell(subNav()+equipeHtml(),navHtml());
+ else if(route==="calc")a.innerHTML=shell(subNav()+calcExHtml(),navHtml());
+ else if(route==="calcedit")a.innerHTML=shell(subNav()+calcEditHtml(),navHtml());
  else if(route==="gestion")a.innerHTML=shell(gestionHtml(),navHtml());
  else if(route==="salle")a.innerHTML=shell(salleHtml(),navHtml());
  else if(route==="salleproj")a.innerHTML=salleProj();
@@ -251,6 +253,7 @@ const hEtat=id=>{if(bilansOf(me)[id])return"termine";const l=lsGet("soiec:"+id);
 function homeHtml(){
  const pubAll=list.filter(s=>s.publie),nrm2=t=>(t||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"");
  const filtre=Boolean(hq||hr||hd||he);
+ const calcs=calcVis().filter(ex=>{if(hr&&(ex.rubrique||"")!==(hr==="__aucune"?"":hr))return false;if(hd)return false;if(hq&&!nrm2(ex.titre+" "+ex.contexte).includes(nrm2(hq)))return false;if(he&&he!==(((myCalculs()[ex.id]||[]).length)?"termine":"nouveau"))return false;return true});
  const pub=pubAll.filter(s=>{if(hq&&!nrm2((s.titre||"")+" "+(s.description||"")).includes(nrm2(hq)))return false;
   if(hr&&(s.rubrique||"")!==(hr==="__aucune"?"":hr))return false;const d=s.duree||0;
   if(hd==="10"&&!(d>0&&d<=10))return false;if(hd==="20"&&!(d>10&&d<=20))return false;if(hd==="21"&&!(d>20))return false;
@@ -260,12 +263,13 @@ function homeHtml(){
  else if(!loaded)h+=`<p class="muted">Chargement…</p>`;
  else if(!pubAll.length&&scnErr)h+=`<div class="card warn">Impossible de charger les scénarios (${esc(scnErr)}). <button class="btn" data-act="reload">Réessayer</button></div>`;
  else if(!pubAll.length)h+=`<div class="card">Aucun scénario publié.${canAdmin?` Crée-en un dans <b>Paramètres</b>.`:""}</div>`;
- if(db&&loaded&&pubAll.length)h+=`<div class="row" style="margin:10px 0"><input id="hq" class="grow" type="search" placeholder="Rechercher un scénario…" value="${esc(hq)}" aria-label="Rechercher"><select id="hr" aria-label="Rubrique"><option value="">Toutes les rubriques</option>${allRub().filter(r=>pubAll.some(x=>x.rubrique===r)).map(r=>`<option${hr===r?" selected":""}>${esc(r)}</option>`).join("")}${pubAll.some(x=>!x.rubrique)?`<option value="__aucune"${hr==="__aucune"?" selected":""}>Autres</option>`:""}</select><select id="hd" aria-label="Durée"><option value="">Toutes durées</option><option value="10"${hd==="10"?" selected":""}>10 min ou moins</option><option value="20"${hd==="20"?" selected":""}>11 à 20 min</option><option value="21"${hd==="21"?" selected":""}>Plus de 20 min</option></select><select id="he" aria-label="État"><option value="">Tous les états</option><option value="nouveau"${he==="nouveau"?" selected":""}>Non commencés</option><option value="encours"${he==="encours"?" selected":""}>En cours</option><option value="termine"${he==="termine"?" selected":""}>Terminés</option></select>${filtre?`<button class="btn" data-act="hreset">Réinitialiser</button><span class="muted">${pub.length} sur ${pubAll.length}</span>`:""}</div>`;
- if(db&&loaded&&filtre&&pubAll.length&&!pub.length)h+=`<div class="card">Aucun scénario ne correspond à ces filtres.</div>`;
- if(db&&loaded&&pubAll.length&&!filtre)h+=`<p><b>${pub.length}</b> scénario${pub.length>1?"s":""} disponible${pub.length>1?"s":""} · ${rubsCount(pub)}</p>`;
+ if(db&&loaded&&pubAll.length)h+=`<div class="row" style="margin:10px 0"><input id="hq" class="grow" type="search" placeholder="Rechercher un scénario…" value="${esc(hq)}" aria-label="Rechercher"><select id="hr" aria-label="Rubrique"><option value="">Toutes les rubriques</option>${allRub().filter(r=>pubAll.some(x=>x.rubrique===r)||calcVis().some(c=>c.rubrique===r)).map(r=>`<option${hr===r?" selected":""}>${esc(r)}</option>`).join("")}${pubAll.some(x=>!x.rubrique)||calcVis().some(c=>!c.rubrique)?`<option value="__aucune"${hr==="__aucune"?" selected":""}>Autres</option>`:""}</select><select id="hd" aria-label="Durée"><option value="">Toutes durées</option><option value="10"${hd==="10"?" selected":""}>10 min ou moins</option><option value="20"${hd==="20"?" selected":""}>11 à 20 min</option><option value="21"${hd==="21"?" selected":""}>Plus de 20 min</option></select><select id="he" aria-label="État"><option value="">Tous les états</option><option value="nouveau"${he==="nouveau"?" selected":""}>Non commencés</option><option value="encours"${he==="encours"?" selected":""}>En cours</option><option value="termine"${he==="termine"?" selected":""}>Terminés</option></select>${filtre?`<button class="btn" data-act="hreset">Réinitialiser</button><span class="muted">${pub.length+calcs.length} sur ${pubAll.length+calcVis().length}</span>`:""}</div>`;
+ if(db&&loaded&&filtre&&pubAll.length&&!pub.length&&!calcs.length)h+=`<div class="card">Aucun scénario ne correspond à ces filtres.</div>`;
+ if(db&&loaded&&pubAll.length&&!filtre)h+=`<p><b>${pub.length+calcs.length}</b> exercice${pub.length+calcs.length>1?"s":""} disponible${pub.length+calcs.length>1?"s":""} · ${rubsCount([...pub,...calcs])}</p>`;
+ const calcCard=ex=>{const l=myCalculs()[ex.id]||[],last=l[l.length-1];return `<button class="card scn" data-act="calcgo" data-arg="${ex.id}"><div class="ph" style="display:flex;align-items:center;justify-content:center;font-size:2rem">🧮</div><div class="b"><h2>${esc(ex.titre)}</h2><p class="muted">${esc(ex.contexte)}</p><div><span class="tag">Calcul LIF</span> <span class="tag">${ex.niveau}</span></div><div class="ft"><span class="muted">${last?`${l.length} essai(s) · dernier ${last.ok}/${last.tot}`:"Non commencé"}</span><span class="btn pri">${last?"Refaire":"Démarrer"}</span></div></div></button>`};
  const card=s=>`<button class="card scn" data-act="play" data-arg="${s.id}">${s.vignette?`<img src="${s.vignette}" alt="">`:`<div class="ph">Pas de photo</div>`}<div class="b"><h2>${esc(s.titre)}</h2><p class="muted">${esc(s.description)}</p><div>${s.reserveA?`<span class="tag">Réservé</span> `:""}${s.evolutif?`<span class="tag evo">Évolutif</span> `:""}${(s.dominantes||[]).length?domBadges(s):""}</div><div class="ft"><span class="muted">${s.duree>0?"⏱ "+s.duree+" min":""}</span><span class="btn pri">Démarrer</span></div></div></button>`;
- const rubs=allRub().filter(r=>pub.some(x=>x.rubrique===r));if(pub.some(x=>!x.rubrique))rubs.push("");
- h+=rubs.map(r=>{const g=pub.filter(x=>(x.rubrique||"")===r);return `<h3 class="rub">${esc(r||"Autres")} <span class="muted">(${g.length})</span></h3><div class="grid">${g.map(card).join("")}</div>`}).join("");
+ const rubs=allRub().filter(r=>pub.some(x=>x.rubrique===r)||calcs.some(c=>c.rubrique===r));if(pub.some(x=>!x.rubrique)||calcs.some(c=>!c.rubrique))rubs.push("");
+ h+=rubs.map(r=>{const g=pub.filter(x=>(x.rubrique||"")===r),cc=calcs.filter(c=>(c.rubrique||"")===r);return `<h3 class="rub">${esc(r||"Autres")} <span class="muted">(${g.length+cc.length})</span></h3><div class="grid">${cc.map(calcCard).join("")}${g.map(card).join("")}</div>`}).join("");
  return h}
 
 /* ---- suivi du stagiaire ---- */
@@ -287,6 +291,119 @@ function userDetail(u){const bs=bilansOf(u),ids=Object.keys(bs);
  if(!ids.length)return `<p class="muted" style="margin:8px 0 0">Aucun exercice terminé.</p>`;
  return `<table class="cmp" style="min-width:0;margin-top:8px"><thead><tr><th>Exercice</th><th>Fin</th><th>Temps</th><th>Questions</th><th>Essentielles</th><th>Tent.</th></tr></thead><tbody>${ids.map(i=>{const b=bs[i];return `<tr><td>${esc(b.titre)}</td><td>${dt(b.fin)}</td><td>${fmt(b.duree||0)}</td><td>${b.nbQ}</td><td>${b.essTot?b.essOk+"/"+b.essTot:"—"}</td><td>${b.nb||1}</td></tr>`}).join("")}</tbody></table>`}
 
+/*CALC-LIB*/
+const GALIM_DEBIT = 4000;
+const TOLERANCE = 0.02; // ±2 % (ou ±1 unité)
+
+const CALC_DEF = [
+  { id: "c1", titre: "Bac à toit fixe — feu de cuvette", niveau: "Initiation",
+    contexte: "Feu de cuvette de rétention autour d'un bac de gazole. Produit non miscible (hydrocarbure). Le réseau incendie de l'établissement est opérationnel.",
+    S: 150, miscible: false, C: 3, Qref: 1200, reseau: 3000, F: 7, h: 0.15 },
+  { id: "c2", titre: "Grande cuvette — réseau insuffisant", niveau: "Initiation",
+    contexte: "Feu généralisé d'une cuvette de rétention de 300 m² (essence, non miscible). Le refroidissement des bacs voisins est engagé.",
+    S: 300, miscible: false, C: 3, Qref: 1500, reseau: 2500, F: 7, h: 0.15 },
+  { id: "c3", titre: "Poste de chargement — éthanol", niveau: "Intermédiaire",
+    contexte: "Feu au poste de chargement camions : éthanol répandu sur 80 m². Produit miscible : l'émulseur polyvalent est dosé à 6 %.",
+    S: 80, miscible: true, C: 6, Qref: 800, reseau: 2000, F: 7, h: 0.15 },
+  { id: "c4", titre: "Sous-cuvette adjacente à protéger", niveau: "Intermédiaire",
+    contexte: "Feu de sous-cuvette de 220 m² (non miscible), la sous-cuvette voisine doit recevoir un tapis préventif. Réseau largement dimensionné.",
+    S: 220, miscible: false, C: 3, Qref: 1000, reseau: 4000, F: 7, h: 0.15 },
+  { id: "c5", titre: "Cuvette de solvant miscible", niveau: "Avancé",
+    contexte: "Feu d'une cuvette de 250 m² contenant un solvant miscible à l'eau. Émulseur polyvalent à 6 %, réseau incendie de 4 000 l/min.",
+    S: 250, miscible: true, C: 6, Qref: 2000, reseau: 4000, F: 7, h: 0.15 },
+  { id: "c6", titre: "Fuite alimentée sous une unité", niveau: "Avancé",
+    contexte: "Fuite alimentée enflammée sous une unité de production, nappe de 120 m² (non miscible). Émulseur à 6 %, tapis préventif sur la zone adjacente.",
+    S: 120, miscible: false, C: 6, Qref: 1800, reseau: 2500, F: 7, h: 0.15 },
+];
+
+const CALC_Q = [
+  ["q1", "Débit de solution moussante Qext", "l/min", "Qext = S × TA"],
+  ["q2", "Débit d'eau total Qtotal", "l/min", "Qtotal = Qext + Qref"],
+  ["q3", "Nombre de GALIM nécessaires", "GALIM", "Si Qtotal > débit réseau : 1 GALIM = 4 000 l/min"],
+  ["q4", "Volume d'émulseur d'extinction Vext (40 min)", "L", "Vext = Qext × C(%) × t"],
+  ["q5", "Volume d'émulseur d'entretien Vetm (10 min)", "L", "Vetm = Qext × C(%) × 10"],
+  ["q6", "Volume tapis préventif Vtmp", "L", "Vtmp = (S × h × C) / 100 × 1000"],
+  ["q7", "Volume entretien préventif Vetmp", "L", "Vetmp = 0,2 × S × C × 10"],
+  ["q8", "Volume total d'émulseur", "L", "TOTAL = Vext + Vetm + Vtmp + Vetmp"],
+];
+
+const taOf = (ex) => (ex.miscible ? 20 : 10);
+
+function attendu(ex) {
+  const TA = taOf(ex), C = ex.C;
+  const q1 = ex.S * TA, q2 = q1 + ex.Qref;
+  const q3 = q2 > ex.reseau ? Math.max(1, Math.ceil((q2 - ex.reseau) / GALIM_DEBIT)) : 0;
+  const q4 = Math.round(q1 * (C / 100) * 40), q5 = Math.round(q1 * (C / 100) * 10);
+  const q6 = Math.round((ex.S * ex.h * C) / 100 * 1000), q7 = Math.round(0.2 * ex.S * C * 10);
+  return { q1, q2, q3, q4, q5, q6, q7, q8: q4 + q5 + q6 + q7 };
+}
+
+function detail(ex) {
+  const a = attendu(ex), TA = taOf(ex), C = ex.C, f = (n) => String(n).replace(".", ",");
+  return {
+    q1: `${ex.S} × ${TA} = ${a.q1} l/min`,
+    q2: `${a.q1} + ${ex.Qref} = ${a.q2} l/min (réseau : ${ex.reseau} l/min)`,
+    q3: a.q2 > ex.reseau ? `${a.q2} > ${ex.reseau} : déficit ${a.q2 - ex.reseau} l/min → ${a.q3} GALIM` : `${a.q2} ≤ ${ex.reseau} : le réseau suffit → 0 GALIM`,
+    q4: `${a.q1} × ${f(C / 100)} × 40 = ${a.q4} L`,
+    q5: `${a.q1} × ${f(C / 100)} × 10 = ${a.q5} L`,
+    q6: `(${ex.S} × ${f(ex.h)} × ${C}) / 100 × 1000 = ${a.q6} L`,
+    q7: `0,2 × ${ex.S} × ${C} × 10 = ${a.q7} L`,
+    q8: `${a.q4} + ${a.q5} + ${a.q6} + ${a.q7} = ${a.q8} L`,
+  };
+}
+
+const estJuste = (rep, att) => {
+  const v = Number(String(rep ?? "").replace(",", "."));
+  if (rep === "" || rep == null || Number.isNaN(v)) return false;
+  return Math.abs(v - att) <= Math.max(1, Math.abs(att) * TOLERANCE);
+};
+
+function corriger(ex, rep) {
+  const a = attendu(ex), res = {};
+  let ok = 0;
+  CALC_Q.forEach(([k]) => { res[k] = estJuste(rep[k], a[k]); if (res[k]) ok++; });
+  return { res, ok, tot: CALC_Q.length, att: a };
+}
+
+const mettreEssai = (calculs, exId, essai) => {
+  const l = [...((calculs || {})[exId] || []), essai].slice(-10);
+  return { ...(calculs || {}), [exId]: l };
+};
+const resumeCalculs = (calculs) => {
+  const o = {};
+  for (const [k, l] of Object.entries(calculs || {})) if (l && l.length) o[k] = { n: l.length, best: Math.max(...l.map((x) => x.ok)), last: l[l.length - 1].ok, tot: l[l.length - 1].tot, le: l[l.length - 1].le };
+  return o;
+};
+
+/*CALC-LIB-END*/
+/* ---- calculs LIF (méthode TOPIMI) ---- */
+let calcId="",calcTab="ex",calcRep={},calcFait=null,calcT0=0,calcA=0,calcB=0;
+const cfn=n=>Number(n).toLocaleString("fr-FR");
+let calcEx=[],calcSnap=false,ceEd=null;
+const calcSort=l=>[...l].sort((a,b)=>(a.o||0)-(b.o||0)||(a.titre||"").localeCompare(b.titre||"","fr"));
+const calcVis=()=>canAdmin?calcEx:calcEx.filter(x=>x.publie);
+const calcOf=id=>calcEx.find(x=>x.id===id);
+const CE_NIV=["Initiation","Intermédiaire","Avancé"];
+const myCalculs=()=>(me&&me.calculs)||{};
+function calcSync(){CALC_Q.forEach(([k])=>{const e=document.getElementById("c"+k);if(e)calcRep[k]=e.value})}
+function calcMemoHtml(){return `<div class="card"><h3 style="margin-top:0">Fiche mémo · dimensionnement de l'extinction LIF</h3><p><b>Débit solution moussante</b> : Qext = S × TA (TA : 10 l/min/m² non miscible, 20 l/min/m² miscible)</p><p><b>Débit eau total</b> : Qtotal = Qext + Qref. Si Qtotal &gt; débit réseau incendie : GALIM (1 GALIM = 4 000 l/min à 1 000 m).</p><p><b>Volumes d'émulseur</b> : Extinction (t = 40 min) Vext = Qext × C(%) × t · Entretien tapis (10 min/heure) Vetm = Qext × C(%) × 10</p><p>Tapis préventif (sous-cuvette adjacente), F = 7, h = 0,15 m, TA entretien = 0,2 l/min/m² : Vtmp = (S × h × C) / 100 × 1000 · Vetmp = 0,2 × S × C × 10</p><p><b>TOTAL</b> = Vext + Vetm + Vtmp + Vetmp</p><p class="muted" style="margin:0">Même méthode que l'onglet Extinction LIF de TOPIMI (Fiche mémo 1er COS). Vérifie ensuite avec le calculateur.</p></div>`}
+
+function calcEditHtml(){const e=ceEd;if(!e)return"";const num=(id,l,v,st)=>`<div><label for="${id}">${l}</label><input id="${id}" type="number" step="${st||1}" value="${esc(String(v))}"></div>`,att=e.id&&calcOf(e.id)?attendu(calcOf(e.id)):null;
+ return `<div class="row between"><h1>${e.id?"Modifier":"Nouvel"} exercice de calcul</h1><button class="btn" data-act="admin">Retour</button></div><div class="card form"><label for="ce_t">Titre</label><input id="ce_t" maxlength="100" value="${esc(e.titre)}"><label for="ce_ctx">Énoncé (contexte)</label><textarea id="ce_ctx" rows="3" maxlength="600">${esc(e.contexte)}</textarea><div class="row"><div><label for="ce_n">Niveau</label><select id="ce_n">${CE_NIV.map(n=>`<option${n===e.niveau?" selected":""}>${n}</option>`).join("")}</select></div><div><label for="ce_rub">Rubrique</label><select id="ce_rub"><option value="">— Aucune —</option>${allRub().map(r=>`<option${r===e.rubrique?" selected":""}>${esc(r)}</option>`).join("")}</select></div><label class="ck"><input type="checkbox" id="ce_p"${e.publie?" checked":""}> Publié (visible des stagiaires)</label></div>
+ <h3>Données de l'exercice</h3><div class="row">${num("ce_S","Surface en feu S (m²)",e.S)}<div><label for="ce_m">Type de LIF</label><select id="ce_m"><option value="0"${e.miscible?"":" selected"}>Non miscible (10 l/min/m²)</option><option value="1"${e.miscible?" selected":""}>Miscible (20 l/min/m²)</option></select></div>${num("ce_C","Concentration C (%)",e.C,"0.1")}${num("ce_Q","Refroidissement Qref (l/min)",e.Qref)}${num("ce_res","Débit réseau (l/min)",e.reseau)}${num("ce_F","Foisonnement F",e.F)}${num("ce_h","Hauteur tapis h (m)",e.h,"0.01")}</div>
+ ${att?`<h4>Résultats attendus (valeurs enregistrées)</h4><table class="cmp" style="min-width:0"><tbody>${CALC_Q.map(([k,l,u])=>`<tr><td>${esc(l)}</td><td><b>${cfn(att[k])}</b> ${u}</td></tr>`).join("")}</tbody></table>`:""}
+ <div class="row" style="margin-top:12px"><button class="btn pri" data-act="calcsave">Enregistrer</button><button class="btn" data-act="admin">Annuler</button></div></div>`}
+function calcCompareHtml(ex,essais){if(!essais.length)return"";const att=attendu(ex);
+ let h=`<div class="card"><h3 style="margin-top:0">Mes essais</h3><table class="cmp" style="min-width:0"><thead><tr><th>#</th><th>Date</th><th>Temps</th><th>Score</th></tr></thead><tbody>${essais.map((e,i)=>`<tr><td>${i+1}</td><td>${dt(e.le)}</td><td>${fmt(e.duree||0)}</td><td>${e.ok}/${e.tot}</td></tr>`).join("")}</tbody></table>`;
+ if(essais.length>1){const a=Math.min(calcA,essais.length-1),b=Math.min(calcB,essais.length-1),A=essais[a],B=essais[b],ca=corriger(ex,A.rep).res,cb=corriger(ex,B.rep).res,sel=(act,v)=>`<select data-cmpsel="${act}">${essais.map((_,i)=>`<option value="${i}"${i===v?" selected":""}>Essai ${i+1}</option>`).join("")}</select>`,val=(r,ok)=>`${r===""||r==null?"—":cfn(r)} ${ok?"✓":"✗"}`;
+  h+=`<h4>Comparer deux essais</h4><div class="row">${sel("a",a)}<span>contre</span>${sel("b",b)}</div><table class="cmp" style="min-width:0;margin-top:8px"><thead><tr><th>Question</th><th>Attendu</th><th>Essai ${a+1}</th><th>Essai ${b+1}</th></tr></thead><tbody>${CALC_Q.map(([k,l,u])=>`<tr><td>${esc(l)}</td><td>${cfn(att[k])} ${u}</td><td>${val(A.rep[k],ca[k])}</td><td>${val(B.rep[k],cb[k])}</td></tr>`).join("")}</tbody></table>`}
+ return h+`</div>`}
+function calcExHtml(){const ex=calcOf(calcId);if(!ex)return `<p>Exercice introuvable.</p>`;const essais=myCalculs()[ex.id]||[],att=attendu(ex),det=detail(ex),cor=calcFait?corriger(ex,calcFait.rep):null;
+ let h=`<div class="row between"><h1>${esc(ex.titre)}</h1><button class="btn" data-act="home">Retour</button></div><div class="tabs" style="margin-bottom:12px"><button data-act="calctab" data-arg="ex" class="${calcTab==="ex"?"on":""}">Exercice</button><button data-act="calctab" data-arg="memo" class="${calcTab==="memo"?"on":""}">Fiche mémo</button></div>`;
+ if(calcTab==="memo")h+=calcMemoHtml();
+ else{h+=`<div class="card"><p style="margin-top:0">${esc(ex.contexte)}</p><table class="cmp" style="min-width:0"><tbody><tr><th>Surface en feu S</th><td>${ex.S} m²</td><th>Type de LIF</th><td>${ex.miscible?"Miscible":"Non miscible"} (TA = ${taOf(ex)} l/min/m²)</td></tr><tr><th>Concentration émulseur C</th><td>${ex.C} %</td><th>Débit de refroidissement Qref</th><td>${cfn(ex.Qref)} l/min</td></tr><tr><th>Débit réseau incendie</th><td>${cfn(ex.reseau)} l/min</td><th>Foisonnement F · hauteur tapis h</th><td>${ex.F} · ${String(ex.h).replace(".",",")} m</td></tr></tbody></table></div>`;
+  h+=`<div class="card"><h3 style="margin-top:0">Tes résultats</h3><table class="cmp" style="min-width:0"><thead><tr><th>Question</th><th>Ta réponse</th>${cor?"<th>Attendu</th><th></th>":""}</tr></thead><tbody>${CALC_Q.map(([k,l,u])=>`<tr><td>${esc(l)}<div class="muted" style="font-size:.8rem">${u}</div></td><td><input id="c${k}" type="number" inputmode="decimal" style="width:110px"${calcFait?" disabled":""} value="${esc(calcRep[k]==null?"":calcRep[k])}"></td>${cor?`<td><b>${cfn(att[k])}</b><div class="muted" style="font-size:.8rem">${esc(det[k])}</div></td><td>${cor.res[k]?"✓":"✗"}</td>`:""}</tr>`).join("")}</tbody></table>${calcFait?`<p><b>Score : ${cor.ok}/${cor.tot}</b> — résultats enregistrés. <button class="btn" data-act="calcgo" data-arg="${ex.id}">Refaire cet exercice</button></p>`:`<p><button class="btn pri" data-act="calcval">Valider et enregistrer mes résultats</button></p>`}</div>`}
+ return h+calcCompareHtml(ex,essais)}
 /* ---- profil ---- */
 const GRADES=["Sapeur 2e classe", "Sapeur 1re classe", "Caporal", "Caporal-chef", "Sergent", "Sergent-chef", "Adjudant", "Adjudant-chef", "Lieutenant 2e classe", "Lieutenant 1re classe", "Lieutenant hors classe", "Capitaine", "Commandant", "Lieutenant-colonel", "Colonel", "Contrôleur général", "Infirmier / Infirmière", "Médecin", "Pharmacien", "Vétérinaire", "Personnel administratif et technique", "Jeune sapeur-pompier", "Autre"],DEPTS=["01 Ain", "02 Aisne", "03 Allier", "04 Alpes-de-Haute-Provence", "05 Hautes-Alpes", "06 Alpes-Maritimes", "07 Ardèche", "08 Ardennes", "09 Ariège", "10 Aube", "11 Aude", "12 Aveyron", "13 Bouches-du-Rhône", "14 Calvados", "15 Cantal", "16 Charente", "17 Charente-Maritime", "18 Cher", "19 Corrèze", "2A Corse-du-Sud", "2B Haute-Corse", "21 Côte-d'Or", "22 Côtes-d'Armor", "23 Creuse", "24 Dordogne", "25 Doubs", "26 Drôme", "27 Eure", "28 Eure-et-Loir", "29 Finistère", "30 Gard", "31 Haute-Garonne", "32 Gers", "33 Gironde", "34 Hérault", "35 Ille-et-Vilaine", "36 Indre", "37 Indre-et-Loire", "38 Isère", "39 Jura", "40 Landes", "41 Loir-et-Cher", "42 Loire", "43 Haute-Loire", "44 Loire-Atlantique", "45 Loiret", "46 Lot", "47 Lot-et-Garonne", "48 Lozère", "49 Maine-et-Loire", "50 Manche", "51 Marne", "52 Haute-Marne", "53 Mayenne", "54 Meurthe-et-Moselle", "55 Meuse", "56 Morbihan", "57 Moselle", "58 Nièvre", "59 Nord", "60 Oise", "61 Orne", "62 Pas-de-Calais", "63 Puy-de-Dôme", "64 Pyrénées-Atlantiques", "65 Hautes-Pyrénées", "66 Pyrénées-Orientales", "67 Bas-Rhin", "68 Haut-Rhin", "69 Rhône", "70 Haute-Saône", "71 Saône-et-Loire", "72 Sarthe", "73 Savoie", "74 Haute-Savoie", "75 Paris", "76 Seine-Maritime", "77 Seine-et-Marne", "78 Yvelines", "79 Deux-Sèvres", "80 Somme", "81 Tarn", "82 Tarn-et-Garonne", "83 Var", "84 Vaucluse", "85 Vendée", "86 Vienne", "87 Haute-Vienne", "88 Vosges", "89 Yonne", "90 Territoire de Belfort", "91 Essonne", "92 Hauts-de-Seine", "93 Seine-Saint-Denis", "94 Val-de-Marne", "95 Val-d'Oise", "971 Guadeloupe", "972 Martinique", "973 Guyane", "974 La Réunion", "976 Mayotte"],CIS13=["Aix-en-Provence", "Arles", "Aubagne", "Berre-l'Étang", "Châteaurenard", "Fos-sur-Mer", "Gardanne", "Istres", "La Ciotat", "Marignane", "Martigues", "Miramas", "Port-de-Bouc", "Port-Saint-Louis-du-Rhône", "Saintes-Maries-de-la-Mer", "Salon-de-Provence", "Tarascon", "Vitrolles"];
 let pf=null,pfAutre=false;
@@ -503,9 +620,10 @@ const filDe=(c,reps)=>{const a=[];if(c){a.push({de:"f",nom:c.auteur||"Formateur"
 const nonLus=(c,reps)=>c?(reps||[]).filter(x=>(x.le||0)>(c.vu||0)).length:0;
 const filHtml=(c,reps,nomS)=>filDe(c,reps).map(m=>`<div style="margin:6px 0;padding:6px 10px;border-radius:8px;border:1px solid var(--line);${m.de==="f"?"border-left:5px solid var(--ok)":""}"><b>${m.de==="f"?esc(m.nom)+" · formateur":esc(nomS||"Stagiaire")}</b> <span class="muted">${dt(m.le)}</span><div style="white-space:pre-wrap">${esc(m.texte)}</div></div>`).join("");
 const nonLusMembre=(t,u)=>{const cm=((t.commentaires||{})[u.id])||{},rp=((t.reponses||{})[u.id])||{};return Object.keys(cm).reduce((n,sc)=>n+nonLus(cm[sc],rp[sc]),0)};
+const calcMem=u=>{const c=u.calculs||{},ids=Object.keys(c);return ids.length?`<table class="cmp" style="min-width:0;margin-top:8px"><thead><tr><th>Calcul LIF</th><th>Essais</th><th>Dernier</th><th>Meilleur</th><th>Date</th></tr></thead><tbody>${ids.map(i=>{const x=c[i],e=calcOf(i);return `<tr><td>${esc(e?e.titre:i)}</td><td>${x.n}</td><td>${x.last}/${x.tot}</td><td>${x.best}/${x.tot}</td><td>${dt(x.le)}</td></tr>`}).join("")}</tbody></table>`:""};
 function memDetail(t,u){const bs=u.bilans||{},ids=Object.keys(bs),cm=((t.commentaires||{})[u.id])||{},rp=((t.reponses||{})[u.id])||{};
- if(!ids.length)return `<p class="muted" style="margin:8px 0 0">Aucun exercice terminé.</p>`;
- return `<table class="cmp" style="min-width:0;margin-top:8px"><thead><tr><th>Exercice</th><th>Fin</th><th>Temps</th><th>Questions</th><th>Essentielles</th><th>Tent.</th></tr></thead><tbody>${ids.map(i=>{const b=bs[i],c=cm[i],k=t.id+"|"+u.id+"|"+i,nl=nonLus(c,rp[i]);
+ if(!ids.length)return `<p class="muted" style="margin:8px 0 0">Aucun exercice terminé.</p>`+calcMem(u);
+ return calcMem(u)+`<table class="cmp" style="min-width:0;margin-top:8px"><thead><tr><th>Exercice</th><th>Fin</th><th>Temps</th><th>Questions</th><th>Essentielles</th><th>Tent.</th></tr></thead><tbody>${ids.map(i=>{const b=bs[i],c=cm[i],k=t.id+"|"+u.id+"|"+i,nl=nonLus(c,rp[i]);
   return `<tr><td>${esc(b.titre)}${nl?` <span class="tag" style="background:#c42a1c;border-color:#c42a1c;color:#fff">${nl} réponse(s) non lue(s)</span>`:""}</td><td>${dt(b.fin)}</td><td>${fmt(b.duree||0)}</td><td>${b.nbQ}</td><td>${b.essTot?b.essOk+"/"+b.essTot:"—"}</td><td>${b.nb||1}</td></tr><tr><td colspan="6">${c?filHtml(c,rp[i],u.nom):""}<textarea data-cm="${k}" rows="2" maxlength="800" placeholder="${c?"Répondre au stagiaire…":"Commentaire du formateur (visible par le stagiaire)…"}" style="width:100%"></textarea><div class="row"><button class="btn pri" data-act="cmsend" data-arg="${k}">${c?"Envoyer la réponse":"Envoyer le commentaire"}</button>${nl?`<button class="btn" data-act="cmread" data-arg="${k}">Marquer comme lu</button>`:""}${c?(confirmKey==="cc:"+k?`<button class="btn dng" data-act="cmclr" data-arg="${k}">Confirmer ?</button>`:`<button class="btn dng" data-act="uask" data-arg="cc:${k}">Effacer le fil</button>`):""}</div></td></tr>`}).join("")}</tbody></table>`}
 const monCommentaire=sc=>{const t=myTeam(),c=t&&t.commentaires&&t.commentaires[myId]&&t.commentaires[myId][sc];if(!c)return"";const reps=((t.reponses||{})[myId]||{})[sc]||[];
  return `<div class="card" style="margin:8px 0 0;border-left:5px solid var(--ok)"><b>Échange avec le formateur</b>${filHtml(c,reps,"Moi")}<textarea data-rp="${esc(sc)}" rows="2" maxlength="600" placeholder="Répondre au formateur…" style="width:100%"></textarea><div class="row"><button class="btn" data-act="cmrep" data-arg="${esc(sc)}">Envoyer ma réponse</button></div></div>`};
@@ -588,7 +706,7 @@ const normCode=c=>(c||"").toUpperCase().replace(/[^A-Z0-9]/g,"");
 const genCode=()=>{const A="ABCDEFGHJKLMNPQRSTUVWXYZ23456789";for(let k=0;k<20;k++){const c=Array.from({length:6},()=>A[Math.floor(Math.random()*A.length)]).join("");if(!eqs.some(t=>t.code===c))return c}return Date.now().toString(36).toUpperCase().slice(-6)};
 const bilanResume=bs=>{const o={};for(const[k,b]of Object.entries(bs||{}))o[k]={titre:b.titre,fin:b.fin,duree:b.duree,nbQ:b.nbQ,essTot:b.essTot,essOk:b.essOk,cubTot:b.cubTot||0,cubOk:b.cubOk||0,nb:b.nb||1};return o};
 async function pushTeam(bs){const t=myTeam();if(!t||!db||!me)return;
- try{await db.collection("equipes").doc(t.id).update({membres:{...t.membres,[myId]:{...t.membres[myId],nom:me.nom,grade:me.grade||"",cis:me.cis||"",maj:Date.now(),bilans:bilanResume(bs||me.bilans)}}})}catch{}}
+ try{await db.collection("equipes").doc(t.id).update({membres:{...t.membres,[myId]:{...t.membres[myId],nom:me.nom,grade:me.grade||"",cis:me.cis||"",maj:Date.now(),bilans:bilanResume(bs||me.bilans),calculs:resumeCalculs(me.calculs)}}})}catch{}}
 function equipeHtml(){
  let h=`<h1>Mon équipe</h1>`;
  if(!me)return h+`<div class="card">Crée d'abord ton accès (onglet Mon suivi).</div>`;
@@ -653,12 +771,13 @@ function paramsHtml(){
  h+=`</div><div class="card"><h3 style="margin-top:0">Avis et suggestions (${av.length})</h3>${av.length?av.map(a=>`<div class="card" style="margin:8px 0"><b>${esc(a.type)}</b>${a.note?` <span class="tag">${"★".repeat(a.note)+"☆".repeat(5-a.note)}</span>`:""} <span class="muted">${esc(a.nom||"anonyme")} · ${dt(a.le)}</span><p class="pre" style="margin:6px 0 0">${esc(a.message)}</p></div>`).join(""):`<p class="muted">Aucun retour pour le moment.</p>`}</div><div class="card">`;
  return h+`<p class="muted">Dans cette version de démonstration, la restriction est appliquée par l'application. La version React la fait appliquer aussi par les règles Firestore.</p></div>`}
 function adminHtml(){
- let h=`<div class="row between"><h1>Scénarios</h1><button class="btn pri" data-act="new">+ Nouveau scénario</button></div>`;
+ let h=`<div class="row between"><h1>Scénarios</h1><div class="row"><button class="btn" data-act="calcnew">+ Exercice de calcul</button><button class="btn pri" data-act="new">+ Nouveau scénario</button></div></div>${calcSnap&&!calcEx.length?`<div class="card">Aucun exercice de calcul. <button class="btn" data-act="calcseed">Importer les 6 exercices de calcul LIF</button></div>`:""}`;
  if(!loaded)h+=`<p class="muted">Chargement…</p>`;
  else if(!list.length)h+=`<div class="card">Aucun scénario. Crée le premier.</div>`;
- const rubs=[...new Set(list.map(x=>x.rubrique||"Sans rubrique"))].sort((x,y)=>x.localeCompare(y,"fr"));
+ const rubs=[...new Set([...list.map(x=>x.rubrique||"Sans rubrique"),...calcEx.map(x=>x.rubrique||"Sans rubrique")])].sort((x,y)=>x.localeCompare(y,"fr")),nRub=r=>list.filter(x=>(x.rubrique||"Sans rubrique")===r).length+calcEx.filter(x=>(x.rubrique||"Sans rubrique")===r).length;
  if(admRub!=="all"&&!rubs.includes(admRub))admRub="all";
- if(list.length)h+=`<div class="row" style="margin:8px 0"><label for="admrub" class="muted">Rubrique</label><select id="admrub"><option value="all">Toutes (${list.length})</option>${rubs.map(r=>`<option value="${esc(r)}"${admRub===r?" selected":""}>${esc(r)} (${list.filter(x=>(x.rubrique||"Sans rubrique")===r).length})</option>`).join("")}</select></div>`;
+ if(list.length)h+=`<div class="row" style="margin:8px 0"><label for="admrub" class="muted">Rubrique</label><select id="admrub"><option value="all">Toutes (${list.length+calcEx.length})</option>${rubs.map(r=>`<option value="${esc(r)}"${admRub===r?" selected":""}>${esc(r)} (${nRub(r)})</option>`).join("")}</select></div>`;
+ h+=calcEx.filter(x=>admRub==="all"||(x.rubrique||"Sans rubrique")===admRub).map(ex=>{const dk="cd:"+ex.id;return `<div class="card row between"><div class="row grow"><div class="thumb" style="display:flex;align-items:center;justify-content:center">🧮</div><div><b>${esc(ex.titre||"Sans titre")}</b><div class="meta"><span class="st ${ex.publie?"ok":"br"}">● ${ex.publie?"Publié":"Brouillon"}</span><span><span class="muted">Rubrique :</span> <b>${esc(ex.rubrique||"—")}</b></span><span class="tag">Exercice de calcul</span></div><div class="muted" style="margin-top:2px">${esc(ex.niveau||"")} · ${ex.S} m² · ${ex.miscible?"miscible":"non miscible"} · C = ${ex.C} %</div></div></div><div class="row"><button class="btn" data-act="calcgo" data-arg="${ex.id}">Tester</button><button class="btn" data-act="calcedit" data-arg="${ex.id}">Modifier</button><button class="btn" data-act="calcdup" data-arg="${ex.id}">Dupliquer</button>${confirmKey===dk?`<button class="btn dng" data-act="calcdel" data-arg="${ex.id}">Confirmer ?</button>`:`<button class="btn dng" data-act="uask" data-arg="${dk}">Supprimer</button>`}</div></div>`}).join("");
  h+=list.filter(x=>admRub==="all"||(x.rubrique||"Sans rubrique")===admRub).map(s=>{const dk="del"+s.id;return `<div class="card row between"><div class="row grow">${s.vignette?`<img class="thumb" src="${s.vignette}" alt="">`:`<div class="thumb"></div>`}<div><b>${esc(s.titre||"Sans titre")}</b><div class="meta"><span class="st ${s.publie?"ok":"br"}">● ${s.publie?"Publié":"Brouillon"}</span><span><span class="muted">Rubrique :</span> <b>${esc(s.rubrique||"—")}</b></span>${s.reserveA?`<span class="muted">Réservé : ${esc(gestNom(s.reserveA))}</span>`:""}</div><div class="muted" style="margin-top:2px">${(s.interlocuteurs||[]).length} interlocuteur(s) · ${(s.qa||[]).length} réponse(s)</div></div></div>
  <div class="row"><button class="btn" data-act="play" data-arg="${s.id}">Tester</button><button class="btn" data-act="edit" data-arg="${s.id}">Modifier</button><button class="btn" data-act="dup" data-arg="${s.id}">Dupliquer</button>
  ${confirmKey===dk?`<button class="btn dng" data-act="delok" data-arg="${s.id}">Confirmer la suppression</button>`:`<button class="btn dng" data-act="del" data-arg="${s.id}">Supprimer</button>`}</div>${(s.dominantes||[]).length||s.evolutif?`<div class="bdg">${s.evolutif?`<span class="tag evo">Évolutif</span>`:""}${domBadges(s)}</div>`:""}</div>`}).join("");
@@ -836,6 +955,21 @@ const A={
  sugt(){sugOpen=!sugOpen;render()},
  sug(id){const x=P.sc.qa.find(q=>q.id===id);if(!x||!P.who)return;P.sess.log.push({id:uid(),who:P.who,question:x.intitule,answer:x.reponse,qaId:x.id});sPost(P.who,x.intitule,x.reponse,x.id);saveSess();render()},
  users(){route="users";confirmKey=null;render()},
+ 
+ calcgo(id){calcId=id;calcTab="ex";calcRep={};calcFait=null;calcT0=Date.now();calcA=0;calcB=0;const l=myCalculs()[id]||[];calcA=Math.max(0,l.length-2);calcB=Math.max(0,l.length-1);route="calc";render();scrollTo(0,0)},
+ calctab(t){calcSync();calcTab=t;render()},
+ async calcval(){calcSync();const ex=calcOf(calcId);if(!ex)return;if(!me){toast("Crée d'abord ton accès (onglet Mon suivi).",true);return}
+  const r=corriger(ex,calcRep),essai={le:Date.now(),duree:Math.round((Date.now()-calcT0)/1000),rep:Object.fromEntries(CALC_Q.map(([k])=>[k,calcRep[k]==null?"":calcRep[k]])),ok:r.ok,tot:r.tot},nc=mettreEssai(myCalculs(),ex.id,essai);
+  try{await db.collection("users").doc(myId).update({calculs:nc});me={...me,calculs:nc};calcFait=essai;calcA=Math.max(0,nc[ex.id].length-2);calcB=nc[ex.id].length-1;toast("Résultats enregistrés.");pushTeam();render()}catch(e){toast("Résultats non enregistrés : "+(e.message||e.code),true)}},
+ calcnew(){ceEd={id:"",titre:"",contexte:"",niveau:"Initiation",rubrique:RI,publie:false,S:100,miscible:false,C:3,Qref:1000,reseau:3000,F:7,h:0.15};route="calcedit";render();scrollTo(0,0)},
+ calcedit(id){const x=calcOf(id);if(!x)return;ceEd={...x};route="calcedit";render();scrollTo(0,0)},
+ async calcsave(){const g=i=>($("#"+i)||{}).value||"",n=i=>Number(String(g(i)).replace(",","."));const t=g("ce_t").trim();if(t.length<3)return toast("Indique un titre.",true);
+  const d={titre:t,contexte:g("ce_ctx").trim(),niveau:g("ce_n"),rubrique:g("ce_rub"),publie:$("#ce_p").checked,S:n("ce_S"),miscible:g("ce_m")==="1",C:n("ce_C"),Qref:n("ce_Q"),reseau:n("ce_res"),F:n("ce_F"),h:n("ce_h"),o:(ceEd&&ceEd.o)||Date.now()};
+  if(!(d.S>0&&d.C>0&&d.Qref>=0&&d.reseau>=0&&d.h>0))return toast("Vérifie les valeurs numériques.",true);
+  try{const ref=ceEd.id?db.collection("exercicesCalcul").doc(ceEd.id):db.collection("exercicesCalcul").doc();await ref.set(d);toast("Exercice enregistré.");ceEd=null;route="admin";render()}catch(e){toast("Erreur : "+(e.message||e.code),true)}},
+ async calcdup(id){const x=calcOf(id);if(!x)return;const {id:_,...d}=x;try{await db.collection("exercicesCalcul").doc().set({...d,titre:d.titre+" (copie)",publie:false,o:Date.now()});toast("Dupliqué.")}catch(e){toast("Erreur : "+(e.message||e.code),true)}},
+ async calcdel(id){confirmKey=null;try{await db.collection("exercicesCalcul").doc(id).delete();toast("Exercice supprimé.")}catch(e){toast("Erreur : "+(e.message||e.code),true)}render()},
+ async calcseed(){try{await Promise.all(CALC_DEF.map((x,i)=>{const {id,...d}=x;return db.collection("exercicesCalcul").doc(id).set({...d,rubrique:RI,publie:true,o:i+1})}));toast("Exercices importés.")}catch(e){toast("Erreur : "+(e.message||e.code),true)}},
  gdteam(id){gdt=id;render()},gdj(j){gdj=Number(j);render()},
  gtab(k){pcSync();gtab=k;render();scrollTo(0,0)},
  pcnew(){pcEd={id:null,titre:"",description:"",ordre:false,partage:false,scIds:[]};render()},
@@ -942,7 +1076,7 @@ const A={
   try{await db.collection("equipes").doc(to).update({membres:{...(b.membres||{}),[uid]:v}});await db.collection("equipes").doc(tid).update({membres:ma});toast("Membre déplacé vers "+b.nom+".")}catch(e){toast("Erreur : "+(e.message||e.code),true)}},
  async eqrm(k){confirmKey=null;const[tid,uid]=k.split("|"),t=eqs.find(x=>x.id===tid);if(!t)return;const m={...t.membres};delete m[uid];try{await db.collection("equipes").doc(tid).update({membres:m});toast("Membre retiré.")}catch(e){toast("Erreur : "+e.message,true)}},
  async eqjoin(){if(!me)return toast("Crée d'abord ton accès.",true);const c=normCode($("#eqcode").value);const t=eqs.find(x=>x.code===c);if(!c||!t)return toast("Code inconnu.",true);
-  try{await db.collection("equipes").doc(t.id).update({membres:{...(t.membres||{}),[myId]:{nom:me.nom,grade:me.grade||"",cis:me.cis||"",rejoint:Date.now(),maj:Date.now(),bilans:bilanResume(me.bilans)}}});toast("Équipe rejointe.")}catch(e){toast("Erreur : "+(e.message||e.code),true)}},
+  try{await db.collection("equipes").doc(t.id).update({membres:{...(t.membres||{}),[myId]:{nom:me.nom,grade:me.grade||"",cis:me.cis||"",rejoint:Date.now(),maj:Date.now(),bilans:bilanResume(me.bilans),calculs:resumeCalculs(me.calculs)}}});toast("Équipe rejointe.")}catch(e){toast("Erreur : "+(e.message||e.code),true)}},
  eqleave(){confirmKey="eqleave";render()},
  async eqleaveok(){confirmKey=null;const t=myTeam();if(!t)return;const m={...t.membres};delete m[myId];try{await db.collection("equipes").doc(t.id).update({membres:m});toast("Tu as quitté l'équipe.")}catch(e){toast("Erreur : "+e.message,true)}},
  uview(id){uopen=uopen===id?null:id;render()},
@@ -993,6 +1127,7 @@ document.addEventListener("input",e=>{const t=e.target;
  else if(t.id==="tw"){tw=t.value;testQ()}else if(t.id==="tq"){tq=t.value;testQ()}});
 document.addEventListener("change",e=>{const t=e.target;
  if(t.id==="hr"||t.id==="hd"||t.id==="he"){({hr:v=>hr=v,hd:v=>hd=v,he:v=>he=v})[t.id](t.value);render();return}
+ if(t.dataset.cmpsel){calcSync();if(t.dataset.cmpsel==="a")calcA=Number(t.value);else calcB=Number(t.value);render();return}
  if(t.dataset.mv){if(t.value)A.eqmove(t.dataset.mv,t.value);return}
  if(t.dataset.pf&&pf){const k=t.dataset.pf;if(k==="cis"&&t.value==="__autre"){pfAutre=true;pf.cis="";render();return}
   pf[k]=t.value;if(k==="departement"){pf.cis="";pfAutre=false;render()}return}
@@ -1017,6 +1152,7 @@ render();
   db=await c.use("db");const u=await c.use("user");canAdmin=u?await u.canEdit():false;
   if(db)db.collection("scenarios").onSnapshot(s=>{allList=s.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(a.titre||"").localeCompare(b.titre||"","fr"));applyVis();loaded=true;syncLocal();if(route==="home"||route==="admin"||route==="suivi")render()},e=>{scnErr=(e&&e.code)||"erreur";db.collection("scenarios").get().then(q=>{allList=q.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(a.titre||"").localeCompare(b.titre||"","fr"));applyVis();scnErr=""}).catch(()=>{}).finally(()=>{loaded=true;if(route==="home"||route==="admin")render()})});
   else loaded=true;
+  if(db)db.collection("exercicesCalcul").onSnapshot(q=>{calcEx=calcSort(q.docs.map(d=>({id:d.id,...d.data()})));calcSnap=true;if(route==="home"||route==="admin")render()},()=>{calcSnap=true});
   if(db)db.collection("nouveautes").onSnapshot(q=>{nouvDb=q.docs.map(d=>({id:d.id,...d.data()}));if(route==="nouveautes"&&!nouvEd)render()},()=>{});
   if(db&&u){myId=await u.id();
    db.collection("parcours").onSnapshot(q=>{parcours=q.docs.map(d=>({id:d.id,...d.data()}));if(route==="gestion"&&!pcEd)render()},()=>{});

@@ -68,7 +68,8 @@ export const mergeScenario = (d) => {
   };
 };
 
-export const RUBRIQUES = ["Incendie", "Secours à personne", "Secours routier", "Opérations diverses"];
+export const RI = "Risques industriels";
+export const RUBRIQUES = ["Incendie", "Secours à personne", "Secours routier", "Opérations diverses", "Risques industriels"];
 export const rubriquesDe = (list) => {
   const x = [...RUBRIQUES];
   (list || []).forEach((s) => s.rubrique && !x.includes(s.rubrique) && x.push(s.rubrique));
