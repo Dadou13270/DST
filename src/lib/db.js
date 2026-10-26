@@ -22,6 +22,8 @@ const byTitre = (a, b) => (a.titre || "").localeCompare(b.titre || "", "fr");
 export async function listScenarios(onlyPublished, ctx) {
   if (!onlyPublished) {
     const snap = await getDocs(col());
+    // Réparation automatique : les anciens scénarios sans champ reserveA seraient invisibles pour les stagiaires.
+    snap.docs.forEach((d) => { if (!("reserveA" in d.data())) updateDoc(d.ref, { reserveA: null }).catch(() => {}); });
     return snap.docs.map((d) => ({ id: d.id, ...d.data() })).sort(byTitre);
   }
   const base = [where("publie", "==", true)];
