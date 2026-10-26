@@ -253,6 +253,7 @@ export default function Gestion() {
   const [err, setErr] = useState("");
   const [scs, setScs] = useState([]);
   const [pcs, setPcs] = useState([]);
+  const [onglet, setOnglet] = useState("eq");
   const loadPcs = () => listParcours(user.uid, isAdmin).then(setPcs).catch(() => {});
   useEffect(() => { if (user) loadPcs(); }, [user?.uid, isAdmin]); // eslint-disable-line
   useEffect(() => { if (user) listScenarios(true, { uid: user.uid, equipeId: profil?.equipeId }).then(setScs).catch(() => {}); }, [user?.uid]); // eslint-disable-line
@@ -266,10 +267,16 @@ export default function Gestion() {
     setErr("");
     try { await createEquipe(user.uid, profil.nom, nom.trim()); setNom(""); await load(); } catch (x) { setErr(x.message); }
   };
+  const onglets = [["eq", "Équipes"], ["pc", "Parcours pédagogiques"], ["sa", "Séance en salle"], ["dm", "Demande de scénario"]];
   return (
     <Layout>
       <h1>Espace gestionnaire</h1>
-      <form className="card row item" onSubmit={creer}>
+      <div className="tabs" style={{ marginBottom: 14 }}>
+        {onglets.map(([k, l]) => <button key={k} className={onglet === k ? "on" : ""} onClick={() => setOnglet(k)}>{l}</button>)}
+      </div>
+      {onglet === "eq" && (
+        <>
+          <form className="card row item" onSubmit={creer}>
         <input className="grow" placeholder="Nom de la nouvelle équipe (ex. FMPA Chef d'agrès 2026)" value={nom} onChange={(e) => setNom(e.target.value)} required minLength={2} />
         <button className="btn primary">Créer l'équipe</button>
       </form>
@@ -283,9 +290,11 @@ export default function Gestion() {
       {!teams && !err && <p>Chargement…</p>}
       {teams && teams.length === 0 && <div className="card">Aucune équipe. Crée-en une : un code d'accès est généré.</div>}
       {(teams || []).map((t) => <Equipe key={t.id} team={t} autres={teams.filter((x) => x.id !== t.id)} scs={scs} pcs={pcs} onChange={load} />)}
-      <Parcours user={user} profil={profil} isAdmin={isAdmin} scs={scs} pcs={pcs} onChange={loadPcs} />
-      <SalleCard scs={scs} />
-      <DemandeScenario user={user} profil={profil} />
+        </>
+      )}
+      {onglet === "pc" && <Parcours user={user} profil={profil} isAdmin={isAdmin} scs={scs} pcs={pcs} onChange={loadPcs} />}
+      {onglet === "sa" && <SalleCard scs={scs} />}
+      {onglet === "dm" && <DemandeScenario user={user} profil={profil} />}
     </Layout>
   );
 }

@@ -391,7 +391,7 @@ const dvDate=ms=>ms?new Date(ms).toLocaleDateString("fr-FR"):"—";
 const dvMine=()=>{const t=myTeam();return((t&&t.devoirs)||[]).map(d=>({...d,statut:dvStatut(d,me&&me.bilans)})).sort((a,b)=>(a.limite||0)-(b.limite||0))};
 const dvTag=st=>st==="ok"?'<span class="tag ok">Rendu</span>':st==="retard"?'<span class="tag" style="background:#c42a1c;border-color:#c42a1c;color:#fff">En retard</span>':'<span class="tag">À rendre</span>';
 /* ---- parcours (séquences d'exercices assignables à une équipe) ---- */
-let parcours=[],pcEd=null;
+let parcours=[],pcEd=null,gtab="eq";
 const pcAll=()=>parcours.filter(p=>p.owner===myId||p.partage||canAdmin).sort((a,b)=>(a.titre||"").localeCompare(b.titre||"","fr"));
 const pcTitre=id=>{const x=allList.find(y=>y.id===id);return x?x.titre:"(scénario supprimé)"};
 function pcSync(){if(!pcEd)return;const g=i=>document.getElementById(i);if(g("pct"))pcEd.titre=g("pct").value;if(g("pcd"))pcEd.description=g("pcd").value;if(g("pco"))pcEd.ordre=g("pco").checked;if(g("pcp"))pcEd.partage=g("pcp").checked}
@@ -573,7 +573,7 @@ function equipeHtml(){
  return h+`<div class="card intro"><p>Saisis le code d'accès donné par ton gestionnaire.</p><p><input id="eqcode" placeholder="ex. K7M2QX" maxlength="10" style="width:100%;letter-spacing:.15em;text-transform:uppercase"></p><button class="btn pri big" data-act="eqjoin">Rejoindre</button></div>`}
 function gestionHtml(){
  const mine=eqs.filter(t=>t.owner===myId).sort((a,b)=>(a.nom||"").localeCompare(b.nom||"","fr"));
- let h=`<h1>Espace gestionnaire</h1><div class="card row"><input id="eqnom" class="grow" placeholder="Nom de la nouvelle équipe" maxlength="80"><button class="btn pri" data-act="eqnew">Créer l'équipe</button></div>`;
+ let h=`<div class="card row"><input id="eqnom" class="grow" placeholder="Nom de la nouvelle équipe" maxlength="80"><button class="btn pri" data-act="eqnew">Créer l'équipe</button></div>`;
  let dem=`<div class="card form"><h3 style="margin-top:0">Demander un scénario</h3><p class="muted">Décris le scénario souhaité : l'administrateur le prépare puis te l'attribue. Il ne sera visible que par toi et ton équipe.</p><label>Thème</label><input id="rqt" maxlength="100" placeholder="Ex. Feu de véhicule électrique en parking"><label>Rubrique</label><select id="rqr"><option value="">—</option>${allRub().map(r=>`<option>${esc(r)}</option>`).join("")}</select><label>Détails (lieu, enjeux, points à travailler)</label><textarea id="rqd" rows="3" maxlength="800"></textarea>${arHtml()}<div class="row"><button class="btn pri" data-act="rqsend">Envoyer la demande</button></div>${((me&&me.scnReq)||[]).length?`<h4>Mes demandes</h4>`+me.scnReq.slice().reverse().map(r=>`<div class="row between" style="margin:4px 0"><span>${esc(r.titre)} <span class="muted">${dt(r.le)}</span></span><span><span class="tag ${r.statut==="livree"?"ok":""}">${RST[r.statut]||r.statut}</span>${r.scenarioId&&r.statut==="livree"?` <button class="btn" data-act="play" data-arg="${r.scenarioId}">Ouvrir</button>`:""}</span></div>`).join(""):""}</div>`;
  if(!me)h+=`<div class="card warn">Crée d'abord ton profil (Espace stagiaire → Mon suivi) pour apparaître comme gestionnaire.</div>`;
  if(mine.length)h+=`<p class="muted">Tu peux créer plusieurs équipes. Les stagiaires rejoignent avec le code de n'importe laquelle de tes équipes, puis tu les répartis avec « Déplacer vers… ».</p>`;
@@ -584,8 +584,9 @@ function gestionHtml(){
   return `<div class="card"><div class="row between"><div><h2 style="margin:0">${esc(t.nom)}</h2><div class="muted">${m.length} membre(s) · ${tot} exercice(s) terminé(s)</div></div><div class="row"><span class="muted">Code d'accès</span><b style="font-size:1.3rem;letter-spacing:.15em;font-family:monospace">${esc(t.code)}</b><button class="btn" data-act="pdfeq" data-arg="${t.id}">Export PDF</button>${two("rg:"+t.id,"Nouveau code","eqcode",t.id)}${two("ed:"+t.id,"Supprimer l'équipe","eqdel",t.id,"dng")}</div></div>
   ${devoirsHtml(t,m)}
   ${m.length?`<table class="cmp" style="min-width:0;margin-top:10px"><thead><tr><th>Stagiaire</th><th>Terminés</th><th>Temps moyen</th><th>Essentielles</th><th>Dernière synchro</th><th></th></tr></thead><tbody>${m.map(u=>{const st=statsOf(u.bilans||{});return `<tr><td><b>${esc(u.nom||"—")}</b><div class="muted" style="font-size:.82rem">${esc([u.grade,u.cis].filter(Boolean).join(" · "))}</div></td><td>${st.n}</td><td>${st.n?fmt(st.tmoy):"—"}</td><td>${st.ess===null?"—":st.ess+" %"}</td><td>${dt(u.maj||u.rejoint)}</td><td><div class="row">${mine.length>1?`<select data-mv="${t.id}|${u.id}"><option value="">Déplacer vers…</option>${mine.filter(x=>x.id!==t.id).map(x=>`<option value="${x.id}">${esc(x.nom)}</option>`).join("")}</select>`:""}<button class="btn" data-act="eqview" data-arg="${t.id}|${u.id}">${eqo===t.id+"|"+u.id?"Masquer":"Suivi"}</button>${two("rm:"+t.id+"|"+u.id,"Retirer","eqrm",t.id+"|"+u.id,"dng")}</div></td></tr>${eqo===t.id+"|"+u.id?`<tr><td colspan="6">${memDetail(t,u)}</td></tr>`:""}`}).join("")}</tbody></table>`:`<p class="muted">Aucun membre. Donne le code aux stagiaires : ils le saisissent dans « Mon équipe ».</p>`}</div>`}).join("");
- h+=parcoursHtml()+salleGestCard()+dem;
- return h}
+ const tabs=[["eq","Équipes"],["pc","Parcours pédagogiques"],["sa","Séance en salle"],["dm","Demande de scénario"]];
+ const bar=`<div class="tabs" style="margin-bottom:14px">${tabs.map(([k,l])=>`<button data-act="gtab" data-arg="${k}" class="${gtab===k?"on":""}">${l}</button>`).join("")}</div>`;
+ return `<h1>Espace gestionnaire</h1>${bar}${gtab==="pc"?parcoursHtml():gtab==="sa"?salleGestCard():gtab==="dm"?dem:h}`}
 
 /* ---- utilisateurs (admin) ---- */
 function usersHtml(){
@@ -811,6 +812,7 @@ const A={
  sugt(){sugOpen=!sugOpen;render()},
  sug(id){const x=P.sc.qa.find(q=>q.id===id);if(!x||!P.who)return;P.sess.log.push({id:uid(),who:P.who,question:x.intitule,answer:x.reponse,qaId:x.id});sPost(P.who,x.intitule,x.reponse,x.id);saveSess();render()},
  users(){route="users";confirmKey=null;render()},
+ gtab(k){pcSync();gtab=k;render();scrollTo(0,0)},
  pcnew(){pcEd={id:null,titre:"",description:"",ordre:false,partage:false,scIds:[]};render()},
  pcedit(id){const p=parcours.find(x=>x.id===id);if(!p)return;pcEd={id:p.id,titre:p.titre||"",description:p.description||"",ordre:!!p.ordre,partage:!!p.partage,scIds:[...(p.scIds||[])]};render()},
  pccancel(){pcEd=null;render()},
