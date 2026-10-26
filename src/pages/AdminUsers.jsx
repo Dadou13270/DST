@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { listUsers, setStatut, setAdmin, deleteUserProfile, fmtDate, fmtDuree } from "../lib/users";
+import { setGestionnaire } from "../lib/equipes";
 import { useAuth } from "../lib/auth";
 
 const d = (t) => (t?.toDate ? t.toDate().toLocaleString("fr-FR", { dateStyle: "short", timeStyle: "short" }) : "—");
@@ -83,6 +84,8 @@ export default function AdminUsers() {
             <div>
               <strong>{u.nom || "—"}</strong>{" "}
               {u.admin && <span className="tag ok">Admin</span>}{" "}
+              {u.gestionnaire && <span className="tag ok">Gestionnaire</span>}{" "}
+              {u.equipeNom && <span className="tag">Équipe : {u.equipeNom}</span>}{" "}
               {susp && <span className="tag">Suspendu</span>} {moi && <span className="tag">Moi</span>}
               <div className="muted">{u.email}</div>
               <small className="muted" style={{ marginLeft: 0 }}>
@@ -111,6 +114,8 @@ export default function AdminUsers() {
                   susp ? "Compte réactivé." : "Compte suspendu.")}
                 {two(`ad:${u.id}`, u.admin ? "Retirer admin" : "Passer admin", () => setAdmin(u.id, !u.admin),
                   u.admin ? "Droits admin retirés." : "Compte promu administrateur.")}
+                {two(`ge:${u.id}`, u.gestionnaire ? "Retirer gestionnaire" : "Passer gestionnaire", () => setGestionnaire(u.id, !u.gestionnaire),
+                  u.gestionnaire ? "Rôle gestionnaire retiré." : "Compte promu gestionnaire.")}
                 {two(`pw:${u.id}`, "Réinit. mot de passe", () => resetPassword(u.email), "E-mail de réinitialisation envoyé.")}
                 {two(`del:${u.id}`, "Supprimer", () => deleteUserProfile(u.id), "Profil supprimé.", "danger")}
               </div>

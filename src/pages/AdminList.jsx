@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import Dominantes from "../components/Dominantes";
 import { Link, useNavigate } from "react-router-dom";
 import { listScenarios, deleteScenario, duplicateScenario, saveScenario } from "../lib/db";
 
@@ -7,6 +8,7 @@ export default function AdminList() {
   const [list, setList] = useState(null);
   const [err, setErr] = useState("");
   const [info, setInfo] = useState("");
+  const [rub, setRub] = useState("all");
 
   // Import de fichiers JSON (dossier seeds/) : un fichier = un scénario, ignoré s'il existe déjà (même titre).
   const importer = async (e) => {
@@ -56,6 +58,10 @@ export default function AdminList() {
     refresh();
   };
 
+  const rubs = [...new Set((list || []).map((x) => x.rubrique || "Sans rubrique"))].sort((a, b) => a.localeCompare(b, "fr"));
+  const rubOk = rub === "all" || rubs.includes(rub) ? rub : "all";
+  const shown = (list || []).filter((x) => rubOk === "all" || (x.rubrique || "Sans rubrique") === rubOk);
+
   return (
     <>
       <div className="row between">
@@ -75,13 +81,29 @@ export default function AdminList() {
       {!list && !err && <p>Chargement…</p>}
       {list && list.length === 0 && <div className="card">Aucun scénario. Crée le premier.</div>}
 
-      {(list || []).map((s) => (
+      {list && list.length > 0 && (
+        <div className="row" style={{ margin: "8px 0" }}>
+          <label htmlFor="admrub" className="muted">Rubrique</label>
+          <select id="admrub" value={rubOk} onChange={(e) => setRub(e.target.value)}>
+            <option value="all">Toutes ({list.length})</option>
+            {rubs.map((r) => (
+              <option key={r} value={r}>{r} ({list.filter((x) => (x.rubrique || "Sans rubrique") === r).length})</option>
+            ))}
+          </select>
+        </div>
+      )}
+
+      {shown.map((s) => (
         <div className="card row between item" key={s.id}>
           <div className="row">
             {s.vignette ? <img className="thumb" src={s.vignette} alt="" /> : <div className="thumb ph" />}
             <div>
-              <strong>{s.titre}</strong>{" "}
-              <span className={s.publie ? "tag ok" : "tag"}>{s.publie ? "Publié" : "Brouillon"}</span>
+              <strong>{s.titre}</strong>
+              <div className="meta">
+                <span className={"st " + (s.publie ? "ok" : "br")}>● {s.publie ? "Publié" : "Brouillon"}</span>
+                <span><span className="muted">Rubrique :</span> <b>{s.rubrique || "—"}</b></span>
+                {s.reserveA && <span className="muted">Réservé</span>}
+              </div>
               <div className="muted">
                 {(s.interlocuteurs || []).length} interlocuteur(s) · {(s.qa || []).length} réponse(s)
               </div>
@@ -93,6 +115,7 @@ export default function AdminList() {
             <button className="btn" onClick={() => dup(s)}>Dupliquer</button>
             <button className="btn danger" onClick={() => del(s)}>Supprimer</button>
           </div>
+          {(s.evolutif || (s.dominantes || []).length > 0) && <div className="bdg"><Dominantes s={s} evo /></div>}
         </div>
       ))}
     </>

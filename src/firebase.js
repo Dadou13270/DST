@@ -1,8 +1,9 @@
 import { initializeApp } from "firebase/app";
-import { getFirestore } from "firebase/firestore";
+import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
+import { initializeAppCheck, ReCaptchaV3Provider } from "firebase/app-check";
 
-const cfg = {
+export const cfg = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
   authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
   projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
@@ -14,5 +15,13 @@ const cfg = {
 export const configured = Boolean(cfg.apiKey && cfg.projectId);
 
 const app = configured ? initializeApp(cfg) : null;
-export const db = app ? getFirestore(app) : null;
+// Cache local persistant : les scénarios déjà consultés restent disponibles hors ligne.
+export const db = app
+  ? initializeFirestore(app, { localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }) })
+  : null;
 export const auth = app ? getAuth(app) : null;
+
+// Protection serveur optionnelle (Firebase App Check + reCAPTCHA v3) : active seulement si la clé est renseignée dans .env.
+if (app && import.meta.env.VITE_RECAPTCHA_SITE_KEY) {
+  initializeAppCheck(app, { provider: new ReCaptchaV3Provider(import.meta.env.VITE_RECAPTCHA_SITE_KEY), isTokenAutoRefreshEnabled: true });
+}

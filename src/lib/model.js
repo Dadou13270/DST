@@ -17,13 +17,27 @@ Actions en cours :
 Je demande :
 `;
 
+export const CUB = [["1","Victimes, enjeux humains"],["2","Construction"],["3","Public et résidents"],["4","Surfaces, hauteurs, forme de la zone sinistrée"],["5","Moyens de secours du site"],["6","Ressources en eau"],["7","Conditions météorologiques"],["8","Accès, circulation, affluence"],["9","Personnels et moyens"],["10","Localisation et développement du feu"],["11","Risques particuliers et surprises"]];
+// État de la reconnaissance cubique : une ligne par rubrique, "ok" si au moins une question rattachée a été posée
+export const cubStat = (sc, asked) =>
+  CUB.map(([c, l]) => {
+    const q = sc.qa.filter((x) => x.cub === c);
+    return { c, l, q, ok: q.some((x) => asked.has(x.id)) };
+  });
+
 export const newScenario = () => ({
   titre: "",
   description: "",
   rubrique: "",
+  dominantes: [],
+  evolutif: false,
+  evolutions: [],
+  suggestions: true,
   duree: 0,
   publie: false,
   afficherCorrection: true,
+  cubique: false,
+  reserveA: null, // uid du gestionnaire à qui le scénario est réservé (null = public)
   vignette: null,
   situation: {
     contexte: "",
@@ -39,7 +53,7 @@ export const newScenario = () => ({
     },
   ],
   qa: [],
-  correction: { S: "", O: "", I: "", E: "", C: "", message: "", commentaire: "" },
+  correction: { S: "", O: "", I: "", E: "", C: "", message: "", commentaire: "", cubique: "" },
 });
 
 export const mergeScenario = (d) => {

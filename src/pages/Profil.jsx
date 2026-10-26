@@ -1,0 +1,140 @@
+import { useState } from "react";
+import { Link } from "react-router-dom";
+import { doc, updateDoc, deleteField } from "firebase/firestore";
+import { EmailAuthProvider, reauthenticateWithCredential, updatePassword, verifyBeforeUpdateEmail } from "firebase/auth";
+import { db, auth } from "../firebase";
+import Layout from "../components/Layout";
+import { StagiaireNav } from "./Home";
+import { useAuth } from "../lib/auth";
+import { GRADES, DEPARTEMENTS, CIS_PAR_DEPT } from "../lib/referentiels";
+
+const ERR = {
+  "auth/wrong-password": "Mot de passe actuel incorrect.",
+  "auth/invalid-credential": "Mot de passe actuel incorrect.",
+  "auth/weak-password": "Nouveau mot de passe trop court (6 caractères minimum).",
+  "auth/invalid-email": "Adresse e-mail invalide.",
+  "auth/email-already-in-use": "Cette adresse est déjà utilisée.",
+  "auth/too-many-requests": "Trop de tentatives, réessaie plus tard.",
+  "auth/requires-recent-login": "Reconnecte-toi puis réessaie.",
+};
+const d = (t) => (t?.toDate ? t.toDate().toLocaleString("fr-FR", { dateStyle: "short", timeStyle: "short" }) : "—");
+
+export default function Profil() {
+  const { user, profil, isAdmin, refreshProfil } = useAuth();
+  const [f, setF] = useState({
+    nom: profil?.nom || "", grade: profil?.grade || "", departement: profil?.departement || "", cis: profil?.cis || "",
+  });
+  const [autre, setAutre] = useState(() => Boolean(profil?.cis && !(CIS_PAR_DEPT[profil?.departement] || []).includes(profil.cis)));
+  const [msg, setMsg] = useState("");
+  const [err, setErr] = useState("");
+  const [cx, setCx] = useState({ actuel: "", email: "", nouveau: "", confirm: "" });
+  const [cmsg, setCmsg] = useState("");
+  const [cerr, setCerr] = useState("");
+  const setC = (k) => (e) => setCx({ ...cx, [k]: e.target.value });
+  const reauth = () => reauthenticateWithCredential(auth.currentUser, EmailAuthProvider.credential(auth.currentUser.email, cx.actuel));
+  const changeEmail = async (e) => {
+    e.preventDefault(); setCerr(""); setCmsg("");
+    try {
+      await reauth();
+      await verifyBeforeUpdateEmail(auth.currentUser, cx.email.trim());
+      setCmsg("Un lien de confirmation a été envoyé à la nouvelle adresse. L'e-mail changera après avoir cliqué dessus (reconnecte-toi ensuite).");
+      setCx({ ...cx, actuel: "", email: "" });
+    } catch (x) { setCerr(ERR[x.code] || x.message); }
+  };
+  const changePwd = async (e) => {
+    e.preventDefault(); setCerr(""); setCmsg("");
+    if (cx.nouveau !== cx.confirm) return setCerr("Les mots de passe ne correspondent pas.");
+    try {
+      await reauth();
+      await updatePassword(auth.currentUser, cx.nouveau);
+      if (profil?.mdpProvisoire) { await updateDoc(doc(db, "users", user.uid), { mdpProvisoire: deleteField() }).catch(() => {}); await refreshProfil(); }
+      setCmsg("Mot de passe modifié.");
+      setCx({ actuel: "", email: "", nouveau: "", confirm: "" });
+    } catch (x) { setCerr(ERR[x.code] || x.message); }
+  };
+  const liste = CIS_PAR_DEPT[f.departement] || [];
+  const set = (k) => (e) => setF({ ...f, [k]: e.target.value });
+
+  const save = async (e) => {
+    e.preventDefault();
+    setErr(""); setMsg("");
+    if (f.nom.trim().length < 2) return setErr("Indique ton nom.");
+    try {
+      await updateDoc(doc(db, "users", user.uid), { nom: f.nom.trim(), grade: f.grade, departement: f.departement, cis: f.cis.trim() });
+      await refreshProfil();
+      setMsg("Profil enregistré.");
+    } catch (x) { setErr(x.message); }
+  };
+
+  return (
+    <Layout>
+      <StagiaireNav />
+      <h1>Mon profil</h1>
+      {profil?.mdpProvisoire && <div className="card alerte"><strong>Mot de passe provisoire.</strong> Il t'a été fourni par ton gestionnaire : change-le dans la section « Connexion » ci-dessous.</div>}
+      <form className="card form" onSubmit={save} style={{ maxWidth: 640 }}>
+        <h3>Inscription</h3>
+        <label>Nom / prénom</label>
+        <input value={f.nom} onChange={set("nom")} required />
+        <label>E-mail</label>
+        <input value={user?.email || profil?.email || ""} disabled />
+        <p className="muted">Inscrit : {d(profil?.creeLe)} · Dernière connexion : {d(profil?.derniereConnexion)}</p>
+        <p>
+          <strong>Rôle :</strong>{" "}
+          {isAdmin && <span className="tag ok">Administrateur</span>}{" "}
+          {profil?.gestionnaire && <span className="tag ok">Gestionnaire</span>}{" "}
+          <span className="tag">Stagiaire</span>
+          {profil?.equipeNom && <span className="muted"> · équipe {profil.equipeNom}</span>}
+        </p>
+        <h3>Informations complémentaires</h3>
+        <label>Grade</label>
+        <select value={f.grade} onChange={set("grade")}><option value="">— Choisir —</option>{GRADES.map((g) => <option key={g}>{g}</option>)}</select>
+        <label>Département</label>
+        <select value={f.departement} onChange={(e) => { setF({ ...f, departement: e.target.value, cis: "" }); setAutre(false); }}>
+          <option value="">— Choisir —</option>{DEPARTEMENTS.map((x) => <option key={x}>{x}</option>)}
+        </select>
+        <label>CIS (centre d'incendie et de secours)</label>
+        {liste.length > 0 && !autre ? (
+          <select value={f.cis} onChange={(e) => (e.target.value === "__autre" ? (setAutre(true), setF({ ...f, cis: "" })) : set("cis")(e))}>
+            <option value="">— Choisir —</option>{liste.map((x) => <option key={x}>{x}</option>)}<option value="__autre">Autre (saisir)…</option>
+          </select>
+        ) : (
+          <input value={f.cis} onChange={set("cis")} placeholder="Nom du CIS" />
+        )}
+        {err && <p className="err">{err}</p>}
+        {msg && <p className="ok-txt">{msg}</p>}
+        <button className="btn primary big">Enregistrer</button>
+      </form>
+      <div className="card form" style={{ maxWidth: 640 }}>
+        <h3>Connexion</h3>
+        <p className="muted">E-mail actuel : <strong>{user?.email}</strong>. Le mot de passe actuel est demandé pour toute modification.</p>
+        <label>Mot de passe actuel</label>
+        <input type="password" autoComplete="current-password" value={cx.actuel} onChange={setC("actuel")} />
+        <form onSubmit={changeEmail}>
+          <label>Nouvel e-mail</label>
+          <input type="email" value={cx.email} onChange={setC("email")} required />
+          <button className="btn" style={{ marginTop: 8 }} disabled={!cx.actuel}>Changer l'e-mail</button>
+        </form>
+        <form onSubmit={changePwd}>
+          <label>Nouveau mot de passe</label>
+          <input type="password" autoComplete="new-password" value={cx.nouveau} onChange={setC("nouveau")} required minLength={6} />
+          <label>Confirmer le nouveau mot de passe</label>
+          <input type="password" autoComplete="new-password" value={cx.confirm} onChange={setC("confirm")} required minLength={6} />
+          <button className="btn" style={{ marginTop: 8 }} disabled={!cx.actuel}>Changer le mot de passe</button>
+        </form>
+        {cerr && <p className="err">{cerr}</p>}
+        {cmsg && <p className="ok-txt">{cmsg}</p>}
+      </div>
+      <div className="card row between item" style={{ maxWidth: 640 }}>
+        <div>
+          <h3 style={{ margin: 0 }}>Affectation</h3>
+          {profil?.equipeId ? (
+            <p style={{ margin: "6px 0 0" }}>Équipe : <strong>{profil.equipeNom}</strong><br />Gestionnaire : <strong>{profil.equipeGest || "—"}</strong></p>
+          ) : (
+            <p className="muted" style={{ margin: "6px 0 0" }}>Aucune équipe.</p>
+          )}
+        </div>
+        <Link className="btn" to="/equipe">{profil?.equipeId ? "Gérer" : "Rejoindre une équipe"}</Link>
+      </div>
+    </Layout>
+  );
+}

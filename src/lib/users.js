@@ -1,5 +1,7 @@
+import { essentielles, nbQuestions } from "./evolutif";
 import { db } from "../firebase";
 import { collection, doc, getDocs, setDoc, updateDoc, deleteDoc } from "firebase/firestore";
+import { cubStat } from "./model";
 
 export async function listUsers() {
   const [u, a] = await Promise.all([getDocs(collection(db, "users")), getDocs(collection(db, "admins"))]);
@@ -20,22 +22,23 @@ export const fmtDuree = (s) => `${String(Math.floor(s / 60)).padStart(2, "0")}:$
 
 // Résultat d'un exercice terminé, stocké dans users/{uid}.bilans[scenarioId]
 export function buildBilan(sc, sess, ancien) {
-  const ess = sc.qa.filter((x) => x.essentielle);
+  const ess = essentielles(sc, sess);
   const asked = new Set(sess.log.map((l) => l.qaId));
   return {
     titre: sc.titre,
     fin: sess.finishedAt,
     duree: Math.floor((sess.finishedAt - sess.start) / 1000),
-    nbQ: sess.log.length,
+    nbQ: nbQuestions(sess),
     essTot: ess.length,
     essOk: ess.filter((x) => asked.has(x.id)).length,
+    ...(sc.cubique ? (() => { const c = cubStat(sc, asked).filter((r) => r.q.length); return { cubTot: c.length, cubOk: c.filter((r) => r.ok).length }; })() : {}),
     nb: (ancien?.nb || (ancien ? 1 : 0)) + 1,
-    log: sess.log.map((l) => ({ who: l.who, question: l.question, answer: l.answer, qaId: l.qaId || null })),
+    log: sess.log.filter((l) => !l.sys).map((l) => ({ who: l.who, question: l.question, answer: l.answer, qaId: l.qaId || null })),
     notes: sess.notes,
   };
 }
 export const saveBilan = (uid, bilans, id, bilan) =>
-  updateDoc(doc(db, "users", uid), { bilans: JSON.parse(JSON.stringify({ ...(bilans || {}), [id]: bilan })) });
+  setDoc(doc(db, "users", uid), { bilans: JSON.parse(JSON.stringify({ ...(bilans || {}), [id]: bilan })) }, { merge: true });
 
 export function statsOf(bilans) {
   const a = Object.values(bilans || {});

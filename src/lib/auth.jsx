@@ -34,7 +34,8 @@ export function AuthProvider({ children }) {
       const ref = doc(db, "users", u.uid);
       const s = await getDoc(ref);
       if (s.exists()) {
-        setProfil({ id: u.uid, ...s.data() });
+        setProfil({ id: u.uid, ...s.data(), email: u.email });
+        if (s.data().email !== u.email) updateDoc(ref, { email: u.email }).catch(() => {}); // e-mail modifié dans le profil
         updateDoc(ref, { derniereConnexion: serverTimestamp() }).catch(() => {});
       } else {
         // compte antérieur à la page d'inscription (ex. admin créé à la main)

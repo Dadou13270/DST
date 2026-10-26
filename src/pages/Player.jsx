@@ -1,16 +1,23 @@
 import { useEffect, useRef, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useSearchParams } from "react-router-dom";
 import Layout from "../components/Layout";
-import { getScenario, getPhoto } from "../lib/db";
+import { getScenario, getPhoto, getSituationPhotos } from "../lib/db";
 import { findAnswer } from "../lib/matching";
-import { SOIEC, MESSAGE_MODELE, uid } from "../lib/model";
+import { evoList, qaActives, essentielles as essentielles_, nbQuestions } from "../lib/evolutif";
+import { SOIEC, MESSAGE_MODELE, uid, CUB, cubStat } from "../lib/model";
 import { useAuth } from "../lib/auth";
+import { db } from "../firebase";
+import { doc, updateDoc, deleteField } from "firebase/firestore";
+import Dominantes from "../components/Dominantes";
+import SalleChat from "../components/SalleChat";
+import { posterQuestion, watchSalle } from "../lib/salles";
 import { buildBilan, saveBilan } from "../lib/users";
 
 const emptySession = () => ({
   start: null,
   finishedAt: null,
   finished: false,
+  evo: {},
   log: [],
   notes: { S: "", O: "", I: "", E: "", C: "", message: "" },
 });
@@ -36,14 +43,39 @@ const fmt = (s) => {
   return `${s < 0 ? "-" : ""}${String(Math.floor(a / 60)).padStart(2, "0")}:${String(a % 60).padStart(2, "0")}`;
 };
 
+function SalleBanner({ code }) {
+  const [r, setR] = useState(undefined);
+  useEffect(() => watchSalle(code, setR), [code]);
+  return (
+    <>
+      <div className="card" style={{ background: "var(--soft)" }}>
+        <strong>Séance en salle {code}</strong> — {r && r.ouverte === false ? "séance clôturée par le formateur." : "le formateur voit tes questions en direct."}
+      </div>
+      <SalleChat code={code} role="stagiaire" />
+    </>
+  );
+}
+
 export default function Player() {
   const { id } = useParams();
-  const key = `soiec-session-${id}`;
+  const [sp] = useSearchParams();
+  const salle = sp.get("salle") || "";
+  const key = salle ? `soiec-session-${id}-s${salle}` : `soiec-session-${id}`;
   const [sc, setSc] = useState(null);
   const [photo, setPhoto] = useState(null);
+  const [sitPhotos, setSitPhotos] = useState([]);
+  const [sz, setSz] = useState(-1);
   const [err, setErr] = useState("");
+  const [saveMsg, setSaveMsg] = useState("");
   const { user, profil, isAdmin, refreshProfil } = useAuth();
-  const [sess, setSess] = useState(() => load(key) || bilanSession(profil?.bilans?.[id]) || emptySession());
+  const [sess, setSess] = useState(() => {
+    const loc = load(key);
+    const cl = salle ? null : profil?.encours?.[id];
+    // reprise sur un autre appareil : on garde la version la plus récente
+    if (cl && (!loc || (cl.maj || 0) > (loc.maj || 0))) return { ...emptySession(), ...cl, finished: false, finishedAt: null };
+    return loc || (salle ? null : bilanSession(profil?.bilans?.[id])) || emptySession();
+  });
+  const [sugOpen, setSugOpen] = useState(true);
   const [tab, setTab] = useState("questions");
   const [who, setWho] = useState(null);
   const [q, setQ] = useState("");
@@ -59,19 +91,58 @@ export default function Player() {
         setSc(s);
         setWho(s.interlocuteurs[0]?.id || null);
         setPhoto(await getPhoto(id));
+        const sp = await getSituationPhotos(id);
+        setSitPhotos(sp.length ? sp : s.situation.photos || []); // repli : photos intégrées au scénario (import de seeds)
       } catch (e) {
         setErr("Erreur de chargement : " + e.message);
       }
     })();
   }, [id]);
 
-  useEffect(() => save(key, sess), [key, sess]);
+  const premier = useRef(true);
+  useEffect(() => {
+    const maj = Date.now();
+    save(key, { ...sess, maj });
+    if (premier.current) {
+      premier.current = false;
+      return;
+    }
+    if (!user || !db || salle) return;
+    const t = setTimeout(() => {
+      const val =
+        !sess.start || sess.finished
+          ? deleteField()
+          : { start: sess.start, maj, evo: sess.evo || {}, log: sess.log.map((l) => ({ id: l.id, who: l.who, question: l.question, answer: l.answer, qaId: l.qaId || null, sys: !!l.sys })), notes: sess.notes };
+      updateDoc(doc(db, "users", user.uid), { [`encours.${id}`]: val }).catch(() => {});
+    }, 2500);
+    return () => clearTimeout(t);
+  }, [key, sess]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (!sess.start || sess.finished) return;
     const t = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(t);
   }, [sess.start, sess.finished]);
+
+  const [alerteId, setAlerteId] = useState(null);
+  const alerte = sc?.evolutif && alerteId ? (sc.evolutions || []).find((x) => x.id === alerteId) : null;
+  useEffect(() => {
+    if (!sc?.evolutif || !sess.start || sess.finished) return;
+    const min = (now - sess.start) / 60000;
+    const dues = evoList(sc).filter((x) => !(sess.evo || {})[x.id] && min >= (Number(x.delai) || 0));
+    if (!dues.length) return;
+    setSess((s) => {
+      const evo = { ...(s.evo || {}) };
+      const log = [...s.log];
+      dues.forEach((x) => {
+        if (evo[x.id]) return;
+        evo[x.id] = Date.now();
+        log.push({ id: uid(), who: "__evo", question: "⚠ " + (x.titre || "Évolution de la situation"), answer: x.message || "", sys: true, qaId: null });
+      });
+      return { ...s, evo, log };
+    });
+    setAlerteId(dues[dues.length - 1].id);
+  }, [now, sc, sess.start, sess.finished]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (chatRef.current) chatRef.current.scrollTop = chatRef.current.scrollHeight;
@@ -100,14 +171,25 @@ export default function Player() {
     const text = q.trim();
     if (!text || !who) return;
     const inter = sc.interlocuteurs.find((i) => i.id === who);
-    const qa = findAnswer(text, sc.qa, who);
+    const qa = findAnswer(text, qaActives(sc, sess), who);
     const answer = qa ? qa.reponse : inter.reponseDefaut || "Je n'ai pas d'information à ce sujet.";
     setSess((s) => ({
       ...s,
       log: [...s.log, { id: uid(), who, question: text, answer, qaId: qa ? qa.id : null }],
     }));
+    if (salle) posterQuestion(salle, user.uid, profil?.nom, who, inter.nom, text, answer, qa ? qa.id : null);
     setQ("");
   };
+
+  const poserSuggestion = (x) => {
+    if (salle) posterQuestion(salle, user.uid, profil?.nom, who, sc.interlocuteurs.find((i) => i.id === who)?.nom || "", x.intitule, x.reponse, x.id);
+    setSess((s) => ({ ...s, log: [...s.log, { id: uid(), who, question: x.intitule, answer: x.reponse, qaId: x.id }] }));
+  };
+  const suggestions = (() => {
+    if (!sc || sc.suggestions === false || !who) return [];
+    const asked = new Set(sess.log.map((l) => l.qaId));
+    return qaActives(sc, sess).filter((x) => (x.interlocuteurId === who || x.interlocuteurId === "tous") && x.intitule?.trim() && !asked.has(x.id));
+  })();
 
   const restart = () => {
     if (window.confirm("Recommencer l'exercice à zéro ?")) setSess(emptySession());
@@ -120,6 +202,8 @@ export default function Player() {
         <div className="card intro">
           <h1>{sc.titre}</h1>
           <p>{sc.description}</p>
+          <Dominantes s={sc} />
+          {sc.evolutif && <p className="muted">Scénario évolutif : la situation changera pendant l'exercice, des informations te seront transmises.</p>}
           <p className="consigne">{sc.situation.consigne}</p>
           {sc.duree > 0 && <p className="muted">Durée conseillée : {sc.duree} min</p>}
           <button className="btn primary big" onClick={() => setSess({ ...emptySession(), start: Date.now() })}>
@@ -131,7 +215,7 @@ export default function Player() {
 
   /* ---------- Correction ---------- */
   if (sess.finished) {
-    const essentielles = sc.qa.filter((x) => x.essentielle);
+    const essentielles = essentielles_(sc, sess);
     const asked = new Set(sess.log.map((l) => l.qaId));
     const rows = [...SOIEC.map((r) => ({ label: `${r.k} – ${r.titre}`, mine: sess.notes[r.k], ref: sc.correction[r.k] })),
       { label: "Message", mine: sess.notes.message, ref: sc.correction.message }];
@@ -145,7 +229,8 @@ export default function Player() {
           </div>
         </div>
         <p className="muted">
-          Temps : {fmt(elapsed)} · {sess.log.length} question(s) posée(s)
+          Temps : {fmt(elapsed)} · {nbQuestions(sess)} question(s) posée(s){sc.evolutif && ` · ${Object.keys(sess.evo || {}).length}/${(sc.evolutions || []).length} évolution(s) vue(s)`}
+          {saveMsg && <span className="err"> — {saveMsg}</span>}
         </p>
 
         {sc.afficherCorrection && essentielles.length > 0 && (
@@ -156,9 +241,33 @@ export default function Player() {
                 <li key={x.id} className={asked.has(x.id) ? "yes" : "no"}>
                   {asked.has(x.id) ? "✓" : "✗"} {x.intitule || x.motsCles}{" "}
                   <span className="muted">({x.interlocuteurId === "tous" ? "tous" : interName(x.interlocuteurId)})</span>
+                  {!asked.has(x.id) && x.reponse && (
+                    <div className="reponse-oubliee"><strong>Réponse :</strong> {x.reponse}</div>
+                  )}
                 </li>
               ))}
             </ul>
+          </div>
+        )}
+
+        {sc.afficherCorrection && sc.cubique && (
+          <div className="card">
+            <h3>Reconnaissance cubique</h3>
+            <ul className="checks">
+              {cubStat(sc, asked).map((r) =>
+                r.q.length ? (
+                  <li key={r.c} className={r.ok ? "yes" : "no"}>
+                    {r.ok ? "✓" : "✗"} {r.c}. {r.l}
+                    {!r.ok && r.q.filter((x) => x.reponse).map((x) => (
+                      <div key={x.id} className="reponse-oubliee"><strong>{x.intitule}</strong> {x.reponse}</div>
+                    ))}
+                  </li>
+                ) : (
+                  <li key={r.c}>• {r.c}. {r.l} <span className="muted">(à apprécier, voir synthèse)</span></li>
+                )
+              )}
+            </ul>
+            {sc.correction.cubique && <p className="pre"><strong>Synthèse attendue</strong>{"\n"}{sc.correction.cubique}</p>}
           </div>
         )}
 
@@ -205,6 +314,14 @@ export default function Player() {
         </>
       }
     >
+      {salle && <SalleBanner code={salle} />}
+      {alerte && (
+        <div className="card" style={{ border: "2px solid #c4161c", background: "var(--soft)" }}>
+          <strong>⚠ Évolution de la situation{alerte.titre ? ` : ${alerte.titre}` : ""}</strong>
+          <p className="pre" style={{ margin: "6px 0" }}>{alerte.message}</p>
+          <button className="btn primary" onClick={() => setAlerteId(null)}>Compris</button>
+        </div>
+      )}
       <div className="play">
         <section className="left card">
           <h2>{sc.titre}</h2>
@@ -217,6 +334,27 @@ export default function Player() {
             <>
               <h3>Situation initiale</h3>
               <p className="pre">{sc.situation.contexte}</p>
+            </>
+          )}
+          {sitPhotos.length > 0 && (
+            <>
+              <h3>Sur les lieux</h3>
+              <div className="grid" style={{ gridTemplateColumns: sz >= 0 ? "100%" : "repeat(auto-fill,minmax(180px,1fr))" }}>
+                {sitPhotos.map((p, i) =>
+                  sz >= 0 && sz !== i ? null : (
+                    <figure key={p.id || i} style={{ margin: 0 }}>
+                      <img
+                        className={sz === i ? "photo zoom" : "photo"}
+                        style={sz === i ? undefined : { height: 120, objectFit: "cover" }}
+                        src={p.data}
+                        alt="Situation à l'arrivée"
+                        onClick={() => setSz(sz === i ? -1 : i)}
+                      />
+                      {p.legende && <figcaption className="muted">{p.legende}</figcaption>}
+                    </figure>
+                  )
+                )}
+              </div>
             </>
           )}
           <p className="consigne">{sc.situation.consigne}</p>
@@ -244,7 +382,12 @@ export default function Player() {
                 {sess.log.length === 0 && (
                   <p className="muted">Choisis un interlocuteur, puis pose ta question (requérant, témoin, badaud…).</p>
                 )}
-                {sess.log.map((l) => (
+                {sess.log.map((l) => l.sys ? (
+                  <div key={l.id} className="card" style={{ margin: "8px 0", borderColor: "#c4161c" }}>
+                    <strong>{l.question}</strong>
+                    <div className="pre">{l.answer}</div>
+                  </div>
+                ) : (
                   <div key={l.id}>
                     <div className="bubble me">
                       <small>Vous → {interName(l.who)}</small>
@@ -257,6 +400,12 @@ export default function Player() {
                   </div>
                 ))}
               </div>
+              {sc.cubique && (
+                <details className="card" style={{ margin: "8px 0" }}>
+                  <summary><b>Aide-mémoire : reconnaissance cubique</b></summary>
+                  <ol style={{ margin: "6px 0 0 18px" }}>{CUB.map(([c, l]) => <li key={c} value={c}>{l}</li>)}</ol>
+                </details>
+              )}
               <form className="ask" onSubmit={ask}>
                 <input
                   value={q}
@@ -265,6 +414,24 @@ export default function Player() {
                 />
                 <button className="btn primary">Demander</button>
               </form>
+              {sc.suggestions !== false && who && (
+                <div style={{ marginTop: 10 }}>
+                  <div className="row between">
+                    <strong>Questions suggérées à {interName(who)}</strong>
+                    <button type="button" className="btn" onClick={() => setSugOpen(!sugOpen)}>{sugOpen ? "Masquer" : "Afficher"}</button>
+                  </div>
+                  {sugOpen &&
+                    (suggestions.length ? (
+                      <div className="chips" style={{ marginTop: 6 }}>
+                        {suggestions.map((x) => (
+                          <button key={x.id} type="button" className="chip" onClick={() => poserSuggestion(x)}>{x.intitule}</button>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="muted" style={{ margin: "6px 0 0" }}>Plus de question suggérée pour cet interlocuteur. Pose tes propres questions.</p>
+                    ))}
+                </div>
+              )}
             </div>
           )}
 
@@ -302,10 +469,10 @@ export default function Player() {
                 if (!window.confirm("Terminer l'exercice ?")) return;
                 const fin = { ...sess, finished: true, finishedAt: Date.now() };
                 setSess(fin);
-                if (user && !isAdmin)
+                if (user)
                   saveBilan(user.uid, profil?.bilans, id, buildBilan(sc, fin, profil?.bilans?.[id]))
                     .then(refreshProfil)
-                    .catch((e) => setErr("Résultat non enregistré : " + e.message));
+                    .catch((e) => setSaveMsg("Ton résultat n'a pas pu être enregistré dans ton suivi (" + (e.code || e.message) + "). L'exercice est bien terminé."));
               }}
             >
               Terminer l'exercice
