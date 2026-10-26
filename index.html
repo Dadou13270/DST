@@ -6,10 +6,29 @@
     <meta name="theme-color" content="#c42a1c" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap" />
-    <title>Devoir sur table simulateur</title>
+    <title>Op'Training</title>
   </head>
   <body>
     <div id="root"></div>
+    <!-- Déclaration statique du formulaire pour Netlify Forms -->
+    <form name="contact" netlify netlify-honeypot="bot-field" hidden>
+      <input name="nom" /><input name="email" /><input name="objet" /><textarea name="message"></textarea><input name="bot-field" />
+    </form>
+    <form name="demande-gestionnaire" netlify netlify-honeypot="bot-field" hidden>
+      <input name="nom" /><input name="email" /><input name="objet" /><input name="fonction" /><input name="centre" /><input name="public" /><textarea name="message"></textarea><input name="bot-field" />
+    </form>
+    <form name="demande-scenario-contact" netlify netlify-honeypot="bot-field" hidden>
+      <input name="nom" /><input name="email" /><input name="objet" /><textarea name="message"></textarea><input name="bot-field" />
+    </form>
+    <form name="ticket" netlify netlify-honeypot="bot-field" hidden>
+      <input name="evenement" /><input name="ticket" /><input name="nom" /><input name="email" /><input name="objet" /><input name="sujet" /><textarea name="message"></textarea><input name="bot-field" />
+    </form>
+    <form name="avis" netlify netlify-honeypot="bot-field" hidden>
+      <input name="type" /><input name="note" /><input name="nom" /><input name="email" /><textarea name="message"></textarea><input name="bot-field" />
+    </form>
+    <form name="demande-scenario" netlify netlify-honeypot="bot-field" hidden>
+      <input name="gestionnaire" /><input name="theme" /><input name="rubrique" /><textarea name="details"></textarea><input name="bot-field" />
+    </form>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
