@@ -31,7 +31,7 @@ export default function AdminTickets() {
           <button className="btn primary" onClick={() => setOuvert(t.id)}>Répondre</button>
         </div>
       ))}
-      {courant && <TicketDialog ticket={courant} role="admin" nom="Équipe Op'Training" onClose={() => setOuvert(null)} />}
+      {courant && <TicketDialog ticket={courant} role="admin" nom="Équipe OPS Training" onClose={() => setOuvert(null)} />}
     </>
   );
 }

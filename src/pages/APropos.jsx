@@ -8,7 +8,7 @@ export default function APropos() {
       <h1>À propos</h1>
       <div className="card">
         <h2>Qui est derrière cette application ?</h2>
-        <p>« Op'Training » a été réalisée par un <strong>sapeur-pompier formateur incendie</strong>, à partir de son expérience du terrain et de la formation.</p>
+        <p>« OPS Training » a été réalisée par un <strong>sapeur-pompier formateur incendie</strong>, à partir de son expérience du terrain et de la formation.</p>
       </div>
       <div className="card">
         <h2>Pourquoi ?</h2>

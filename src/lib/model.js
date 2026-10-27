@@ -17,6 +17,13 @@ export const SMES = [
   { k: "mt", titre: "Sécurité", aide: "Risques pour les intervenants et les victimes, périmètre, mesures de sécurité, EPI." },
 ];
 
+export const CRM = [
+  { k: "crs", titre: "Je suis", aide: "Qui je suis, où je suis, ma position et mes moyens." },
+  { k: "crv", titre: "Je vois", aide: "Ce que j'observe : la situation, les victimes, les risques, l'évolution." },
+  { k: "crf", titre: "Je fais", aide: "Les actions engagées et celles que je vais engager." },
+  { k: "crd", titre: "Je demande", aide: "Les moyens, renforts ou renseignements dont j'ai besoin." },
+];
+
 export const MESSAGE_MODELE = `ICI [indicatif], MESSAGE D'AMBIANCE
 Arrivé sur les lieux de :
 Situation :
@@ -62,7 +69,7 @@ export const newScenario = () => ({
   ],
   qa: [],
   variantes: [],
-  correction: { S: "", O: "", I: "", E: "", C: "", ms: "", mm: "", me: "", mt: "", message: "", commentaire: "", cubique: "" },
+  correction: { S: "", O: "", I: "", E: "", C: "", ms: "", mm: "", me: "", mt: "", crs: "", crv: "", crf: "", crd: "", message: "", commentaire: "", cubique: "" },
 });
 
 export const mergeScenario = (d) => {

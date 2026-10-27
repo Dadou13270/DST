@@ -4,7 +4,7 @@ import Layout from "../components/Layout";
 import { getScenario, getPhoto, getSituationPhotos } from "../lib/db";
 import { findAnswer } from "../lib/matching";
 import { evoList, qaActives, essentielles as essentielles_, nbQuestions } from "../lib/evolutif";
-import { SOIEC, SMES, MESSAGE_MODELE, uid, CUB, cubStat } from "../lib/model";
+import { SOIEC, SMES, CRM, MESSAGE_MODELE, uid, CUB, cubStat } from "../lib/model";
 import { useAuth } from "../lib/auth";
 import { db } from "../firebase";
 import { doc, updateDoc, deleteField } from "firebase/firestore";
@@ -21,7 +21,7 @@ const emptySession = () => ({
   finished: false,
   evo: {},
   log: [],
-  notes: { S: "", O: "", I: "", E: "", C: "", ms: "", mm: "", me: "", mt: "", message: "" },
+  notes: { S: "", O: "", I: "", E: "", C: "", ms: "", mm: "", me: "", mt: "", message: "", crs: "", crv: "", crf: "", crd: "" },
 });
 const load = (k) => {
   try {
@@ -275,7 +275,8 @@ export default function Player() {
     const essentielles = essentielles_(sc, sess);
     const asked = new Set(sess.log.map((l) => l.qaId));
     const rows = [...(sc.smes ? SMES.map((r) => ({ label: `SMES – ${r.titre}`, mine: sess.notes[r.k], ref: sc.correction[r.k] })) : []), ...SOIEC.map((r) => ({ label: `${r.k} – ${r.titre}`, mine: sess.notes[r.k], ref: sc.correction[r.k] })),
-      { label: "Message", mine: sess.notes.message, ref: sc.correction.message }];
+      { label: "Message d'ambiance", mine: sess.notes.message, ref: sc.correction.message },
+      ...CRM.map((r) => ({ label: `Compte rendu – ${r.titre}`, mine: sess.notes[r.k], ref: sc.correction[r.k] }))];
     return (
       <Layout wide right={<Link to="/">Scénarios</Link>}>
         <div className="row between">
@@ -500,7 +501,7 @@ export default function Player() {
           )}
 
           <div className="ptabs" role="tablist">
-            {[...(sc.smes ? SMES.map((r) => [r.k, `SMES · ${r.titre}`]) : []), ...SOIEC.map((r) => [r.k, `${r.k} · ${r.titre}`]), ["message", "Message"]].map(([k, l]) => (
+            {[...(sc.smes ? SMES.map((r) => [r.k, `SMES · ${r.titre}`]) : []), ...SOIEC.map((r) => [r.k, `${r.k} · ${r.titre}`]), ["message", "Message d'ambiance"], ["cr", "Compte rendu"]].map(([k, l]) => (
               <button key={k} role="tab" className={tab === k ? "on" : ""} onClick={() => setTab(k)}>{l}</button>
             ))}
           </div>
@@ -511,9 +512,21 @@ export default function Player() {
               <textarea rows={5} value={sess.notes[r.k] || ""} onChange={(e) => setNote(r.k, e.target.value)} />
             </div>
           ))}
+          {tab === "cr" && (
+            <div className="note">
+              <div className="nk"><span className="kk">✉</span>Message de compte rendu</div>
+              <p className="nh">Complète les quatre rubriques : je suis, je vois, je fais, je demande.</p>
+              {CRM.map((r) => (
+                <div key={r.k}>
+                  <label style={{ display: "block", marginTop: 8 }}><strong>{r.titre}</strong> <span className="muted">{r.aide}</span></label>
+                  <textarea rows={3} value={sess.notes[r.k] || ""} onChange={(e) => setNote(r.k, e.target.value)} />
+                </div>
+              ))}
+            </div>
+          )}
           {tab === "message" && (
             <div className="note">
-              <div className="nk"><span className="kk">✉</span>Message d'ambiance / de renseignements</div>
+              <div className="nk"><span className="kk">✉</span>Message d'ambiance</div>
               <textarea rows={9} value={sess.notes.message} onChange={(e) => setNote("message", e.target.value)} />
               {!sess.notes.message && (
                 <button className="btn" onClick={() => setNote("message", MESSAGE_MODELE)}>

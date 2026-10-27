@@ -8,7 +8,7 @@ async function nouveau(titre, sousTitre) {
   const autoTable = [at.default, at.default?.default, at.autoTable].find((f) => typeof f === "function");
   const doc = new jsPDF({ unit: "mm", format: "a4" });
   doc.setFillColor(196, 42, 28); doc.rect(0, 0, 210, 18, "F");
-  doc.setTextColor(255); doc.setFontSize(14); doc.text("Op'Training", 14, 12);
+  doc.setTextColor(255); doc.setFontSize(14); doc.text("OPS Training", 14, 12);
   doc.setTextColor(30); doc.setFontSize(16); doc.text(titre, 14, 30);
   doc.setFontSize(10); doc.setTextColor(100); doc.text(`${sousTitre} · édité le ${dateJour()}`, 14, 37);
   doc.setTextColor(30);

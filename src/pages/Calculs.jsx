@@ -1,3 +1,4 @@
+import { calcImg } from "../lib/calculImages";
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { doc, updateDoc } from "firebase/firestore";
@@ -101,6 +102,7 @@ export function CalculExercice() {
     <Layout>
       <StagiaireNav />
       <div className="row between"><h1>{ex.titre}</h1><Link to="/"><button className="btn">Retour</button></Link></div>
+      {calcImg(ex) && <img src={calcImg(ex)} alt="Illustration de l'exercice" style={{ width: "100%", maxHeight: 260, objectFit: "cover", borderRadius: 10, marginBottom: 12 }} />}
       <div className="tabs" style={{ marginBottom: 12 }}>
         <button className={tab === "ex" ? "on" : ""} onClick={() => setTab("ex")}>Exercice</button>
         <button className={tab === "memo" ? "on" : ""} onClick={() => setTab("memo")}>Fiche mémo</button>

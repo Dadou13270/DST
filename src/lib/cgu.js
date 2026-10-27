@@ -3,7 +3,7 @@ export const CGU_MAJ = "24 octobre 2026";
 export const CGU = [
  [
   "1. Objet",
-  "« Op'Training » est un outil de formation destiné aux sapeurs-pompiers. Il permet de s'entraîner aux devoirs sur table (méthode SOIEC) à partir de scénarios illustrés, et de suivre sa progression. Les présentes conditions encadrent l'utilisation de l'application."
+  "« OPS Training » est un outil de formation destiné aux sapeurs-pompiers. Il permet de s'entraîner aux devoirs sur table (méthode SOIEC) à partir de scénarios illustrés, et de suivre sa progression. Les présentes conditions encadrent l'utilisation de l'application."
  ],
  [
   "2. Caractère pédagogique",

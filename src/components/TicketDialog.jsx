@@ -23,7 +23,7 @@ export default function TicketDialog({ ticket, role, nom, onClose }) {
     const t = txt.trim();
     if (!t) return;
     setTxt("");
-    try { await repondre(ticket, role, role === "admin" ? "Équipe Op'Training" : nom, t); } catch (x) { setErr(x.message); }
+    try { await repondre(ticket, role, role === "admin" ? "Équipe OPS Training" : nom, t); } catch (x) { setErr(x.message); }
   };
   const st = async (s) => { try { await setStatut(ticket, role, s); } catch (x) { setErr(x.message); } };
 

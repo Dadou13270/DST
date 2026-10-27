@@ -5,6 +5,7 @@ import { getScenario, getPhoto, getSituationPhotos } from "../lib/db";
 import { watchSalle } from "../lib/salles";
 
 // Écran de projection (plein écran, sans menu) : photo, situation et, à la demande, la correction
+const CRM_LIB = [["crs", "Je suis"], ["crv", "Je vois"], ["crf", "Je fais"], ["crd", "Je demande"]];
 const SMES_LIB = { ms: "Situation", mm: "Mission", me: "Exécution", mt: "Sécurité" };
 export default function SalleProjection() {
   const { code } = useParams();
@@ -59,7 +60,8 @@ export default function SalleProjection() {
         <div className="card" style={{ fontSize: "1.1rem" }}>
           <h2>Correction</h2>
           {[...(sc.smes ? ["ms", "mm", "me", "mt"] : []), "S", "O", "I", "E", "C"].map((k) => c[k] && <p className="pre" key={k}><strong>{SMES_LIB[k] ? "SMES · " + SMES_LIB[k] : k}</strong> — {c[k]}</p>)}
-          {c.message && <><h3>Message de renseignements</h3><p className="pre">{c.message}</p></>}
+          {c.message && <><h3>Message d'ambiance</h3><p className="pre">{c.message}</p></>}
+          {CRM_LIB.some(([k]) => c[k]) && <><h3>Message de compte rendu</h3>{CRM_LIB.map(([k, l]) => c[k] && <p className="pre" key={k}><strong>{l}</strong> — {c[k]}</p>)}</>}
           {c.commentaire && <><h3>Points de vigilance</h3><p className="pre">{c.commentaire}</p></>}
           {sc.cubique && c.cubique && <><h3>Reconnaissance cubique</h3><p className="pre">{c.cubique}</p></>}
         </div>

@@ -1,3 +1,4 @@
+import { calcImg } from "../lib/calculImages";
 import { useEffect, useState } from "react";
 import { rubriquesDe } from "../lib/model";
 import { listCalculs, deleteCalcul, dupCalcul, seedCalculs } from "../lib/calculs";
@@ -11,6 +12,7 @@ export default function AdminList() {
   const [err, setErr] = useState("");
   const [info, setInfo] = useState("");
   const [rub, setRub] = useState("all");
+  const [rech, setRech] = useState("");
   const [calcEx, setCalcEx] = useState(null);
   const refreshCalc = () => listCalculs(true).then(setCalcEx).catch(() => setCalcEx([]));
   useEffect(() => { refreshCalc(); }, []);
@@ -47,6 +49,7 @@ export default function AdminList() {
               if (d.situation?.contexte) patch["situation.contexte"] = d.situation.contexte;
             }
             if (ex.cubique === undefined && d.cubique !== undefined) patch.cubique = d.cubique;
+            if (!patch.correction) for (const k of ["crs", "crv", "crf", "crd"]) if (!ex.correction?.[k] && d.correction?.[k]) patch["correction." + k] = d.correction[k];
           }
           if (Object.keys(patch).length) { await updateScenarioChamps(ex.id, patch); maj++; } else ignores++;
           continue;
@@ -86,7 +89,10 @@ export default function AdminList() {
   const nRub = (r) => (list || []).filter((x) => (x.rubrique || "Sans rubrique") === r).length + ce.filter((x) => (x.rubrique || "Sans rubrique") === r).length;
   const rubs = [...new Set([...(list || []).map((x) => x.rubrique || "Sans rubrique"), ...ce.map((x) => x.rubrique || "Sans rubrique")])].sort((a, b) => a.localeCompare(b, "fr"));
   const rubOk = rub === "all" || rubs.includes(rub) ? rub : "all";
-  const shown = (list || []).filter((x) => rubOk === "all" || (x.rubrique || "Sans rubrique") === rubOk);
+  const nq = (t) => String(t || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  const mots = nq(rech).trim().split(/\s+/).filter(Boolean);
+  const qok = (x) => !mots.length || mots.every((w) => nq([x.titre, x.description, x.rubrique, (x.dominantes || []).join(" "), x.niveau].join(" ")).includes(w));
+  const shown = (list || []).filter((x) => qok(x) && (rubOk === "all" || (x.rubrique || "Sans rubrique") === rubOk));
 
   return (
     <>
@@ -110,6 +116,7 @@ export default function AdminList() {
 
       {list && (
         <div className="row" style={{ margin: "8px 0" }}>
+          <input type="search" className="grow" placeholder="Rechercher un scénario (titre, rubrique, dominante…)" value={rech} onChange={(e) => setRech(e.target.value)} autoComplete="off" />
           <label htmlFor="admrub" className="muted">Rubrique</label>
           <select id="admrub" value={rubOk} onChange={(e) => setRub(e.target.value)}>
             <option value="all">Toutes ({list.length + ce.length})</option>
@@ -123,10 +130,11 @@ export default function AdminList() {
       {calcEx && calcEx.length === 0 && (
         <div className="card">Aucun exercice de calcul. <button className="btn" onClick={() => seedCalculs().then(refreshCalc)}>Importer les 6 exercices de calcul LIF</button></div>
       )}
-      {list && ce.filter((x) => rubOk === "all" || (x.rubrique || "Sans rubrique") === rubOk).map((ex) => (
+      {list && mots.length > 0 && shown.length === 0 && !ce.some(qok) && <div className="card muted">Aucun résultat pour « {rech} ». <button className="btn" onClick={() => setRech("")}>Effacer la recherche</button></div>}
+      {list && ce.filter((x) => qok(x) && (rubOk === "all" || (x.rubrique || "Sans rubrique") === rubOk)).map((ex) => (
         <div className="card row between item" key={ex.id}>
           <div className="row">
-            <div className="thumb ph" style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>🧮</div>
+            {calcImg(ex) ? <img className="thumb" src={calcImg(ex)} alt="" /> : <div className="thumb ph" style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>🧮</div>}
             <div>
               <strong>{ex.titre}</strong>
               <div className="meta">

@@ -4,7 +4,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { getScenario, getPhoto, getSituationPhotos, saveScenario } from "../lib/db";
 import { compressImage } from "../lib/image";
 import { findAnswer } from "../lib/matching";
-import { newScenario, uid, SOIEC, SMES, TOUS, CUB, rubriquesDe } from "../lib/model";
+import { newScenario, uid, SOIEC, SMES, CRM, TOUS, CUB, rubriquesDe } from "../lib/model";
 import { listScenarios } from "../lib/db";
 import { varAutoOn, tirer } from "../lib/variantes";
 import BanqueQuestions from "../components/BanqueQuestions";
@@ -20,7 +20,8 @@ const TABS = [
   ["qa", "Questions / réponses"],
   ["smes", "Correction SMES"],
   ["corr", "Correction SOIEC"],
-  ["msgm", "Message modèle"],
+  ["msgm", "Message d'ambiance"],
+  ["crm", "Message de compte rendu"],
   ["comm", "Commentaire du formateur"],
 ];
 
@@ -723,8 +724,19 @@ export default function AdminEditor() {
 
       {tab === "msgm" && (
         <div className="card form">
-          <label><b>Message modèle</b> (message d'ambiance / de renseignements)</label>
+          <label><b>Message d'ambiance</b> – message modèle (ambiance / renseignements)</label>
           <textarea rows={9} value={s.correction.message} onChange={(e) => upd((n) => (n.correction.message = e.target.value))} />
+        </div>
+      )}
+
+      {tab === "crm" && (
+        <div className="card form">
+          {CRM.map((r) => (
+            <div key={r.k}>
+              <label><b>{r.titre}</b> <small className="muted">{r.aide}</small></label>
+              <textarea rows={3} value={s.correction[r.k] || ""} onChange={(e) => upd((n) => (n.correction[r.k] = e.target.value))} />
+            </div>
+          ))}
         </div>
       )}
 

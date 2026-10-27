@@ -9,8 +9,8 @@ export default defineConfig({
       registerType: "autoUpdate",
       includeAssets: ["icon-192.png", "icon-512.png"],
       manifest: {
-        name: "Op'Training",
-        short_name: "Op'Training",
+        name: "OPS Training",
+        short_name: "OPS Training",
         description: "Simulation de devoirs sur table SOIEC pour sapeurs-pompiers",
         lang: "fr",
         theme_color: "#c42a1c",

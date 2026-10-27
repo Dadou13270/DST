@@ -1,3 +1,4 @@
+import { calcImg } from "../lib/calculImages";
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import Dominantes from "../components/Dominantes";
@@ -136,7 +137,7 @@ export default function Home() {
                 const l = essaisDe(ex.id), last = l[l.length - 1];
                 return (
                   <Link key={ex.id} to={`/calculs/${ex.id}`} className="card scn">
-                    <div className="ph" style={{ display: "flex", alignItems: "center", justifyContent: "center", fontSize: "2rem" }}>🧮</div>
+                    {calcImg(ex) ? <img src={calcImg(ex)} alt="" loading="lazy" /> : <div className="ph" style={{ display: "flex", alignItems: "center", justifyContent: "center", fontSize: "2rem" }}>🧮</div>}
                     <div className="scn-body">
                       <h3>{ex.titre}</h3>
                       <p className="muted">{ex.contexte}</p>

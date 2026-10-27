@@ -38,7 +38,7 @@ export default function Layout({ children, extra }) {
   return (
     <>
       <header className={"top" + (menu ? " open" : "") + (extra ? " nc" : "")}>
-        <Link to="/" className="brand"><Logo size={36} />Op'Training</Link>
+        <Link to="/" className="brand"><Logo size={36} />OPS Training</Link>
         <button className="burger" aria-label="Menu" aria-expanded={menu} onClick={() => setMenu((v) => !v)}>☰</button>
         <nav>
           {extra}
@@ -77,7 +77,7 @@ export default function Layout({ children, extra }) {
         <div className="fin">
           <div className="fbrand">
             <Logo size={52} />
-            <b>Op'Training</b>
+            <b>OPS Training</b>
             <span>Simulateur opérationnel collaboratif</span>
           </div>
           <div>
@@ -111,7 +111,7 @@ export default function Layout({ children, extra }) {
             </ul>
           </div>
         </div>
-        <div className="fcopy">© {new Date().getFullYear()} Op'Training — Tous droits réservés · <Link to="/cgu">CGU</Link></div>
+        <div className="fcopy">© {new Date().getFullYear()} OPS Training — Tous droits réservés · <Link to="/cgu">CGU</Link></div>
       </footer>
       {avisOpen && <AvisModal onClose={() => setAvisOpen(false)} />}
     </>

@@ -17,7 +17,7 @@ export const deleteNouveaute = (id) => deleteDoc(doc(db, "nouveautes", id));
 export const NOUVEAUTES_INIT = [
   {"d": "2026-10-26", "t": "Parcours d'exercices", "l": ["Espace gestionnaire : crée des parcours (ex. « FMPA chef d'agrès ») en regroupant plusieurs exercices dans un ordre précis.", "Assigne un parcours à une équipe en une fois, avec une date limite ; retire-le aussi en un clic.", "Les stagiaires voient leur progression (ex. 4/8) et la prochaine étape si l'ordre est imposé.", "Les parcours peuvent être partagés ou dupliqués entre gestionnaires."]},
   {"d": "2026-10-25", "t": "Support : tickets avec réponse en direct", "l": ["Nouveau lien « Support » dans le pied de page : ouvre un ticket (objet, sujet, message).", "Les réponses de l'équipe arrivent en direct dans une boîte de dialogue, avec le statut du ticket (ouvert, en cours, résolu).", "Espace admin : onglet « Tickets » pour répondre, changer le statut ou supprimer."]},
-  {"d": "2026-10-25", "t": "Nouveau nom : Op'Training", "l": ["L'application devient Op'Training : bandeau, pied de page, exports PDF, page « À propos » et conditions d'utilisation."]},
+  {"d": "2026-10-25", "t": "Nouveau nom : OPS Training", "l": ["L'application devient OPS Training : bandeau, pied de page, exports PDF, page « À propos » et conditions d'utilisation."]},
   {
     "d": "2026-10-25",
     "t": "Page « À propos » et blocs d'exercices repensés",

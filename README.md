@@ -1,4 +1,4 @@
-# Op'Training — pompiers (SOIEC)
+# OPS Training — pompiers (SOIEC)
 
 React + Vite + Firebase (Firestore + Auth). Déploiement Netlify.
 
