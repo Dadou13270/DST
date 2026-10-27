@@ -2,6 +2,9 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { listCalculs, saveCalcul, attendu, CALC_Q } from "../lib/calculs";
 import { RUBRIQUES } from "../lib/model";
+import { compressImage } from "../lib/image";
+import { calcImg } from "../lib/calculImages";
+import { listIllustrations } from "../lib/illustrations";
 
 const VIDE = { titre: "", contexte: "", niveau: "Initiation", rubrique: "Risques industriels", publie: false, S: 100, miscible: false, C: 3, Qref: 1000, reseau: 3000, F: 7, h: 0.15 };
 const NIV = ["Initiation", "Intermédiaire", "Avancé"];
@@ -12,6 +15,8 @@ export default function AdminCalcul() {
   const nav = useNavigate();
   const [e, setE] = useState(id === "nouveau" ? VIDE : null);
   const [err, setErr] = useState("");
+  const [libOpen, setLibOpen] = useState(false);
+  const [lib, setLib] = useState(null);
   useEffect(() => {
     if (id !== "nouveau") listCalculs(true).then((l) => setE(l.find((x) => x.id === id) || VIDE));
   }, [id]);
@@ -26,6 +31,17 @@ export default function AdminCalcul() {
     if (!(e.S > 0 && e.C > 0 && e.Qref >= 0 && e.reseau >= 0 && e.h > 0)) return setErr("Vérifie les valeurs numériques.");
     try { await saveCalcul(id === "nouveau" ? "" : id, { ...e, titre: e.titre.trim() }); nav("/admin"); } catch (x) { setErr(x.message); }
   };
+  const importerImage = async (ev) => {
+    const f = ev.target.files?.[0];
+    ev.target.value = "";
+    if (!f) return;
+    try { set("image", await compressImage(f, 900, 0.82, 380000)); setErr(""); } catch (x) { setErr(x.message || "Image illisible"); }
+  };
+  const ouvrirLib = () => {
+    setLibOpen(!libOpen);
+    if (!lib) listIllustrations().then(setLib).catch((x) => setErr(x.message));
+  };
+  const im = calcImg(e);
   const att = id !== "nouveau" ? attendu(e) : null;
   return (
     <>
@@ -38,6 +54,33 @@ export default function AdminCalcul() {
           <div><label>Rubrique</label><select value={e.rubrique || ""} onChange={(ev) => set("rubrique", ev.target.value)}><option value="">— Aucune —</option>{RUBRIQUES.map((r) => <option key={r}>{r}</option>)}</select></div>
           <label className="ck"><input type="checkbox" checked={!!e.publie} onChange={(ev) => set("publie", ev.target.checked)} /> Publié (visible des stagiaires)</label>
         </div>
+        <h3>Illustration</h3>
+        <div className="row" style={{ alignItems: "flex-start" }}>
+          {im ? <img src={im} alt="" style={{ width: 220, maxWidth: "100%", borderRadius: 8 }} /> : <div className="ph" style={{ width: 220, height: 120, fontSize: "2rem", borderRadius: 8 }}>🧮</div>}
+          <div className="grow">
+            <p className="muted" style={{ marginTop: 0 }}>Importe une image depuis ton ordinateur ou choisis-en une dans la bibliothèque d'illustrations. Elle est redimensionnée automatiquement.</p>
+            <div className="row">
+              <label className="btn" style={{ cursor: "pointer" }}>Importer une image<input type="file" accept="image/*" hidden onChange={importerImage} /></label>
+              <button type="button" className="btn" onClick={ouvrirLib}>{libOpen ? "Fermer la bibliothèque" : "Bibliothèque d'illustrations"}</button>
+              {im && <button type="button" className="btn danger" onClick={() => set("image", "")}>Retirer l'image</button>}
+            </div>
+          </div>
+        </div>
+        {libOpen && (
+          <div className="card" style={{ background: "var(--soft)" }}>
+            {!lib && <p>Chargement…</p>}
+            {lib && lib.length === 0 && <p className="muted">Bibliothèque vide.</p>}
+            <div className="grid" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))" }}>
+              {(lib || []).map((i) => (
+                <div className="card" key={i.id} style={{ padding: 6, margin: 0 }}>
+                  <img src={i.vignette || i.photo} alt="" style={{ width: "100%", height: 90, objectFit: "cover", borderRadius: 6, cursor: "pointer" }} onClick={() => { set("image", i.photo || i.vignette); setLibOpen(false); }} />
+                  <div style={{ fontSize: ".82rem", margin: "4px 0" }}>{i.titre}</div>
+                  <button type="button" className="btn" style={{ padding: "2px 8px" }} onClick={() => { set("image", i.photo || i.vignette); setLibOpen(false); }}>Utiliser</button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
         <h3>Données de l'exercice</h3>
         <div className="row">
           {num("S", "Surface en feu S (m²)")}
