@@ -5,11 +5,55 @@ import SalleChat from "../components/SalleChat";
 import { FriseSvg, FRISE_COL, frMmss } from "../components/Frise";
 import { useAuth } from "../lib/auth";
 import { getScenario } from "../lib/db";
-import { watchSalle, watchQuestions, watchParticipants, setOuverte, supprimerSalle, etatSalle, libEtat, fmtDebut, setDebut, debutDepuisInput, inputDepuisDebut } from "../lib/salles";
+import { watchSalle, watchQuestions, watchParticipants, watchMessages, envoyerEvenement, setChrono, chronoReste, setOuverte, supprimerSalle, etatSalle, libEtat, fmtDebut, setDebut, debutDepuisInput, inputDepuisDebut } from "../lib/salles";
 
 const hhmm = (t) => new Date(t).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
 
 // Tableau de bord du formateur : participants, couverture des questions essentielles, flux en direct
+// Chrono commun de la séance (affiché chez tous les stagiaires)
+function ChronoCard({ code, chrono, duree, act }) {
+  const [now, setNow] = useState(Date.now());
+  const [min, setMin] = useState(duree || 15);
+  const [conf, setConf] = useState(false);
+  useEffect(() => { const t = setInterval(() => setNow(Date.now()), 1000); return () => clearInterval(t); }, []);
+  if (!chrono)
+    return (
+      <div className="card">
+        <h3 style={{ marginTop: 0 }}>Chrono de la séance</h3>
+        <p className="muted" style={{ margin: "0 0 6px" }}>Un chrono commun, affiché chez tous les stagiaires. À la fin du temps, vous pouvez terminer l'exercice pour tous.</p>
+        <div className="row">
+          <input type="number" min={1} max={240} value={min} onChange={(e) => setMin(e.target.value)} style={{ width: 90 }} /> <span className="muted">minutes</span>
+          <button className="btn primary" onClick={act(() => setChrono(code, { duree: Math.max(1, Math.min(240, Number(min) || 15)) * 60, t0: Date.now(), pausedAt: null, fin: null }))}>Démarrer le chrono</button>
+        </div>
+      </div>
+    );
+  const rem = chronoReste(chrono, now);
+  const cls = rem < 0 ? " late" : rem <= Math.max(30, chrono.duree * 0.1) ? " danger" : rem <= Math.max(60, chrono.duree * 0.25) ? " warn" : "";
+  const fmt = (s) => `${s < 0 ? "-" : ""}${String(Math.floor(Math.abs(s) / 60)).padStart(2, "0")}:${String(Math.abs(s) % 60).padStart(2, "0")}`;
+  return (
+    <div className="card">
+      <h3 style={{ marginTop: 0 }}>Chrono de la séance</h3>
+      <div className="row between">
+        <span className={"timer" + cls}>{chrono.fin ? "■ " : chrono.pausedAt ? "⏸ " : ""}{fmt(rem)}</span>
+        <div className="row">
+          {chrono.fin ? <span className="tag">Terminé pour tous</span> : (
+            <>
+              {chrono.pausedAt
+                ? <button className="btn primary" onClick={act(() => setChrono(code, { ...chrono, t0: chrono.t0 + (Date.now() - chrono.pausedAt), pausedAt: null }))}>▶ Reprendre</button>
+                : <button className="btn" onClick={act(() => setChrono(code, { ...chrono, pausedAt: Date.now() }))}>⏸ Pause</button>}
+              <button className="btn" onClick={act(() => setChrono(code, { ...chrono, duree: chrono.duree + 300 }))}>+ 5 min</button>
+              {conf
+                ? <button className="btn danger" onClick={act(async () => { await setChrono(code, { ...chrono, pausedAt: null, fin: Date.now() }); setConf(false); })}>Confirmer : terminer pour tous</button>
+                : <button className="btn danger" onClick={() => setConf(true)}>Terminer pour tous</button>}
+            </>
+          )}
+          <button className="btn" onClick={act(() => setChrono(code, null))}>Réinitialiser</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function Salle() {
   const { code } = useParams();
   const { user, isAdmin, profil } = useAuth();
@@ -22,11 +66,18 @@ export default function Salle() {
   const [conf, setConf] = useState(false);
   const [err, setErr] = useState("");
   const [deb, setDeb] = useState(null);
+  const [evts, setEvts] = useState([]);
+  const [feT, setFeT] = useState("");
+  const [feM, setFeM] = useState("");
+  const [feC, setFeC] = useState("all");
+  const [repId, setRepId] = useState(null);
+  const [repT, setRepT] = useState("");
+  const [codeGrand, setCodeGrand] = useState(false);
   const [, tick] = useState(0);
   useEffect(() => { const t = setInterval(() => tick((n) => n + 1), 15000); return () => clearInterval(t); }, []);
 
   useEffect(() => {
-    const u = [watchSalle(code, setSalle), watchQuestions(code, setQs), watchParticipants(code, setPs)];
+    const u = [watchSalle(code, setSalle), watchQuestions(code, setQs), watchParticipants(code, setPs), watchMessages(code, (l) => setEvts(l.filter((m) => m.kind)))];
     return () => u.forEach((f) => f && f());
   }, [code]);
   useEffect(() => { if (salle?.scId) getScenario(salle.scId).then(setSc).catch(() => {}); }, [salle?.scId]);
@@ -43,10 +94,13 @@ export default function Salle() {
   const feed = qs.filter((x) => filt === "all" || x.uid === filt);
   const interNom = (id) => (sc?.interlocuteurs || []).find((i) => i.id === id)?.nom || "";
   const ferme = salle.ouverte === false;
+  const compact = etatSalle(salle) === "open" && (ps.length > 0 || !!salle.chrono) && !codeGrand;
+  const prevues = (sc?.evolutions || []).slice().sort((a, b) => (Number(a.delai) || 0) - (Number(b.delai) || 0));
+  const envoyer = (d) => envoyerEvenement(code, user.uid, profil?.nom || "Formateur", { kind: "evo", texte: "", ...d });
   const act = (f) => async () => { setErr(""); try { await f(); } catch (e) { setErr(e.message); } };
 
   return (
-    <Layout>
+    <Layout wide>
       <div className="row between">
         <h1>Séance en salle</h1>
         <div className="row">
@@ -59,7 +113,14 @@ export default function Salle() {
         </div>
       </div>
       {err && <div className="card warn">Erreur : {err}</div>}
+      {compact ? (
+        <div className="card row between" style={{ padding: "8px 14px" }}>
+          <span><span className="muted">Salle</span> <strong style={{ fontSize: "1.5rem", letterSpacing: ".2em" }}>{salle.code}</strong> · <strong>{salle.titre}</strong> <span className="tag ok">{libEtat[etatSalle(salle)]}</span></span>
+          <span className="row"><span className="muted">{ps.length} stagiaire(s) · {qs.length} question(s)</span><button className="btn" onClick={() => setCodeGrand(true)}>Agrandir le code</button></span>
+        </div>
+      ) : (
       <div className="card" style={{ textAlign: "center" }}>
+        {codeGrand && etatSalle(salle) === "open" && <div className="row" style={{ justifyContent: "flex-end" }}><button className="btn" onClick={() => setCodeGrand(false)}>Réduire</button></div>}
         <div className="muted">Code de la salle</div>
         <div style={{ fontSize: "3.2rem", fontWeight: 800, letterSpacing: ".3em" }}>{salle.code}</div>
         <div><strong>{salle.titre}</strong> <span className={etatSalle(salle) === "open" ? "tag ok" : "tag"}>{libEtat[etatSalle(salle)]}</span></div>
@@ -71,7 +132,37 @@ export default function Salle() {
         </div>
         <p className="muted" style={{ margin: "6px 0 0" }}>{ps.length} stagiaire(s) connecté(s) · {qs.length} question(s) posée(s)</p>
       </div>
+      )}
+      <div className="sgrid"><div className="scol">
+      <ChronoCard code={code} chrono={salle.chrono} duree={sc?.duree} act={act} />
       <SalleChat code={code} role="formateur" />
+      <div className="card">
+        <h3 style={{ marginTop: 0 }}>Faire évoluer la séance</h3>
+        {prevues.length === 0 ? <p className="muted" style={{ margin: "0 0 6px" }}>Aucune évolution prévue dans ce scénario.</p> : (
+          <>
+            <p className="muted" style={{ margin: "0 0 6px" }}>Évolutions prévues (elles tombent aussi seules à l'heure prévue) :</p>
+            {prevues.map((e) => (
+              <div key={e.id} className="row between" style={{ margin: "4px 0" }}>
+                <span><strong>{e.titre || "Évolution"}</strong> <span className="muted">T+{Number(e.delai) || 0} min</span></span>
+                {evts.some((m) => m.evoId === e.id) ? <span className="tag ok">Envoyée</span> : <button className="btn" onClick={act(() => envoyer({ evoId: e.id, cible: "all" }))}>Déclencher maintenant</button>}
+              </div>
+            ))}
+          </>
+        )}
+        <div style={{ borderTop: "1px solid var(--line, #ddd)", marginTop: 8, paddingTop: 8 }}>
+          <strong>Message d'évolution libre</strong>
+          <input maxLength={80} placeholder="Titre (ex. Le vent tourne)" value={feT} onChange={(e) => setFeT(e.target.value)} style={{ width: "100%", margin: "6px 0" }} />
+          <textarea rows={2} maxLength={400} placeholder="Message affiché en bandeau aux stagiaires…" value={feM} onChange={(e) => setFeM(e.target.value)} style={{ width: "100%" }} />
+          <div className="row" style={{ marginTop: 6 }}>
+            <select value={feC} onChange={(e) => setFeC(e.target.value)}>
+              <option value="all">À toute la salle</option>
+              {ps.map((u) => <option key={u.uid || u.id} value={u.uid || u.id}>{u.nom || "Stagiaire"}</option>)}
+            </select>
+            <button className="btn primary" disabled={!feT.trim() && !feM.trim()} onClick={act(async () => { await envoyer({ cible: feC, titre: feT.trim().slice(0, 80), texte: feM.trim().slice(0, 400) }); setFeT(""); setFeM(""); })}>Envoyer l'évolution</button>
+          </div>
+        </div>
+      </div>
+      </div><div className="scol">
       <div className="card">
         <h3 style={{ marginTop: 0 }}>Stagiaires</h3>
         {ps.length === 0 ? <p className="muted">En attente des stagiaires…</p> : (
@@ -87,12 +178,14 @@ export default function Salle() {
       </div>
       <div className="card">
         <h3 style={{ marginTop: 0 }}>Questions essentielles : {faites} / {ess.length} posées au moins une fois</h3>
+        <div style={{ maxHeight: 280, overflow: "auto" }}>
         {ess.map((x) => (
           <div className="row between" key={x.id} style={{ margin: "3px 0" }}>
             <span>{qui(x) ? "✅" : "⬜"} {x.intitule} <span className="muted">{interNom(x.interlocuteurId)}</span></span>
             <span className={qui(x) ? "tag ok" : "tag"}>{qui(x)} / {ps.length}</span>
           </div>
         ))}
+        </div>
         {ess.length === 0 && <p className="muted">Aucune question essentielle définie.</p>}
       </div>
       {qs.length > 0 && (() => {
@@ -120,9 +213,20 @@ export default function Salle() {
             </div>
             <div>{x.q}</div>
             <div className="muted">↳ {x.a}</div>
+            {evts.filter((m) => m.kind === "rep" && m.qid === x.id).map((m) => <div key={m.id} className="muted">✎ Réponse du formateur : {m.texte}</div>)}
+            {repId === x.id ? (
+              <>
+                <textarea rows={2} maxLength={400} autoFocus style={{ width: "100%", marginTop: 4 }} placeholder={`Réponse de ${x.whoNom || "l'interlocuteur"}…`} value={repT} onChange={(e) => setRepT(e.target.value)} />
+                <div className="row" style={{ marginTop: 4 }}>
+                  <button className="btn primary" disabled={!repT.trim()} onClick={act(async () => { await envoyerEvenement(code, user.uid, profil?.nom || "Formateur", { kind: "rep", cible: x.uid, qid: x.id, who: x.who || "", whoNom: x.whoNom || "", q: String(x.q || "").slice(0, 120), texte: repT.trim().slice(0, 400) }); setRepId(null); setRepT(""); })}>Envoyer</button>
+                  <button className="btn" onClick={() => { setRepId(null); setRepT(""); }}>Annuler</button>
+                </div>
+              </>
+            ) : <button className="btn" style={{ marginTop: 4 }} onClick={() => { setRepId(x.id); setRepT(""); }}>Répondre à la place de l'interlocuteur</button>}
           </div>
         ))}
       </div>
+      </div></div>
     </Layout>
   );
 }

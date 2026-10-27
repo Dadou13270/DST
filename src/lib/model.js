@@ -10,6 +10,13 @@ export const SOIEC = [
   { k: "C", titre: "Commandement", aide: "Poste de commandement, liaisons, transmissions, renforts, sécurité, logistique." },
 ];
 
+export const SMES = [
+  { k: "ms", titre: "Situation", aide: "Que se passe-t-il ? Où ? Qui est concerné ? Éléments connus et inconnus." },
+  { k: "mm", titre: "Mission", aide: "Ce qui t'est demandé : mission reçue, objectif à atteindre." },
+  { k: "me", titre: "Exécution", aide: "Comment tu vas accomplir la mission : actions, moyens, enchaînement." },
+  { k: "mt", titre: "Sécurité", aide: "Risques pour les intervenants et les victimes, périmètre, mesures de sécurité, EPI." },
+];
+
 export const MESSAGE_MODELE = `ICI [indicatif], MESSAGE D'AMBIANCE
 Arrivé sur les lieux de :
 Situation :
@@ -31,6 +38,7 @@ export const newScenario = () => ({
   rubrique: "",
   dominantes: [],
   evolutif: false,
+  smes: false,
   evolutions: [],
   suggestions: true,
   duree: 0,
@@ -54,7 +62,7 @@ export const newScenario = () => ({
   ],
   qa: [],
   variantes: [],
-  correction: { S: "", O: "", I: "", E: "", C: "", message: "", commentaire: "", cubique: "" },
+  correction: { S: "", O: "", I: "", E: "", C: "", ms: "", mm: "", me: "", mt: "", message: "", commentaire: "", cubique: "" },
 });
 
 export const mergeScenario = (d) => {

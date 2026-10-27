@@ -61,6 +61,14 @@ export const watchMessages = (code, cb) =>
 export const posterMessage = (code, uid, nom, role, texte) =>
   addDoc(collection(db, "salles", code, "messages"), { uid, nom, role, texte: texte.slice(0, 400), le: Date.now() });
 
+// Pilotage de la séance par le formateur : évolution prévue/libre ou réponse imposée (champ texte toujours présent pour les règles)
+export const envoyerEvenement = (code, uid, nom, data) =>
+  addDoc(collection(db, "salles", code, "messages"), { uid, nom, role: "formateur", texte: "", ...data, le: Date.now() });
+
+// Chrono commun : { duree (s), t0 (ms, décalé des pauses), pausedAt (ms|null), fin (ms|null) } ; null = pas de chrono
+export const setChrono = (code, chrono) => updateDoc(doc(db, "salles", code), { chrono });
+export const chronoReste = (ch, now = Date.now()) => Math.round(ch.duree - ((ch.fin || ch.pausedAt || now) - ch.t0) / 1000);
+
 export const setOuverte = (code, ouverte) => updateDoc(doc(db, "salles", code), { ouverte });
 
 export async function supprimerSalle(code) {

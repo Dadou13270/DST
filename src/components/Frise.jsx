@@ -1,11 +1,11 @@
 const COL = ["#c42a1c", "#1f6feb", "#2a9d5c", "#b7791f", "#7b3fb3", "#0e8f9a", "#d6336c", "#667"];
 const mmss = (t) => String(Math.floor(t / 60)).padStart(2, "0") + ":" + String(t % 60).padStart(2, "0");
 export const evTimes = (sc, sess) =>
-  sess.evoT || Object.entries(sess.evo || {}).map(([id, ms]) => ({ titre: (sc.evolutions || []).find((e) => e.id === id)?.titre || "Évolution", t: Math.max(0, Math.round((ms - sess.start) / 1000)) }));
+  sess.evoT || Object.entries(sess.evo || {}).map(([id, ms]) => ({ titre: (sc.evolutions || []).find((e) => e.id === id)?.titre || sess.evoTitres?.[id] || "Évolution", t: Math.max(0, Math.round((ms - sess.start) / 1000)) }));
 
 // Chronologie : quand chaque question a été posée et quand les évolutions sont tombées.
 export default function Frise({ sc, sess, interName }) {
-  const log = (sess.log || []).filter((l) => !l.sys && typeof l.t === "number");
+  const log = (sess.log || []).filter((l) => !l.sys && !l.rep && typeof l.t === "number");
   if (!log.length) return <div className="card"><h3 style={{ marginTop: 0 }}>Chronologie de l'exercice</h3><p className="muted">Pas de chronologie pour cet exercice (terminé avant l'ajout de cette fonction).</p></div>;
   const ev = evTimes(sc, sess).filter((e) => typeof e.t === "number");
   const ess = new Set((sc.qa || []).filter((x) => x.essentielle).map((x) => x.id));

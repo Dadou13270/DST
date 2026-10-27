@@ -4,14 +4,14 @@ import Layout from "../components/Layout";
 import { getScenario, getPhoto, getSituationPhotos } from "../lib/db";
 import { findAnswer } from "../lib/matching";
 import { evoList, qaActives, essentielles as essentielles_, nbQuestions } from "../lib/evolutif";
-import { SOIEC, MESSAGE_MODELE, uid, CUB, cubStat } from "../lib/model";
+import { SOIEC, SMES, MESSAGE_MODELE, uid, CUB, cubStat } from "../lib/model";
 import { useAuth } from "../lib/auth";
 import { db } from "../firebase";
 import { doc, updateDoc, deleteField } from "firebase/firestore";
 import Dominantes from "../components/Dominantes";
-import Frise from "../components/Frise";
+import Frise, { FRISE_COL, frMmss } from "../components/Frise";
 import SalleChat from "../components/SalleChat";
-import { posterQuestion, watchSalle } from "../lib/salles";
+import { posterQuestion, watchSalle, watchMessages, chronoReste } from "../lib/salles";
 import { buildBilan, saveBilan } from "../lib/users";
 import { applyVars, tirer, varsDe } from "../lib/variantes";
 
@@ -21,7 +21,7 @@ const emptySession = () => ({
   finished: false,
   evo: {},
   log: [],
-  notes: { S: "", O: "", I: "", E: "", C: "", message: "" },
+  notes: { S: "", O: "", I: "", E: "", C: "", ms: "", mm: "", me: "", mt: "", message: "" },
 });
 const load = (k) => {
   try {
@@ -79,7 +79,8 @@ export default function Player() {
   });
   const sc = useMemo(() => (scRaw ? applyVars(scRaw, sess.vars) : null), [scRaw, sess.vars]);
   const [sugOpen, setSugOpen] = useState(true);
-  const [tab, setTab] = useState("questions");
+  const [tab, setTab] = useState("S");
+  useEffect(() => { if (sc?.smes) setTab((t) => (t === "S" ? "ms" : t)); }, [sc?.smes]); // eslint-disable-line react-hooks/exhaustive-deps
   const [who, setWho] = useState(null);
   const [q, setQ] = useState("");
   const [now, setNow] = useState(Date.now());
@@ -115,7 +116,7 @@ export default function Player() {
       const val =
         !sess.start || sess.finished
           ? deleteField()
-          : { start: sess.start, maj, evo: sess.evo || {}, log: sess.log.map((l) => ({ t: l.t ?? null, id: l.id, who: l.who, question: l.question, answer: l.answer, qaId: l.qaId || null, sys: !!l.sys })), notes: sess.notes };
+          : { start: sess.start, maj, evo: sess.evo || {}, log: sess.log.map((l) => ({ t: l.t ?? null, id: l.id, who: l.who, question: l.question, answer: l.answer, qaId: l.qaId || null, sys: !!l.sys, rep: !!l.rep })), notes: sess.notes };
       updateDoc(doc(db, "users", user.uid), { [`encours.${id}`]: val }).catch(() => {});
     }, 2500);
     return () => clearTimeout(t);
@@ -128,10 +129,60 @@ export default function Player() {
   }, [sess.start, sess.finished]);
 
   const [alerteId, setAlerteId] = useState(null);
-  const alerte = sc?.evolutif && alerteId ? (sc.evolutions || []).find((x) => x.id === alerteId) : null;
+  const [evoLibre, setEvoLibre] = useState(null);
+  const alerte = evoLibre && evoLibre.id === alerteId ? evoLibre : sc?.evolutif && alerteId ? (sc.evolutions || []).find((x) => x.id === alerteId) : null;
+  // Séance en salle : le formateur peut déclencher une évolution, en envoyer une libre ou répondre à la place d'un interlocuteur
+  const [salleMsgs, setSalleMsgs] = useState([]);
+  const [salleDoc, setSalleDoc] = useState(null);
+  useEffect(() => (salle ? watchSalle(salle, setSalleDoc) : undefined), [salle]);
+  const chrono = salle ? salleDoc?.chrono || null : null;
+  // le formateur termine l'exercice pour tous
+  useEffect(() => {
+    if (!chrono?.fin || !sess.start || sess.finished) return;
+    const fin = { ...sess, finished: true, finishedAt: Date.now() };
+    setSess(fin);
+    if (user) saveBilan(user.uid, profil?.bilans, id, buildBilan(sc, fin, profil?.bilans?.[id])).then(refreshProfil).catch(() => {});
+  }, [chrono?.fin, sess.start, sess.finished]); // eslint-disable-line react-hooks/exhaustive-deps
+  const vus = useRef(new Set());
+  useEffect(() => (salle ? watchMessages(salle, (l) => setSalleMsgs(l.filter((m) => m.kind))) : undefined), [salle]);
+  useEffect(() => {
+    if (!salle || !sc || !user || !sess.start || sess.finished) return;
+    const nouveaux = salleMsgs.filter((m) => !vus.current.has(m.id) && (!m.cible || m.cible === "all" || m.cible === user.uid));
+    if (!nouveaux.length) return;
+    nouveaux.forEach((m) => vus.current.add(m.id));
+    let alerteNew = null;
+    nouveaux.forEach((m) => {
+      if (m.kind !== "evo") return;
+      if (m.evoId) { if ((sc.evolutions || []).some((e) => e.id === m.evoId) && !(sess.evo || {})[m.evoId]) alerteNew = { id: m.evoId }; }
+      else alerteNew = { id: "libre_" + m.id, titre: m.titre || "", message: m.texte || "" };
+    });
+    setSess((s) => {
+      const evo = { ...(s.evo || {}) };
+      const evoTitres = { ...(s.evoTitres || {}) };
+      const log = [...s.log];
+      const t = Math.max(0, Math.round((Date.now() - s.start) / 1000));
+      nouveaux.forEach((m) => {
+        if (m.kind === "evo" && m.evoId) {
+          const x = (sc.evolutions || []).find((e) => e.id === m.evoId);
+          if (!x || evo[x.id]) return;
+          evo[x.id] = Date.now();
+          log.push({ t, id: uid(), who: "__evo", question: "⚠ " + (x.titre || "Évolution de la situation"), answer: x.message || "", sys: true, qaId: null });
+        } else if (m.kind === "evo") {
+          const k = "libre_" + m.id;
+          evo[k] = Date.now();
+          evoTitres[k] = m.titre || "Évolution";
+          log.push({ t, id: uid(), who: "__evo", question: "⚠ " + (m.titre || "Évolution de la situation"), answer: m.texte || "", sys: true, qaId: null });
+        } else if (m.kind === "rep" && m.cible === user.uid && (m.le || 0) >= s.start - 60000) {
+          log.push({ t, id: uid(), who: m.who, question: "", answer: m.texte || "", rep: true, qaId: null });
+        }
+      });
+      return { ...s, evo, evoTitres, log };
+    });
+    if (alerteNew) { if (alerteNew.message !== undefined) setEvoLibre(alerteNew); setAlerteId(alerteNew.id); }
+  }, [salleMsgs, sc, user, sess.start, sess.finished]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (!sc?.evolutif || !sess.start || sess.finished) return;
-    const min = (now - sess.start) / 60000;
+    const min = chrono ? Math.max(0, ((chrono.fin || chrono.pausedAt || now) - chrono.t0) / 60000) : (now - sess.start) / 60000;
     const dues = evoList(sc).filter((x) => !(sess.evo || {})[x.id] && min >= (Number(x.delai) || 0));
     if (!dues.length) return;
     setSess((s) => {
@@ -145,7 +196,7 @@ export default function Player() {
       return { ...s, evo, log };
     });
     setAlerteId(dues[dues.length - 1].id);
-  }, [now, sc, sess.start, sess.finished]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [now, sc, sess.start, sess.finished, chrono]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (chatRef.current) chatRef.current.scrollTop = chatRef.current.scrollHeight;
@@ -164,6 +215,8 @@ export default function Player() {
       </Layout>
     );
 
+  const icol = (iid) => { const k = sc.interlocuteurs.findIndex((i) => i.id === iid); return k < 0 ? "#667" : FRISE_COL[k % FRISE_COL.length]; };
+  const iini = (iid) => (interName(iid).trim().charAt(0) || "?").toUpperCase();
   const interName = (iid) => sc.interlocuteurs.find((i) => i.id === iid)?.nom || "?";
   const setNote = (k, v) => setSess((s) => ({ ...s, notes: { ...s.notes, [k]: v } }));
   const elapsed = sess.start ? Math.floor(((sess.finishedAt || now) - sess.start) / 1000) : 0;
@@ -221,7 +274,7 @@ export default function Player() {
   if (sess.finished) {
     const essentielles = essentielles_(sc, sess);
     const asked = new Set(sess.log.map((l) => l.qaId));
-    const rows = [...SOIEC.map((r) => ({ label: `${r.k} – ${r.titre}`, mine: sess.notes[r.k], ref: sc.correction[r.k] })),
+    const rows = [...(sc.smes ? SMES.map((r) => ({ label: `SMES – ${r.titre}`, mine: sess.notes[r.k], ref: sc.correction[r.k] })) : []), ...SOIEC.map((r) => ({ label: `${r.k} – ${r.titre}`, mine: sess.notes[r.k], ref: sc.correction[r.k] })),
       { label: "Message", mine: sess.notes.message, ref: sc.correction.message }];
     return (
       <Layout wide right={<Link to="/">Scénarios</Link>}>
@@ -233,7 +286,7 @@ export default function Player() {
           </div>
         </div>
         <p className="muted">
-          Temps : {fmt(elapsed)} · {nbQuestions(sess)} question(s) posée(s){sc.evolutif && ` · ${Object.keys(sess.evo || {}).length}/${(sc.evolutions || []).length} évolution(s) vue(s)`}{sess.vars && ` · Variante jouée : ${Object.values(sess.vars).join(" · ")}`}
+          Temps : {fmt(elapsed)} · {nbQuestions(sess)} question(s) posée(s){sc.evolutif && ` · ${Object.keys(sess.evo || {}).filter((k) => !k.startsWith("libre_")).length}/${(sc.evolutions || []).length} évolution(s) vue(s)`}{sess.vars && ` · Variante jouée : ${Object.values(sess.vars).join(" · ")}`}
           {saveMsg && <span className="err"> — {saveMsg}</span>}
         </p>
         <Frise sc={sc} sess={sess} interName={interName} />
@@ -313,17 +366,21 @@ export default function Player() {
     <Layout
       extra={
         <>
-          {remaining !== null && <span className={remaining < 0 ? "timer late" : "timer"}>{fmt(remaining)}</span>}
-          {remaining === null && <span className="timer">{fmt(elapsed)}</span>}
+          {chrono && <span className={"timer" + (chronoReste(chrono, now) < 0 ? " late" : chronoReste(chrono, now) <= Math.max(30, chrono.duree * 0.1) ? " danger" : chronoReste(chrono, now) <= Math.max(60, chrono.duree * 0.25) ? " warn" : "")}>{chrono.fin ? "■ " : chrono.pausedAt ? "⏸ " : ""}{fmt(chronoReste(chrono, now))}</span>}
+          {!chrono && remaining !== null && <span className={"timer" + (remaining < 0 ? " late" : remaining <= Math.max(30, sc.duree * 6) ? " danger" : remaining <= Math.max(60, sc.duree * 15) ? " warn" : "")}>{fmt(remaining)}</span>}
+          {!chrono && remaining === null && <span className="timer">{fmt(elapsed)}</span>}
           <Link to="/" className="navbtn">Quitter</Link>
         </>
       }
     >
       {salle && <SalleBanner code={salle} />}
       {alerte && (
-        <div className="card" style={{ border: "2px solid #c4161c", background: "var(--soft)" }}>
-          <strong>⚠ Évolution de la situation{alerte.titre ? ` : ${alerte.titre}` : ""}</strong>
-          <p className="pre" style={{ margin: "6px 0" }}>{alerte.message}</p>
+        <div className="evoband" role="alert">
+          <span className="evoico">⚠</span>
+          <div className="grow">
+            <strong>Évolution de la situation{alerte.titre ? ` : ${alerte.titre}` : ""}</strong>
+            <p className="pre">{alerte.message}</p>
+          </div>
           <button className="btn primary" onClick={() => setAlerteId(null)}>Compris</button>
         </div>
       )}
@@ -366,41 +423,43 @@ export default function Player() {
         </section>
 
         <section className="right card">
-          <div className="tabs">
-            {[["questions", "Questions"], ["soiec", "SOIEC"], ["message", "Message"]].map(([k, l]) => (
-              <button key={k} className={tab === k ? "on" : ""} onClick={() => setTab(k)}>
-                {l}
-              </button>
-            ))}
-          </div>
+          <h2 style={{ marginBottom: 8 }}>Échanges</h2>
 
-          {tab === "questions" && (
+          {(
             <div className="chatbox">
               <div className="chips">
                 {sc.interlocuteurs.map((i) => (
-                  <button key={i.id} className={who === i.id ? "chip on" : "chip"} onClick={() => setWho(i.id)} title={i.role}>
-                    {i.nom}
+                  <button key={i.id} className={"chip chipav" + (who === i.id ? " on" : "")} style={{ "--c": icol(i.id) }} onClick={() => setWho(i.id)} title={i.role}>
+                    <span className="av" style={{ background: icol(i.id) }}>{iini(i.id)}</span>{i.nom}
                   </button>
                 ))}
               </div>
               <div className="chat" ref={chatRef}>
-                {sess.log.length === 0 && (
+                {!sess.log.some((l) => !l.sys) && (
                   <p className="muted">Choisis un interlocuteur, puis pose ta question (requérant, témoin, badaud…).</p>
                 )}
-                {sess.log.map((l) => l.sys ? (
-                  <div key={l.id} className="card" style={{ margin: "8px 0", borderColor: "#c4161c" }}>
-                    <strong>{l.question}</strong>
-                    <div className="pre">{l.answer}</div>
+                {sess.log.map((l) => l.sys ? null : l.rep ? (
+                  <div key={l.id} className="msg th">
+                    <span className="av" style={{ background: icol(l.who) }} title={interName(l.who)}>{iini(l.who)}</span>
+                    <div className="bub th" style={{ "--c": icol(l.who) }}>
+                      <small style={{ color: icol(l.who) }}>{interName(l.who)} · précision du formateur{typeof l.t === "number" ? " · " + frMmss(l.t) : ""}</small>
+                      {l.answer}
+                    </div>
                   </div>
                 ) : (
                   <div key={l.id}>
-                    <div className="bubble me">
-                      <small>Vous → {interName(l.who)}</small>
-                      {l.question}
+                    <div className="msg me">
+                      <div className="bub me">
+                        <small>Vous → {interName(l.who)}{typeof l.t === "number" ? " · " + frMmss(l.t) : ""}</small>
+                        {l.question}
+                      </div>
                     </div>
-                    <div className="bubble them">
-                      <small>{interName(l.who)}</small>
-                      {l.answer}
+                    <div className="msg th">
+                      <span className="av" style={{ background: icol(l.who) }} title={interName(l.who)}>{iini(l.who)}</span>
+                      <div className="bub th" style={{ "--c": icol(l.who) }}>
+                        <small style={{ color: icol(l.who) }}>{interName(l.who)}</small>
+                        {l.answer}
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -440,25 +499,22 @@ export default function Player() {
             </div>
           )}
 
-          {tab === "soiec" && (
-            <div className="notes">
-              {SOIEC.map((r) => (
-                <div key={r.k} className="note">
-                  <label>
-                    <b>{r.k}</b> {r.titre} <small className="muted">{r.aide}</small>
-                  </label>
-                  <textarea rows={3} value={sess.notes[r.k]} onChange={(e) => setNote(r.k, e.target.value)} />
-                </div>
-              ))}
+          <div className="ptabs" role="tablist">
+            {[...(sc.smes ? SMES.map((r) => [r.k, `SMES · ${r.titre}`]) : []), ...SOIEC.map((r) => [r.k, `${r.k} · ${r.titre}`]), ["message", "Message"]].map(([k, l]) => (
+              <button key={k} role="tab" className={tab === k ? "on" : ""} onClick={() => setTab(k)}>{l}</button>
+            ))}
+          </div>
+          {[...(sc.smes ? SMES : []), ...SOIEC].filter((r) => r.k === tab).map((r) => (
+            <div key={r.k} className="note">
+              <div className="nk"><span className="kk">{SMES.includes(r) ? r.titre[0] : r.k}</span>{SMES.includes(r) ? "SMES · " : ""}{r.titre}</div>
+              <p className="nh">{r.aide}</p>
+              <textarea rows={5} value={sess.notes[r.k] || ""} onChange={(e) => setNote(r.k, e.target.value)} />
             </div>
-          )}
-
+          ))}
           {tab === "message" && (
-            <div className="notes">
-              <label>
-                <b>Message d'ambiance / de renseignements</b>
-              </label>
-              <textarea rows={12} value={sess.notes.message} onChange={(e) => setNote("message", e.target.value)} />
+            <div className="note">
+              <div className="nk"><span className="kk">✉</span>Message d'ambiance / de renseignements</div>
+              <textarea rows={9} value={sess.notes.message} onChange={(e) => setNote("message", e.target.value)} />
               {!sess.notes.message && (
                 <button className="btn" onClick={() => setNote("message", MESSAGE_MODELE)}>
                   Insérer une trame

@@ -11,7 +11,7 @@ export default function SalleChat({ code, role }) {
   const [txt, setTxt] = useState("");
   const [err, setErr] = useState("");
   const fin = useRef(null);
-  useEffect(() => watchMessages(code, setMsgs), [code]);
+  useEffect(() => watchMessages(code, (l) => setMsgs(l.filter((m) => !m.kind))), [code]);
   useEffect(() => { if (fin.current) fin.current.scrollTop = fin.current.scrollHeight; }, [msgs.length]);
   const send = async (e) => {
     e.preventDefault();

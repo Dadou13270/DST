@@ -5,6 +5,7 @@ import { getScenario, getPhoto, getSituationPhotos } from "../lib/db";
 import { watchSalle } from "../lib/salles";
 
 // Écran de projection (plein écran, sans menu) : photo, situation et, à la demande, la correction
+const SMES_LIB = { ms: "Situation", mm: "Mission", me: "Exécution", mt: "Sécurité" };
 export default function SalleProjection() {
   const { code } = useParams();
   const { user, isAdmin, profil } = useAuth();
@@ -57,7 +58,7 @@ export default function SalleProjection() {
       {corr && (
         <div className="card" style={{ fontSize: "1.1rem" }}>
           <h2>Correction</h2>
-          {["S", "O", "I", "E", "C"].map((k) => c[k] && <p className="pre" key={k}><strong>{k}</strong> — {c[k]}</p>)}
+          {[...(sc.smes ? ["ms", "mm", "me", "mt"] : []), "S", "O", "I", "E", "C"].map((k) => c[k] && <p className="pre" key={k}><strong>{SMES_LIB[k] ? "SMES · " + SMES_LIB[k] : k}</strong> — {c[k]}</p>)}
           {c.message && <><h3>Message de renseignements</h3><p className="pre">{c.message}</p></>}
           {c.commentaire && <><h3>Points de vigilance</h3><p className="pre">{c.commentaire}</p></>}
           {sc.cubique && c.cubique && <><h3>Reconnaissance cubique</h3><p className="pre">{c.cubique}</p></>}

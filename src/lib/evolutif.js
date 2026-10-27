@@ -12,4 +12,4 @@ export const qaActives = (sc, sess) => {
 export const essentielles = (sc, sess) =>
   sc.qa.filter((x) => x.essentielle && (!sc.evolutif || !x.evo || (sess?.evo || {})[x.evo]));
 
-export const nbQuestions = (sess) => sess.log.filter((l) => !l.sys).length;
+export const nbQuestions = (sess) => sess.log.filter((l) => !l.sys && !l.rep).length;

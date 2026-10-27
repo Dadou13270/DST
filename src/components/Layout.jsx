@@ -16,6 +16,8 @@ export default function Layout({ children, extra }) {
   const adm = pathname.startsWith("/admin");
   const [cnt, setCnt] = useState(null);
   const [avisOpen, setAvisOpen] = useState(false);
+  const [menu, setMenu] = useState(false);
+  useEffect(() => setMenu(false), [pathname]);
   const uid = user?.uid;
   const dept = profil?.departement;
   // Présence : on signale le passage toutes les 2 min, et on relit les compteurs chaque minute.
@@ -35,8 +37,9 @@ export default function Layout({ children, extra }) {
   }, [uid]);
   return (
     <>
-      <header className="top">
+      <header className={"top" + (menu ? " open" : "") + (extra ? " nc" : "")}>
         <Link to="/" className="brand"><Logo size={36} />Op'Training</Link>
+        <button className="burger" aria-label="Menu" aria-expanded={menu} onClick={() => setMenu((v) => !v)}>☰</button>
         <nav>
           {extra}
           {user && cnt && (
@@ -62,7 +65,7 @@ export default function Layout({ children, extra }) {
           )}
         </nav>
       </header>
-      {user && profil && !profilComplet(profil) && pathname !== "/profil" && (
+      {user && profil && !profilComplet(profil) && pathname !== "/profil" && !pathname.startsWith("/gestion/salle") && (
         <div className="card alerte" role="status" style={{ margin: "10px auto", maxWidth: 1100 }}>
           <strong>Complète ton profil</strong> (grade, département, CIS) pour que ton gestionnaire te retrouve facilement. <Link to="/profil" className="btn primary">Compléter mon profil</Link>
         </div>

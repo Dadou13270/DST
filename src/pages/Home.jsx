@@ -35,6 +35,8 @@ export default function Home() {
   const [rub, setRub] = useState("");
   const [dur, setDur] = useState("");
   const [etat, setEtat] = useState("");
+  const [ferme, setFerme] = useState(() => { try { return JSON.parse(localStorage.getItem("op-rub") || "{}") || {}; } catch { return {}; } });
+  const majFerme = (n) => { setFerme(n); try { localStorage.setItem("op-rub", JSON.stringify(n)); } catch { /* */ } };
   const norm = (t) => (t || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
   const vue = (list || []).filter((s) => {
     if (q && !norm(`${s.titre} ${s.description}`).includes(norm(q))) return false;
@@ -113,12 +115,23 @@ export default function Home() {
       {configured && !list && !err && <p>Chargement…</p>}
       {list && list.length === 0 && <div className="card">Aucun scénario publié pour le moment.</div>}
 
+      {(() => {
+        const toutes = [...rubriquesDe([...(list || []), ...calcEx]).filter((r) => vue.some((s) => s.rubrique === r) || calcs.some((c) => c.rubrique === r)), ...(vue.some((s) => !s.rubrique) || calcs.some((c) => !c.rubrique) ? [""] : [])];
+        if (toutes.length < 2 || filtre) return null;
+        const un = toutes.some((r) => !ferme[r]);
+        return <div className="rubbar"><span /><button className="btn" onClick={() => majFerme(Object.fromEntries(toutes.map((r) => [r, un])))}>{un ? "Tout replier" : "Tout déplier"}</button></div>;
+      })()}
       {[...rubriquesDe([...(list || []), ...calcEx]).filter((r) => vue.some((s) => s.rubrique === r) || calcs.some((c) => c.rubrique === r)), ...(vue.some((s) => !s.rubrique) || calcs.some((c) => !c.rubrique) ? [""] : [])].map((r) => {
         const g = vue.filter((s) => (s.rubrique || "") === r);
+        const clos = !filtre && ferme[r];
         return (
           <section key={r || "autres"}>
-            <h3 className="rub">{r || "Autres"} <span className="muted">({g.length + calcs.filter((c) => (c.rubrique || "") === r).length})</span></h3>
-            <div className="grid">
+            <h3 className="rub">
+              <button className="rubtog" aria-expanded={!clos} onClick={() => majFerme({ ...ferme, [r]: !ferme[r] })}>
+                <span className="chev">▾</span><span className="rname">{r || "Autres"}</span> <span className="muted">({g.length + calcs.filter((c) => (c.rubrique || "") === r).length})</span>
+              </button>
+            </h3>
+            {!clos && <div className="grid">
               {calcs.filter((c) => (c.rubrique || "") === r).map((ex) => {
                 const l = essaisDe(ex.id), last = l[l.length - 1];
                 return (
@@ -151,7 +164,7 @@ export default function Home() {
                   </div>
                 </Link>
               ))}
-            </div>
+            </div>}
           </section>
         );
       })}

@@ -4,7 +4,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { getScenario, getPhoto, getSituationPhotos, saveScenario } from "../lib/db";
 import { compressImage } from "../lib/image";
 import { findAnswer } from "../lib/matching";
-import { newScenario, uid, SOIEC, TOUS, CUB, rubriquesDe } from "../lib/model";
+import { newScenario, uid, SOIEC, SMES, TOUS, CUB, rubriquesDe } from "../lib/model";
 import { listScenarios } from "../lib/db";
 import { varAutoOn, tirer } from "../lib/variantes";
 import BanqueQuestions from "../components/BanqueQuestions";
@@ -18,7 +18,10 @@ const TABS = [
   ["evo", "Évolutions"],
   ["var", "Variantes"],
   ["qa", "Questions / réponses"],
+  ["smes", "Correction SMES"],
   ["corr", "Correction SOIEC"],
+  ["msgm", "Message modèle"],
+  ["comm", "Commentaire du formateur"],
 ];
 
 export default function AdminEditor() {
@@ -210,7 +213,7 @@ export default function AdminEditor() {
       </div>
 
       <div className="tabs">
-        {TABS.filter(([k]) => k !== "evo" || s.evolutif).map(([k, l]) => (
+        {TABS.filter(([k]) => (k !== "evo" || s.evolutif) && (k !== "smes" || s.smes)).map(([k, l]) => (
           <button key={k} className={tab === k ? "on" : ""} onClick={() => setTab(k)}>
             {l}
           </button>
@@ -288,6 +291,10 @@ export default function AdminEditor() {
           <label className="check">
             <input type="checkbox" checked={!!s.cubique} onChange={(e) => upd((n) => (n.cubique = e.target.checked))} />
             Reconnaissance cubique (chef d'agrès, incendie)
+          </label>
+          <label className="check">
+            <input type="checkbox" checked={!!s.smes} onChange={(e) => upd((n) => (n.smes = e.target.checked))} />
+            Faire un SMES (le stagiaire rédige un SMES avant le SOIEC et le message)
           </label>
           <label className="check">
             <input type="checkbox" checked={!!s.evolutif} onChange={(e) => upd((n) => (n.evolutif = e.target.checked))} />
@@ -688,18 +695,41 @@ export default function AdminEditor() {
       )}
 
       {/* ---------- CORRECTION ---------- */}
+      {tab === "smes" && s.smes && (
+        <div className="card form">
+          {SMES.map((r) => (
+            <div key={r.k}>
+              <label>
+                <b>{r.k === "ms" ? "S" : r.k === "mm" ? "M" : r.k === "me" ? "E" : "S"}</b> – {r.titre} <small className="muted">{r.aide}</small>
+              </label>
+              <textarea rows={3} value={s.correction[r.k] || ""} onChange={(e) => upd((n) => (n.correction[r.k] = e.target.value))} />
+            </div>
+          ))}
+        </div>
+      )}
+
       {tab === "corr" && (
         <div className="card form">
           {SOIEC.map((r) => (
             <div key={r.k}>
               <label>
-                <b>{r.k}</b> – {r.titre} <small className="muted">{r.aide}</small>
+                <b>{r.k} – {r.titre}</b> <small className="muted">{r.aide}</small>
               </label>
-              <textarea rows={3} value={s.correction[r.k]} onChange={(e) => upd((n) => (n.correction[r.k] = e.target.value))} />
+              <textarea rows={3} value={s.correction[r.k] || ""} onChange={(e) => upd((n) => (n.correction[r.k] = e.target.value))} />
             </div>
           ))}
+        </div>
+      )}
+
+      {tab === "msgm" && (
+        <div className="card form">
           <label><b>Message modèle</b> (message d'ambiance / de renseignements)</label>
-          <textarea rows={5} value={s.correction.message} onChange={(e) => upd((n) => (n.correction.message = e.target.value))} />
+          <textarea rows={9} value={s.correction.message} onChange={(e) => upd((n) => (n.correction.message = e.target.value))} />
+        </div>
+      )}
+
+      {tab === "comm" && (
+        <div className="card form">
           <label>Commentaire du formateur (points de vigilance, erreurs fréquentes)</label>
           <textarea rows={4} value={s.correction.commentaire} onChange={(e) => upd((n) => (n.correction.commentaire = e.target.value))} />
           {s.cubique && (
