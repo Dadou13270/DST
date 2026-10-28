@@ -38,6 +38,7 @@ export function buildBilan(sc, sess, ancien) {
     nb: (ancien?.nb || (ancien ? 1 : 0)) + 1,
     log: sess.log.filter((l) => !l.sys).map((l) => ({ t: typeof l.t === "number" ? l.t : null, who: l.who, question: l.question, answer: l.answer, qaId: l.qaId || null })),
     notes: sess.notes,
+    taches: sess.taches || null,
   };
 }
 export const saveBilan = (uid, bilans, id, bilan) =>

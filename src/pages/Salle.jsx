@@ -5,7 +5,7 @@ import SalleChat from "../components/SalleChat";
 import { FriseSvg, FRISE_COL, frMmss } from "../components/Frise";
 import { useAuth } from "../lib/auth";
 import { getScenario } from "../lib/db";
-import { watchSalle, watchQuestions, watchParticipants, watchMessages, envoyerEvenement, setChrono, chronoReste, setOuverte, supprimerSalle, etatSalle, libEtat, fmtDebut, setDebut, debutDepuisInput, inputDepuisDebut } from "../lib/salles";
+import { watchSalle, watchQuestions, watchParticipants, watchMessages, envoyerEvenement, setChrono, chronoReste, setOuverte, supprimerSalle, setTaches, TACHES_MODELES, etatSalle, libEtat, fmtDebut, setDebut, debutDepuisInput, inputDepuisDebut } from "../lib/salles";
 
 const hhmm = (t) => new Date(t).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
 
@@ -72,6 +72,7 @@ export default function Salle() {
   const [feC, setFeC] = useState("all");
   const [repId, setRepId] = useState(null);
   const [repT, setRepT] = useState("");
+  const [feTache, setFeTache] = useState("");
   const [codeGrand, setCodeGrand] = useState(false);
   const [, tick] = useState(0);
   useEffect(() => { const t = setInterval(() => tick((n) => n + 1), 15000); return () => clearInterval(t); }, []);
@@ -97,6 +98,8 @@ export default function Salle() {
   const compact = etatSalle(salle) === "open" && (ps.length > 0 || !!salle.chrono) && !codeGrand;
   const prevues = (sc?.evolutions || []).slice().sort((a, b) => (Number(a.delai) || 0) - (Number(b.delai) || 0));
   const envoyer = (d) => envoyerEvenement(code, user.uid, profil?.nom || "Formateur", { kind: "evo", texte: "", ...d });
+  const taches = salle.taches || [];
+  const cocher = (t) => setTaches(code, taches.some((x) => x.id === t.id) ? taches.filter((x) => x.id !== t.id) : [...taches, t]);
   const act = (f) => async () => { setErr(""); try { await f(); } catch (e) { setErr(e.message); } };
 
   return (
@@ -163,6 +166,39 @@ export default function Salle() {
         </div>
       </div>
       </div><div className="scol">
+      <div className="card">
+        <h3 style={{ marginTop: 0 }}>Consignes aux stagiaires</h3>
+        <p className="muted" style={{ margin: "0 0 6px" }}>Coche ce que les stagiaires doivent rédiger : ils voient les consignes cochées et y répondent. Les réponses s'affichent ici et dans leur suivi.</p>
+        {[...TACHES_MODELES, ...taches.filter((t) => !TACHES_MODELES.some((m) => m.id === t.id))].map((t) => {
+          const on = taches.some((x) => x.id === t.id);
+          const n = ps.filter((u) => u.taches?.[t.id]?.texte).length;
+          return (
+            <label key={t.id} className="row between" style={{ margin: "4px 0", cursor: "pointer" }}>
+              <span><input type="checkbox" checked={on} onChange={() => act(() => cocher(t))()} /> {t.titre}</span>
+              {on && <span className={n && n === ps.length ? "tag ok" : "tag"}>{n} / {ps.length} réponse(s)</span>}
+            </label>
+          );
+        })}
+        <div className="row" style={{ marginTop: 6 }}>
+          <input maxLength={80} placeholder="Autre consigne (ex. Rédiger le message de situation)" value={feTache} onChange={(e) => setFeTache(e.target.value)} style={{ flex: 1 }} />
+          <button className="btn" disabled={!feTache.trim()} onClick={act(async () => { await cocher({ id: "libre_" + Date.now().toString(36), titre: feTache.trim().slice(0, 80) }); setFeTache(""); })}>Ajouter et cocher</button>
+        </div>
+        {taches.some((t) => ps.some((u) => u.taches?.[t.id]?.texte)) && (
+          <div style={{ borderTop: "1px solid var(--line, #ddd)", marginTop: 8, paddingTop: 4 }}>
+            {taches.map((t) => ps.filter((u) => u.taches?.[t.id]?.texte).length > 0 && (
+              <div key={t.id} style={{ margin: "8px 0" }}>
+                <strong>{t.titre}</strong>
+                {ps.filter((u) => u.taches?.[t.id]?.texte).map((u) => (
+                  <div key={u.id} style={{ margin: "4px 0 0 8px" }}>
+                    <span className="muted">{u.nom} · {hhmm(u.taches[t.id].le)}</span>
+                    <p className="pre" style={{ margin: "2px 0 0" }}>{u.taches[t.id].texte}</p>
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
       <div className="card">
         <h3 style={{ marginTop: 0 }}>Suivi des évolutions</h3>
         {(() => {

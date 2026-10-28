@@ -398,3 +398,7 @@ html[data-cartes="h"] .grid[data-cols="3"] .scn img,html[data-cartes="h"] .grid[
 .evorappel .chip{cursor:pointer}
 @media(prefers-color-scheme:dark){html:not([data-theme="light"]) .evorappel{background:#3b2d10;color:#f1d58a;border-color:#7a5a12}}
 html[data-theme="dark"] .evorappel{background:#3b2d10;color:#f1d58a;border-color:#7a5a12}
+
+.taches-salle{border-left:4px solid var(--red,#c42a1c)}
+.taches-bilan{margin:6px 0;padding:8px 12px;border-left:3px solid var(--red,#c42a1c);background:var(--soft,#f5f6f7);border-radius:6px}
+.taches-bilan .tb-item{margin-top:6px}

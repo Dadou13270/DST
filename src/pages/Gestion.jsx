@@ -1,3 +1,4 @@
+import TachesBilan from "../components/TachesBilan";
 import { listExercices, typeExercice, listCatalogue } from "../lib/relation";
 import { useEffect, useState } from "react";
 import { Link, Navigate } from "react-router-dom";
@@ -208,6 +209,7 @@ function Equipe({ team, autres, scs, pcs, onChange }) {
                         <tbody>{Object.entries(u.bilans).map(([scId, b]) => [
                           <tr key={scId}><td>{b.titre}</td><td>{fmtDate(b.fin)}</td><td>{fmtDuree(b.duree || 0)}</td><td>{b.nbQ}</td><td>{b.essTot ? `${b.essOk}/${b.essTot}` : "—"}</td><td>{b.nb || 1}</td></tr>,
                           <tr key={scId + "f"}><td colSpan={6}><FriseBilan b={b} sc={scs.find((x) => x.id === scId)} /></td></tr>,
+                          b.taches && <tr key={scId + "t"}><td colSpan={6}><TachesBilan taches={b.taches} /></td></tr>,
                           <tr key={scId + "c"}><td colSpan={6}><Commentaire u={u} scId={scId} auteur={profil?.nom || "Formateur"} onSaved={load} /></td></tr>,
                         ])}</tbody>
                       </table>

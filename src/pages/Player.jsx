@@ -11,7 +11,7 @@ import { doc, updateDoc, deleteField } from "firebase/firestore";
 import Dominantes from "../components/Dominantes";
 import Frise, { FRISE_COL, frMmss } from "../components/Frise";
 import SalleChat from "../components/SalleChat";
-import { posterQuestion, watchSalle, watchMessages, chronoReste, signalerEvo } from "../lib/salles";
+import { posterQuestion, watchSalle, watchMessages, chronoReste, signalerEvo, repondreTache } from "../lib/salles";
 import { buildBilan, saveBilan } from "../lib/users";
 import { applyVars, tirer, varsDe } from "../lib/variantes";
 
@@ -39,7 +39,7 @@ const save = (k, v) => {
   }
 };
 const bilanSession = (b) =>
-  b ? { start: b.fin - (b.duree || 0) * 1000, finishedAt: b.fin, finished: true, evoT: b.evos || undefined, vars: b.vars || undefined, log: b.log || [], notes: { ...emptySession().notes, ...b.notes } } : null;
+  b ? { start: b.fin - (b.duree || 0) * 1000, finishedAt: b.fin, finished: true, evoT: b.evos || undefined, vars: b.vars || undefined, taches: b.taches || undefined, log: b.log || [], notes: { ...emptySession().notes, ...b.notes } } : null;
 const fmt = (s) => {
   const a = Math.abs(s);
   return `${s < 0 ? "-" : ""}${String(Math.floor(a / 60)).padStart(2, "0")}:${String(a % 60).padStart(2, "0")}`;
@@ -141,6 +141,15 @@ export default function Player() {
     if (!salle || !user) return;
     Object.keys(sess.evo || {}).forEach((k) => { if (!signalees.current.has(k)) { signalees.current.add(k); signalerEvo(salle, user.uid, k, "r"); } });
   }, [sess.evo, salle, user]); // eslint-disable-line react-hooks/exhaustive-deps
+  // consignes cochées par le formateur : une zone de réponse chacune
+  const tachesSalle = salle ? salleDoc?.taches || [] : [];
+  const [tacheTxt, setTacheTxt] = useState({});
+  const envoyerTache = async (t) => {
+    const texte = (tacheTxt[t.id] ?? sess.taches?.[t.id]?.texte ?? "").trim();
+    if (!texte || !user) return;
+    setSess((s) => ({ ...s, taches: { ...(s.taches || {}), [t.id]: { titre: t.titre, texte, le: Date.now() } } }));
+    try { await repondreTache(salle, user.uid, profil?.nom, t, texte); } catch { /* la réponse reste enregistrée dans l'exercice */ }
+  };
   const compris = () => { if (salle && user && alerteId) signalerEvo(salle, user.uid, alerteId, "c"); setAlerteId(null); };
   // Séance en salle : le formateur peut déclencher une évolution, en envoyer une libre ou répondre à la place d'un interlocuteur
   const [salleMsgs, setSalleMsgs] = useState([]);
@@ -396,6 +405,22 @@ export default function Player() {
             <p className="pre">{alerte.message}</p>
           </div>
           <button className="btn primary" onClick={compris}>Compris</button>
+        </div>
+      )}
+      {tachesSalle.length > 0 && !sess.finished && (
+        <div className="card taches-salle">
+          <h3 style={{ marginTop: 0 }}>Consignes du formateur</h3>
+          {tachesSalle.map((t) => {
+            const fait = sess.taches?.[t.id];
+            const val = tacheTxt[t.id] ?? fait?.texte ?? "";
+            return (
+              <div key={t.id} style={{ margin: "8px 0" }}>
+                <label><strong>{t.titre}</strong> {fait && <span className="tag ok">Envoyé à {new Date(fait.le).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}</span>}</label>
+                <textarea rows={3} maxLength={1500} style={{ width: "100%", marginTop: 4 }} value={val} onChange={(e) => setTacheTxt((x) => ({ ...x, [t.id]: e.target.value }))} placeholder="Ta réponse…" />
+                <button className="btn primary" disabled={!val.trim() || val.trim() === fait?.texte} onClick={() => envoyerTache(t)}>{fait ? "Mettre à jour" : "Envoyer"}</button>
+              </div>
+            );
+          })}
         </div>
       )}
       {!alerte && Object.keys(sess.evo || {}).length > 0 && (

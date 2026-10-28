@@ -1,3 +1,4 @@
+import TachesBilan from "../components/TachesBilan";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { doc, setDoc } from "firebase/firestore";
@@ -144,6 +145,7 @@ export default function Suivi() {
                       <span className={"sv-st " + i.etat}>{ET[i.etat]}</span>
                       <div className="sv-info">{i.info}</div>
                       <Link className={i.etat === "termine" ? "btn" : "btn primary"} to={i.to}>{i.btn}</Link>
+                      {i.scId && bs[i.scId]?.taches && <div className="sv-fil"><TachesBilan taches={bs[i.scId].taches} /></div>}
                       {i.scId && profil?.commentaires?.[i.scId] && <div className="sv-fil"><Fil profil={profil} scId={i.scId} uid={user?.uid} onSent={refreshProfil} /></div>}
                     </div>
                   ))}

@@ -70,6 +70,18 @@ export const envoyerEvenement = (code, uid, nom, data) =>
   addDoc(collection(db, "salles", code, "messages"), { uid, nom, role: "formateur", texte: "", ...data, le: Date.now() });
 
 // Chrono commun : { duree (s), t0 (ms, décalé des pauses), pausedAt (ms|null), fin (ms|null) } ; null = pas de chrono
+// Consignes cochées par le formateur (modèles + libres) et réponses des stagiaires.
+export const TACHES_MODELES = [
+  { id: "flash", titre: "Rédiger le message flash" },
+  { id: "arrivee", titre: "Rédiger le message d'arrivée sur les lieux" },
+  { id: "reactions", titre: "Indiquer les réactions immédiates" },
+  { id: "ambiance", titre: "Rédiger le message d'ambiance" },
+  { id: "moyens", titre: "Rédiger la demande de renforts / moyens" },
+];
+export const setTaches = (code, taches) => updateDoc(doc(db, "salles", code), { taches });
+export const repondreTache = (code, uid, nom, t, texte) =>
+  setDoc(doc(db, "salles", code, "participants", uid), { uid, nom: nom || "Stagiaire", taches: { [t.id]: { titre: t.titre, texte, le: Date.now() } } }, { merge: true });
+
 export const setChrono = (code, chrono) => updateDoc(doc(db, "salles", code), { chrono });
 export const chronoReste = (ch, now = Date.now()) => Math.round(ch.duree - ((ch.fin || ch.pausedAt || now) - ch.t0) / 1000);
 
