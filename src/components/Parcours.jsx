@@ -8,6 +8,7 @@ export default function Parcours({ user, profil, isAdmin, scs, pcs, onChange }) 
   const [add, setAdd] = useState("");
   const [msg, setMsg] = useState("");
   const [conf, setConf] = useState(null);
+  const [vus, setVus] = useState({});
   const titre = (id) => scs.find((x) => x.id === id)?.titre || "(exercice indisponible)";
   const run = async (f) => { setMsg(""); try { await f(); onChange(); } catch (e) { setMsg("Erreur : " + e.message); } };
   const move = (i, d) => setEd((e) => { const a = [...e.scIds]; const j = i + d; if (j < 0 || j >= a.length) return e; [a[i], a[j]] = [a[j], a[i]]; return { ...e, scIds: a }; });
@@ -67,6 +68,16 @@ export default function Parcours({ user, profil, isAdmin, scs, pcs, onChange }) 
                     <strong>{p.titre}</strong> {p.ordre && <span className="tag">Ordre imposé</span>} {p.partage && <span className="tag">Partagé</span>}
                     <div className="muted">{(p.scIds || []).length} exercice(s){p.owner !== user.uid ? ` · par ${p.ownerNom || "un gestionnaire"}` : ""}</div>
                     {p.description && <div className="muted">{p.description}</div>}
+                    {(p.scIds || []).length > 0 && (
+                      <button type="button" className="btn" style={{ marginTop: 6 }} onClick={() => setVus((v) => ({ ...v, [p.id]: !v[p.id] }))}>
+                        {vus[p.id] ? "▾ Masquer les exercices" : "▸ Voir les exercices"}
+                      </button>
+                    )}
+                    {vus[p.id] && (
+                      <ol style={{ margin: "6px 0 0 20px", padding: 0 }}>
+                        {(p.scIds || []).map((id, i) => <li key={id + i}>{titre(id)}{scs.find((x) => x.id === id)?.rubrique ? <span className="muted"> · {scs.find((x) => x.id === id).rubrique}</span> : null}</li>)}
+                      </ol>
+                    )}
                   </div>
                   <div className="row item">
                     {mien && <button className="btn" onClick={() => setEd({ ...p })}>Modifier</button>}

@@ -9,6 +9,8 @@ import AdminList from "./pages/AdminList";
 import AdminEditor from "./pages/AdminEditor";
 import Carte from "./pages/Carte";
 import Parametres from "./pages/Parametres";
+import Attribution from "./pages/Attribution";
+import DemanderScenario from "./pages/DemanderScenario";
 import AdminStats from "./pages/AdminStats";
 import AdminUsers from "./pages/AdminUsers";
 import Login from "./pages/Login";
@@ -53,6 +55,7 @@ export default function App() {
         <Route path="/site" element={<Site />} />
         <Route path="/a-propos" element={<APropos />} />
         <Route path="/nouveautes" element={<Nouveautes />} />
+        <Route path="/demande-scenario" element={<RequireUser><DemanderScenario /></RequireUser>} />
         <Route path="/tickets" element={<RequireUser><Tickets /></RequireUser>} />
         <Route path="/cgu" element={<Cgu />} />
         <Route path="/contact" element={<Contact />} />
@@ -77,6 +80,7 @@ export default function App() {
           <Route path="utilisateurs" element={<AdminUsers />} />
           <Route path="stats" element={<AdminStats />} />
           <Route path="parametres" element={<Parametres />} />
+          <Route path="attribution" element={<Attribution />} />
           <Route path="tickets" element={<AdminTickets />} />
           <Route path="site" element={<AdminSite />} />
           <Route path="journal" element={<AdminAudit />} />

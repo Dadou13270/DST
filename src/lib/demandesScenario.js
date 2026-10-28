@@ -4,9 +4,9 @@ import { collection, doc, getDocs, addDoc, updateDoc, query, where, serverTimest
 // Demandes de scénarios faites par les gestionnaires, traitées par l'admin (Paramètres).
 export const STATUTS = { nouvelle: "Nouvelle", en_cours: "En cours", livree: "Livrée", refusee: "Refusée" };
 
-export const creerDemande = (uid, nom, { titre, rubrique, details }) =>
+export const creerDemande = (uid, nom, { titre, rubrique, details, interet, role }) =>
   addDoc(collection(db, "demandesScenario"), {
-    demandeur: uid, demandeurNom: nom || "", titre, rubrique: rubrique || "", details: details || "",
+    demandeur: uid, demandeurNom: nom || "", titre, rubrique: rubrique || "", details: details || "", interet: interet || "", role: role || "gestionnaire",
     statut: "nouvelle", scenarioId: "", creeLe: serverTimestamp(),
   });
 

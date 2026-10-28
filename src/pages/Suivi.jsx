@@ -1,4 +1,5 @@
 import TachesBilan from "../components/TachesBilan";
+import AutoBilan from "../components/AutoBilan";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { doc, setDoc } from "firebase/firestore";
@@ -17,6 +18,7 @@ import { listExercices, typeExercice } from "../lib/relation";
 function Fil({ profil, scId, uid, onSent }) {
   const [txt, setTxt] = useState("");
   const [err, setErr] = useState("");
+  const [ouvert, setOuvert] = useState(false);
   const reps = (profil.reponses || {})[scId] || [];
   const envoyer = async () => {
     setErr("");
@@ -24,13 +26,19 @@ function Fil({ profil, scId, uid, onSent }) {
   };
   return (
     <div className="card alerte" style={{ margin: "8px 0 0", borderLeftColor: "var(--ok)" }}>
-      <strong>Échange avec le formateur</strong>
-      <FilMessages c={profil.commentaires[scId]} reps={reps} nomStagiaire="Moi" />
-      <textarea rows={2} maxLength={600} placeholder="Répondre au formateur…" value={txt} onChange={(e) => setTxt(e.target.value)} />
-      <div className="row item">
-        <button className="btn" disabled={!txt.trim() || reps.length >= 30} onClick={envoyer}>Envoyer ma réponse</button>
-        {err && <span className="err">{err}</span>}
-      </div>
+      <button type="button" className="sv-tog" aria-expanded={ouvert} onClick={() => setOuvert(!ouvert)}>
+        <span className="chev" style={{ display: "inline-block", transition: ".15s", transform: ouvert ? "rotate(90deg)" : "none" }}>▶</span> <strong>Échange avec le formateur</strong> <span className="muted">· {1 + reps.length} message{reps.length ? "s" : ""}</span>
+      </button>
+      {ouvert && (
+        <>
+          <FilMessages c={profil.commentaires[scId]} reps={reps} nomStagiaire="Moi" />
+          <textarea rows={2} maxLength={600} placeholder="Répondre au formateur…" value={txt} onChange={(e) => setTxt(e.target.value)} />
+          <div className="row item">
+            <button className="btn" disabled={!txt.trim() || reps.length >= 30} onClick={envoyer}>Envoyer ma réponse</button>
+            {err && <span className="err">{err}</span>}
+          </div>
+        </>
+      )}
     </div>
   );
 }
@@ -145,6 +153,7 @@ export default function Suivi() {
                       <span className={"sv-st " + i.etat}>{ET[i.etat]}</span>
                       <div className="sv-info">{i.info}</div>
                       <Link className={i.etat === "termine" ? "btn" : "btn primary"} to={i.to}>{i.btn}</Link>
+                      {i.scId && bs[i.scId]?.auto && <div className="sv-fil"><AutoBilan auto={bs[i.scId].auto} /></div>}
                       {i.scId && bs[i.scId]?.taches && <div className="sv-fil"><TachesBilan taches={bs[i.scId].taches} /></div>}
                       {i.scId && profil?.commentaires?.[i.scId] && <div className="sv-fil"><Fil profil={profil} scId={i.scId} uid={user?.uid} onSent={refreshProfil} /></div>}
                     </div>

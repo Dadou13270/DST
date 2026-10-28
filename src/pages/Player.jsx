@@ -11,6 +11,7 @@ import { doc, updateDoc, deleteField } from "firebase/firestore";
 import Dominantes from "../components/Dominantes";
 import Frise, { FRISE_COL, frMmss } from "../components/Frise";
 import SalleChat from "../components/SalleChat";
+import AutoBilan, { AUTO_CH } from "../components/AutoBilan";
 import { posterQuestion, watchSalle, watchMessages, chronoReste, signalerEvo, repondreTache } from "../lib/salles";
 import { buildBilan, saveBilan } from "../lib/users";
 import { applyVars, tirer, varsDe } from "../lib/variantes";
@@ -21,7 +22,7 @@ const emptySession = () => ({
   finished: false,
   evo: {},
   log: [],
-  notes: { S: "", O: "", I: "", E: "", C: "", ms: "", mm: "", me: "", mt: "", message: "", crs: "", crv: "", crf: "", crd: "" },
+  notes: { ri: "", S: "", O: "", I: "", E: "", C: "", ms: "", mm: "", me: "", mt: "", message: "", crs: "", crv: "", crf: "", crd: "" },
 });
 const load = (k) => {
   try {
@@ -39,7 +40,7 @@ const save = (k, v) => {
   }
 };
 const bilanSession = (b) =>
-  b ? { start: b.fin - (b.duree || 0) * 1000, finishedAt: b.fin, finished: true, evoT: b.evos || undefined, vars: b.vars || undefined, taches: b.taches || undefined, log: b.log || [], notes: { ...emptySession().notes, ...b.notes } } : null;
+  b ? { start: b.fin - (b.duree || 0) * 1000, finishedAt: b.fin, finished: true, evoT: b.evos || undefined, vars: b.vars || undefined, taches: b.taches || undefined, auto: b.auto || undefined, log: b.log || [], notes: { ...emptySession().notes, ...b.notes } } : null;
 const fmt = (s) => {
   const a = Math.abs(s);
   return `${s < 0 ? "-" : ""}${String(Math.floor(a / 60)).padStart(2, "0")}:${String(a % 60).padStart(2, "0")}`;
@@ -79,8 +80,10 @@ export default function Player() {
   });
   const sc = useMemo(() => (scRaw ? applyVars(scRaw, sess.vars) : null), [scRaw, sess.vars]);
   const [sugOpen, setSugOpen] = useState(true);
-  const [tab, setTab] = useState("S");
-  useEffect(() => { if (sc?.smes) setTab((t) => (t === "S" ? "ms" : t)); }, [sc?.smes]); // eslint-disable-line react-hooks/exhaustive-deps
+  const [tab, setTab] = useState("ri");
+  const [autoOpen, setAutoOpen] = useState(false);
+  const setAuto = (k, v) => setSess((s) => ({ ...s, auto: { ...(s.auto || {}), [k]: v } }));
+  const autoOk = AUTO_CH.every((c) => (sess.auto?.[c.k] || "").trim());
   const [who, setWho] = useState(null);
   const [q, setQ] = useState("");
   const [now, setNow] = useState(Date.now());
@@ -142,7 +145,6 @@ export default function Player() {
     Object.keys(sess.evo || {}).forEach((k) => { if (!signalees.current.has(k)) { signalees.current.add(k); signalerEvo(salle, user.uid, k, "r"); } });
   }, [sess.evo, salle, user]); // eslint-disable-line react-hooks/exhaustive-deps
   // consignes cochées par le formateur : une zone de réponse chacune
-  const tachesSalle = salle ? salleDoc?.taches || [] : [];
   const [tacheTxt, setTacheTxt] = useState({});
   const envoyerTache = async (t) => {
     const texte = (tacheTxt[t.id] ?? sess.taches?.[t.id]?.texte ?? "").trim();
@@ -154,6 +156,7 @@ export default function Player() {
   // Séance en salle : le formateur peut déclencher une évolution, en envoyer une libre ou répondre à la place d'un interlocuteur
   const [salleMsgs, setSalleMsgs] = useState([]);
   const [salleDoc, setSalleDoc] = useState(null);
+  const tachesSalle = salle ? salleDoc?.taches || [] : [];
   useEffect(() => (salle ? watchSalle(salle, setSalleDoc) : undefined), [salle]);
   const chrono = salle ? salleDoc?.chrono || null : null;
   // le formateur termine l'exercice pour tous
@@ -296,7 +299,7 @@ export default function Player() {
   if (sess.finished) {
     const essentielles = essentielles_(sc, sess);
     const asked = new Set(sess.log.map((l) => l.qaId));
-    const rows = [...(sc.smes ? SMES.map((r) => ({ label: `SMES – ${r.titre}`, mine: sess.notes[r.k], ref: sc.correction[r.k] })) : []), ...SOIEC.map((r) => ({ label: `${r.k} – ${r.titre}`, mine: sess.notes[r.k], ref: sc.correction[r.k] })),
+    const rows = [{ label: "Réactions immédiates", mine: sess.notes.ri, ref: "" }, ...(sc.smes ? SMES.map((r) => ({ label: `SMES – ${r.titre}`, mine: sess.notes[r.k], ref: sc.correction[r.k] })) : []), ...SOIEC.map((r) => ({ label: `${r.k} – ${r.titre}`, mine: sess.notes[r.k], ref: sc.correction[r.k] })),
       { label: "Message d'ambiance", mine: sess.notes.message, ref: sc.correction.message },
       ...CRM.map((r) => ({ label: `Compte rendu – ${r.titre}`, mine: sess.notes[r.k], ref: sc.correction[r.k] }))];
     return (
@@ -313,6 +316,7 @@ export default function Player() {
           {saveMsg && <span className="err"> — {saveMsg}</span>}
         </p>
         <Frise sc={sc} sess={sess} interName={interName} />
+        <AutoBilan auto={sess.auto} />
 
         {sc.afficherCorrection && essentielles.length > 0 && (
           <div className="card">
@@ -405,22 +409,6 @@ export default function Player() {
             <p className="pre">{alerte.message}</p>
           </div>
           <button className="btn primary" onClick={compris}>Compris</button>
-        </div>
-      )}
-      {tachesSalle.length > 0 && !sess.finished && (
-        <div className="card taches-salle">
-          <h3 style={{ marginTop: 0 }}>Consignes du formateur</h3>
-          {tachesSalle.map((t) => {
-            const fait = sess.taches?.[t.id];
-            const val = tacheTxt[t.id] ?? fait?.texte ?? "";
-            return (
-              <div key={t.id} style={{ margin: "8px 0" }}>
-                <label><strong>{t.titre}</strong> {fait && <span className="tag ok">Envoyé à {new Date(fait.le).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}</span>}</label>
-                <textarea rows={3} maxLength={1500} style={{ width: "100%", marginTop: 4 }} value={val} onChange={(e) => setTacheTxt((x) => ({ ...x, [t.id]: e.target.value }))} placeholder="Ta réponse…" />
-                <button className="btn primary" disabled={!val.trim() || val.trim() === fait?.texte} onClick={() => envoyerTache(t)}>{fait ? "Mettre à jour" : "Envoyer"}</button>
-              </div>
-            );
-          })}
         </div>
       )}
       {!alerte && Object.keys(sess.evo || {}).length > 0 && (
@@ -548,17 +536,35 @@ export default function Player() {
           )}
 
           <div className="ptabs" role="tablist">
-            {[...(sc.smes ? SMES.map((r) => [r.k, `SMES · ${r.titre}`]) : []), ...SOIEC.map((r) => [r.k, `${r.k} · ${r.titre}`]), ["message", "Message d'ambiance"], ["cr", "Compte rendu"]].map(([k, l]) => (
+            {[["ri", "Réactions immédiates"], ...(sc.smes ? [["smes", "SMES"]] : []), ["message", "Message d'ambiance"], ["soiec", "SOIEC"], ["cr", "Compte rendu"], ...tachesSalle.map((t) => ["t:" + t.id, t.titre.replace(/^(Rédiger|Indiquer) (le |la |les |l')?/i, "").replace(/^./, (c) => c.toUpperCase())])].map(([k, l]) => (
               <button key={k} role="tab" className={tab === k ? "on" : ""} onClick={() => setTab(k)}>{l}</button>
             ))}
           </div>
-          {[...(sc.smes ? SMES : []), ...SOIEC].filter((r) => r.k === tab).map((r) => (
+          {[...(sc.smes && tab === "smes" ? SMES : []), ...(tab === "soiec" ? SOIEC : [])].map((r) => (
             <div key={r.k} className="note">
               <div className="nk"><span className="kk">{SMES.includes(r) ? r.titre[0] : r.k}</span>{SMES.includes(r) ? "SMES · " : ""}{r.titre}</div>
               <p className="nh">{r.aide}</p>
               <textarea rows={5} value={sess.notes[r.k] || ""} onChange={(e) => setNote(r.k, e.target.value)} />
             </div>
           ))}
+          {tab === "ri" && (
+            <div className="note">
+              <div className="nk"><span className="kk">⚡</span>Réactions immédiates</div>
+              <p className="nh">Quelles sont tes premières actions, dès ton arrivée, avant même d'avoir toutes les informations ?</p>
+              <textarea rows={5} value={sess.notes.ri || ""} onChange={(e) => setNote("ri", e.target.value)} />
+            </div>
+          )}
+          {tachesSalle.filter((t) => tab === "t:" + t.id).map((t) => {
+            const fait = sess.taches?.[t.id];
+            const val = tacheTxt[t.id] ?? fait?.texte ?? "";
+            return (
+              <div key={t.id} className="note">
+                <div className="nk"><span className="kk">✎</span>{t.titre} <span className="muted">· consigne du formateur</span> {fait && <span className="tag ok">Envoyé à {new Date(fait.le).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}</span>}</div>
+                <textarea rows={6} maxLength={1500} value={val} onChange={(e) => setTacheTxt((x) => ({ ...x, [t.id]: e.target.value }))} placeholder="Ta réponse…" />
+                <button className="btn primary" disabled={!val.trim() || val.trim() === fait?.texte} onClick={() => envoyerTache(t)}>{fait ? "Mettre à jour" : "Envoyer au formateur"}</button>
+              </div>
+            );
+          })}
           {tab === "cr" && (
             <div className="note">
               <div className="nk"><span className="kk">✉</span>Message de compte rendu</div>
@@ -583,11 +589,25 @@ export default function Player() {
             </div>
           )}
 
+          {autoOpen && (
+            <div className="card" style={{ borderLeft: "4px solid var(--red, #c42a1c)" }}>
+              <h3 style={{ marginTop: 0 }}>Auto-évaluation avant de terminer</h3>
+              <p className="muted" style={{ margin: "0 0 6px" }}>Dis-nous ce que tu as retenu de cet exercice (obligatoire).</p>
+              {AUTO_CH.map((c) => (
+                <div key={c.k}>
+                  <label style={{ display: "block", marginTop: 6 }}><strong>{c.titre}</strong> <span className="muted">{c.q}</span></label>
+                  <textarea rows={3} maxLength={1200} value={sess.auto?.[c.k] || ""} onChange={(e) => setAuto(c.k, e.target.value)} />
+                </div>
+              ))}
+            </div>
+          )}
           <div className="row end">
+            {autoOpen && <button className="btn" onClick={() => setAutoOpen(false)}>Annuler</button>}
             <button
               className="btn primary"
+              disabled={autoOpen && !autoOk}
               onClick={() => {
-                if (!window.confirm("Terminer l'exercice ?")) return;
+                if (!autoOpen) return setAutoOpen(true);
                 const fin = { ...sess, finished: true, finishedAt: Date.now() };
                 setSess(fin);
                 if (user)
@@ -596,7 +616,7 @@ export default function Player() {
                     .catch((e) => setSaveMsg("Ton résultat n'a pas pu être enregistré dans ton suivi (" + (e.code || e.message) + "). L'exercice est bien terminé."));
               }}
             >
-              Terminer l'exercice
+              {autoOpen ? "Valider et terminer l'exercice" : "Terminer l'exercice"}
             </button>
           </div>
         </section>

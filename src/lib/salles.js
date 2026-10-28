@@ -15,6 +15,7 @@ export const libEtat = { close: "Clôturée", plan: "Planifiée", open: "Ouverte
 export const fmtDebut = (ms) => (ms ? new Date(ms).toLocaleString("fr-FR", { dateStyle: "short", timeStyle: "short" }) : "");
 export const debutDepuisInput = (v) => { const t = v ? new Date(v).getTime() : NaN; return Number.isNaN(t) ? null : t; };
 export const inputDepuisDebut = (ms) => (ms ? new Date(ms - new Date(ms).getTimezoneOffset() * 60000).toISOString().slice(0, 16) : "");
+export const modifierSalle = (code, data) => updateDoc(doc(db, "salles", code), data);
 export const setDebut = (code, debut) => updateDoc(doc(db, "salles", code), { debut });
 
 export async function creerSalle(owner, ownerNom, sc, debut = null) {
@@ -74,9 +75,6 @@ export const envoyerEvenement = (code, uid, nom, data) =>
 export const TACHES_MODELES = [
   { id: "flash", titre: "Rédiger le message flash" },
   { id: "arrivee", titre: "Rédiger le message d'arrivée sur les lieux" },
-  { id: "reactions", titre: "Indiquer les réactions immédiates" },
-  { id: "ambiance", titre: "Rédiger le message d'ambiance" },
-  { id: "moyens", titre: "Rédiger la demande de renforts / moyens" },
 ];
 export const setTaches = (code, taches) => updateDoc(doc(db, "salles", code), { taches });
 export const repondreTache = (code, uid, nom, t, texte) =>

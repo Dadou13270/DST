@@ -80,7 +80,7 @@ export default function Layout({ children, extra }) {
             <b>OPS Training</b>
             <span>Simulateur opérationnel collaboratif</span>
           </div>
-          <div>
+          {user && <div>
             <h4>Application</h4>
             <ul>
               <li><Link to="/">Exercices</Link></li>
@@ -89,30 +89,33 @@ export default function Layout({ children, extra }) {
               <li><Link to="/profil">Mon profil</Link></li>
               <li><Link to="/carte">Carte des inscrits</Link></li>
             </ul>
-          </div>
-          <div>
+          </div>}
+          {user && <div>
             <h4>Gestionnaires</h4>
             <ul>
               <li><Link to="/aide-equipes">Fonctionnement des équipes</Link></li>
               <li><Link to="/aide-salle">Séance en salle</Link></li>
               <li><Link to="/contact?objet=gestionnaire">Demander l'accès gestionnaire</Link></li>
             </ul>
-          </div>
+          </div>}
           <div>
             <h4>Informations</h4>
             <ul>
               <li><Link to="/site">Site de présentation</Link></li>
               <li><Link to="/a-propos">À propos</Link></li>
-              <li><Link to="/nouveautes">Nouveautés</Link></li>
-              <li><Link to="/tickets">Support</Link></li>
-              <li><Link to="/cgu">Conditions d'utilisation (CGU)</Link></li>
-              <li><a href="#" onClick={(e) => { e.preventDefault(); rouvrirVisite(); }}>Visite guidée</a></li>
-              <li><Link to="/contact">Contact</Link></li>
-              <li><a href="#" onClick={(e) => { e.preventDefault(); setAvisOpen(true); }}>Avis et suggestions</a></li>
+              {user && <>
+                <li><Link to="/nouveautes">Nouveautés</Link></li>
+                <li><Link to="/demande-scenario">Demander un scénario</Link></li>
+                <li><Link to="/tickets">Support</Link></li>
+                <li><Link to="/cgu">Conditions d'utilisation (CGU)</Link></li>
+                <li><a href="#" onClick={(e) => { e.preventDefault(); rouvrirVisite(); }}>Visite guidée</a></li>
+                <li><Link to="/contact">Contact</Link></li>
+                <li><a href="#" onClick={(e) => { e.preventDefault(); setAvisOpen(true); }}>Avis et suggestions</a></li>
+              </>}
             </ul>
           </div>
         </div>
-        <div className="fcopy">© {new Date().getFullYear()} OPS Training — Tous droits réservés · <Link to="/cgu">CGU</Link></div>
+        <div className="fcopy">© {new Date().getFullYear()} OPS Training — Tous droits réservés{user && <> · <Link to="/cgu">CGU</Link></>}</div>
       </footer>
       {avisOpen && <AvisModal onClose={() => setAvisOpen(false)} />}
     </>
