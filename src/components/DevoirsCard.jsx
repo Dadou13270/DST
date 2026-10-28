@@ -8,7 +8,7 @@ export default function DevoirsCard({ devoirs }) {
   devoirs.forEach((d) => { const k = d.pc || ""; if (!groupes.has(k)) groupes.set(k, []); groupes.get(k).push(d); });
   const ligne = (d, next, dim) => (
     <div key={d.scId} style={dim ? { opacity: 0.55 } : undefined}>
-      {d.pc && d.rg !== undefined ? `${d.rg + 1}. ` : ""}<Link to={`/scenario/${d.scId}`}>{d.titre}</Link> — avant le {fmtLimite(d.limite)}{" "}
+      {d.pc && d.rg !== undefined ? `${d.rg + 1}. ` : ""}<Link to={d.k === "rel" ? `/relation/${d.scId}` : d.k ? `/calculs/${d.scId}` : `/scenario/${d.scId}`}>{d.titre}</Link> — avant le {fmtLimite(d.limite)}{" "}
       {d.statut === "retard" && <span className="tag late">En retard</span>}{next && <span className="tag">Prochaine étape</span>}
     </div>
   );

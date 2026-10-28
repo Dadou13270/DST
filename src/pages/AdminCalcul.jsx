@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { listCalculs, saveCalcul, attendu, CALC_Q } from "../lib/calculs";
-import { RUBRIQUES } from "../lib/model";
+import { toutesRubriques } from "../lib/relation";
 import { compressImage } from "../lib/image";
 import { calcImg } from "../lib/calculImages";
 import { listIllustrations } from "../lib/illustrations";
@@ -15,6 +15,8 @@ export default function AdminCalcul() {
   const nav = useNavigate();
   const [e, setE] = useState(id === "nouveau" ? VIDE : null);
   const [err, setErr] = useState("");
+  const [rubs, setRubs] = useState([]);
+  useEffect(() => { toutesRubriques().then(setRubs).catch(() => {}); }, []);
   const [libOpen, setLibOpen] = useState(false);
   const [lib, setLib] = useState(null);
   useEffect(() => {
@@ -51,7 +53,7 @@ export default function AdminCalcul() {
         <label>Énoncé (contexte)</label><textarea rows={3} maxLength={600} value={e.contexte} onChange={(ev) => set("contexte", ev.target.value)} />
         <div className="row">
           <div><label>Niveau</label><select value={e.niveau} onChange={(ev) => set("niveau", ev.target.value)}>{NIV.map((n) => <option key={n}>{n}</option>)}</select></div>
-          <div><label>Rubrique</label><select value={e.rubrique || ""} onChange={(ev) => set("rubrique", ev.target.value)}><option value="">— Aucune —</option>{RUBRIQUES.map((r) => <option key={r}>{r}</option>)}</select></div>
+          <div><label>Rubrique</label><select value={e.rubrique || ""} onChange={(ev) => set("rubrique", ev.target.value)}><option value="">— Aucune —</option>{rubs.map((r) => <option key={r}>{r}</option>)}</select></div>
           <label className="ck"><input type="checkbox" checked={!!e.publie} onChange={(ev) => set("publie", ev.target.checked)} /> Publié (visible des stagiaires)</label>
         </div>
         <h3>Illustration</h3>

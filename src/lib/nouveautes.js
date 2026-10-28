@@ -1,10 +1,11 @@
-import { collection, doc, onSnapshot, addDoc, updateDoc, deleteDoc } from "firebase/firestore";
-import { db } from "../firebase";
+import { collection, doc, onSnapshot, setDoc, addDoc, updateDoc, deleteDoc } from "firebase/firestore";
+import { onAuthStateChanged } from "firebase/auth";
+import { db, auth } from "../firebase";
 
 // Les nouveautés sont stockées dans Firestore (collection "nouveautes"), modifiables par l'admin.
 export function watchNouveautes(cb) {
   return onSnapshot(collection(db, "nouveautes"), (s) => {
-    const l = s.docs.map((d) => ({ id: d.id, ...d.data() }));
+    const l = s.docs.filter((d) => d.id !== "_reglages").map((d) => ({ id: d.id, ...d.data() }));
     l.sort((a, b) => (b.d || "").localeCompare(a.d || ""));
     cb(l);
   }, () => cb([]));
@@ -56,3 +57,20 @@ export const NOUVEAUTES_INIT = [
     ]
   }
 ];
+
+// Graphisme de l'application (réglage admin) : "" = actuel, "b" = institutionnel.
+export function appliquerStyle(v) {
+  document.documentElement.dataset.style = v === "b" ? "b" : "";
+  try { localStorage.setItem("op-style", v === "b" ? "b" : ""); } catch { /* ignore */ }
+}
+export function initStyle() {
+  try { if (localStorage.getItem("op-style") === "b") document.documentElement.dataset.style = "b"; } catch { /* ignore */ }
+  if (!auth) return () => {};
+  let off = () => {};
+  const offAuth = onAuthStateChanged(auth, (u) => {
+    off();
+    off = u ? onSnapshot(doc(db, "nouveautes", "_reglages"), (d) => appliquerStyle(d.exists() ? d.data().style : ""), () => {}) : () => {};
+  });
+  return () => { off(); offAuth(); };
+}
+export const setStyle = (v) => setDoc(doc(db, "nouveautes", "_reglages"), { style: v === "b" ? "b" : "" });

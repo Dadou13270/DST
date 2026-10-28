@@ -2,11 +2,65 @@ import { useEffect, useState } from "react";
 import { listUsers, setStatut, setAdmin, deleteUserProfile, fmtDate, fmtDuree } from "../lib/users";
 import { setGestionnaire } from "../lib/equipes";
 import { useAuth } from "../lib/auth";
+import { creerUtilisateur, parseLignes } from "../lib/inscription";
+import { logAudit } from "../lib/audit";
+import { listExercices, typeExercice } from "../lib/relation";
 
 const d = (t) => (t?.toDate ? t.toDate().toLocaleString("fr-FR", { dateStyle: "short", timeStyle: "short" }) : "—");
 
+function AjoutUsers({ adminUid, adminNom, onDone }) {
+  const [txt, setTxt] = useState("");
+  const [role, setRole] = useState("stagiaire");
+  const [res, setRes] = useState(null);
+  const [busy, setBusy] = useState(false);
+  const go = async (e) => {
+    e.preventDefault();
+    setBusy(true);
+    const out = [];
+    for (const l of parseLignes(txt)) {
+      try {
+        const id = await creerUtilisateur(l, adminUid);
+        if (role === "admin") await setAdmin(id, true);
+        if (role === "gestionnaire") await setGestionnaire(id, true);
+        logAudit({ uid: adminUid, nom: adminNom }, "creation_compte", { id, nom: l.nom }, `${l.email} · rôle ${role}`);
+        out.push({ ...l, ok: true });
+      } catch (x) { out.push({ ...l, ok: false, err: x.message }); }
+    }
+    setRes(out); setBusy(false); setTxt(""); onDone();
+  };
+  const recap = (res || []).filter((r) => r.ok).map((r) => `${r.nom} — ${r.email} — mot de passe : ${r.mdp}`).join("\n");
+  return (
+    <form className="card form" onSubmit={go}>
+      <h2>Ajouter des utilisateurs</h2>
+      <p className="muted">Une personne par ligne : <code>Nom ; e-mail ; mot de passe</code> (mot de passe facultatif : généré sinon). Elle se connecte avec cet e-mail et ce mot de passe provisoire, à changer dans son profil.</p>
+      <label>Rôle</label>
+      <select value={role} onChange={(e) => setRole(e.target.value)}>
+        <option value="stagiaire">Stagiaire</option><option value="gestionnaire">Gestionnaire</option><option value="admin">Administrateur</option>
+      </select>
+      <label>Utilisateurs</label>
+      <textarea rows={4} value={txt} onChange={(e) => setTxt(e.target.value)} placeholder={"Zoé Léger ; zoe@exemple.fr\nPaul Martin ; paul@exemple.fr ; Motdepasse1"} required />
+      <button className="btn primary" disabled={busy}>{busy ? "Création…" : "Créer les comptes"}</button>
+      {res && (
+        <div style={{ marginTop: 12 }}>
+          {res.map((r, i) => (
+            <div key={i} className={r.ok ? "ok-txt" : "err"}>{r.ok ? "✓" : "✗"} {r.nom || "(sans nom)"} — {r.email || "?"} {r.ok ? "" : `: ${r.err}`}</div>
+          ))}
+          {recap && (
+            <>
+              <p className="muted">À transmettre aux intéressés (les mots de passe ne seront plus affichés) :</p>
+              <textarea readOnly rows={Math.min(8, recap.split("\n").length + 1)} value={recap} onFocus={(e) => e.target.select()} />
+              <button type="button" className="btn" onClick={() => navigator.clipboard?.writeText(recap)}>Copier</button>
+            </>
+          )}
+        </div>
+      )}
+    </form>
+  );
+}
+
 export default function AdminUsers() {
-  const { user, resetPassword } = useAuth();
+  const { user, profil, resetPassword } = useAuth();
+  const L = (action, u, details = "") => logAudit({ uid: user.uid, nom: profil?.nom }, action, { id: u.id, nom: u.nom }, details);
   const [list, setList] = useState(null);
   const [err, setErr] = useState("");
   const [msg, setMsg] = useState("");
@@ -14,6 +68,9 @@ export default function AdminUsers() {
   const [filtre, setFiltre] = useState("tous");
   const [confirm, setConfirm] = useState(null); // "action:uid"
   const [open, setOpen] = useState(null);
+  const [exs, setExs] = useState([]);
+  useEffect(() => { listExercices(true).then(setExs); }, []);
+  const nbEx = (u) => Object.keys(u.bilans || {}).length + Object.keys(u.calculs || {}).length;
 
   const refresh = () =>
     listUsers()
@@ -71,6 +128,7 @@ export default function AdminUsers() {
           <option value="admin">Administrateurs</option>
         </select>
       </div>
+      <AjoutUsers adminUid={user.uid} adminNom={profil?.nom} onDone={refresh} />
       {msg && <p className="ok-txt">{msg}</p>}
       {err && <div className="card warn">Erreur : {err}</div>}
       {!list && !err && <p>Chargement…</p>}
@@ -89,11 +147,17 @@ export default function AdminUsers() {
               {susp && <span className="tag">Suspendu</span>} {moi && <span className="tag">Moi</span>}
               <div className="muted">{u.email}</div>
               <small className="muted" style={{ marginLeft: 0 }}>
-                Inscrit : {d(u.creeLe)} · Dernière connexion : {d(u.derniereConnexion)} · {Object.keys(u.bilans || {}).length} exercice(s) terminé(s)
+                Inscrit : {d(u.creeLe)} · Dernière connexion : {d(u.derniereConnexion)} · {nbEx(u)} exercice(s) terminé(s)
               </small>
+              {open === u.id && Object.keys(u.calculs || {}).length > 0 && (
+                <table className="cmp" style={{ marginTop: 8 }}>
+                  <thead><tr><th>Exercice</th><th>Type</th><th>Essais</th><th>Dernier</th><th>Meilleur</th><th>Date</th></tr></thead>
+                  <tbody>{Object.entries(u.calculs).map(([id, l]) => { const e = exs.find((x) => x.id === id); const dd = l[l.length - 1]; return <tr key={id}><td>{e ? e.titre : id}</td><td>{typeExercice(e)}</td><td>{l.length}</td><td>{dd.ok}/{dd.tot}</td><td>{Math.max(...l.map((x) => x.ok))}/{dd.tot}</td><td>{fmtDate(dd.le)}</td></tr>; })}</tbody>
+                </table>
+              )}
               {open === u.id &&
                 (Object.keys(u.bilans || {}).length === 0 ? (
-                  <p className="muted">Aucun exercice terminé.</p>
+                  (Object.keys(u.calculs || {}).length === 0 ? <p className="muted">Aucun exercice terminé.</p> : null)
                 ) : (
                   <table className="cmp" style={{ marginTop: 8 }}>
                     <thead><tr><th>Exercice</th><th>Fin</th><th>Temps</th><th>Questions</th><th>Essentielles</th><th>Tent.</th></tr></thead>
@@ -110,14 +174,14 @@ export default function AdminUsers() {
             </div>
             {!moi && (
               <div className="row">
-                {two(`st:${u.id}`, susp ? "Réactiver" : "Suspendre", () => setStatut(u.id, susp ? "actif" : "suspendu"),
+                {two(`st:${u.id}`, susp ? "Réactiver" : "Suspendre", async () => { await setStatut(u.id, susp ? "actif" : "suspendu"); L(susp ? "reactivation" : "suspension", u); },
                   susp ? "Compte réactivé." : "Compte suspendu.")}
-                {two(`ad:${u.id}`, u.admin ? "Retirer admin" : "Passer admin", () => setAdmin(u.id, !u.admin),
+                {two(`ad:${u.id}`, u.admin ? "Retirer admin" : "Passer admin", async () => { await setAdmin(u.id, !u.admin); L(u.admin ? "admin_retrait" : "admin_ajout", u); },
                   u.admin ? "Droits admin retirés." : "Compte promu administrateur.")}
-                {two(`ge:${u.id}`, u.gestionnaire ? "Retirer gestionnaire" : "Passer gestionnaire", () => setGestionnaire(u.id, !u.gestionnaire),
+                {two(`ge:${u.id}`, u.gestionnaire ? "Retirer gestionnaire" : "Passer gestionnaire", async () => { await setGestionnaire(u.id, !u.gestionnaire); L(u.gestionnaire ? "gestionnaire_retrait" : "gestionnaire_ajout", u); },
                   u.gestionnaire ? "Rôle gestionnaire retiré." : "Compte promu gestionnaire.")}
-                {two(`pw:${u.id}`, "Réinit. mot de passe", () => resetPassword(u.email), "E-mail de réinitialisation envoyé.")}
-                {two(`del:${u.id}`, "Supprimer", () => deleteUserProfile(u.id), "Profil supprimé.", "danger")}
+                {two(`pw:${u.id}`, "Réinit. mot de passe", async () => { await resetPassword(u.email); L("reinit_mdp", u); }, "E-mail de réinitialisation envoyé.")}
+                {two(`del:${u.id}`, "Supprimer", async () => { await deleteUserProfile(u.id); L("suppression_profil", u, u.email || ""); }, "Profil supprimé.", "danger")}
               </div>
             )}
           </div>

@@ -24,8 +24,8 @@ export default function TableauBord({ teams, scs }) {
   const membres = (m || []).map((u) => {
     const bs = u.bilans || {};
     const n = Object.keys(bs).length;
-    const rendus = dev.filter((d) => bs[d.scId]).length;
-    const retards = dev.filter((d) => statutDevoir(d, bs, now) === "retard").length;
+    const rendus = dev.filter((d) => bs[d.scId] || (u.calculs || {})[d.scId]).length;
+    const retards = dev.filter((d) => statutDevoir(d, bs, now, u.calculs) === "retard").length;
     const pct = dev.length ? rendus / dev.length : nPub ? Math.min(1, n / nPub) : 0;
     const last = Math.max(ms(u.derniereConnexion), ...Object.values(bs).map((b) => b.fin || 0));
     return { u, n, rendus, retards, pct, last };
@@ -38,7 +38,7 @@ export default function TableauBord({ teams, scs }) {
     a.n++; a.ok += b.essOk || 0; a.tot += b.essTot || 0;
   }));
   const rates = Object.values(agg).filter((a) => a.tot > 0).map((a) => ({ ...a, taux: Math.round((a.ok / a.tot) * 100) })).sort((a, b) => a.taux - b.taux).slice(0, 5);
-  const retardsDev = dev.map((d) => ({ d, r: membres.filter((x) => statutDevoir(d, x.u.bilans, now) === "retard").length })).filter((x) => x.r > 0);
+  const retardsDev = dev.map((d) => ({ d, r: membres.filter((x) => statutDevoir(d, x.u.bilans, now, x.u.calculs) === "retard").length })).filter((x) => x.r > 0);
   const inactifs = membres.filter((x) => !x.last || now - x.last > jours * J).sort((a, b) => a.last - b.last);
   const depuis = (t) => (t ? `il y a ${Math.floor((now - t) / J)} j` : "jamais");
 

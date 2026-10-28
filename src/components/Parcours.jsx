@@ -8,7 +8,7 @@ export default function Parcours({ user, profil, isAdmin, scs, pcs, onChange }) 
   const [add, setAdd] = useState("");
   const [msg, setMsg] = useState("");
   const [conf, setConf] = useState(null);
-  const titre = (id) => scs.find((x) => x.id === id)?.titre || "(scénario indisponible)";
+  const titre = (id) => scs.find((x) => x.id === id)?.titre || "(exercice indisponible)";
   const run = async (f) => { setMsg(""); try { await f(); onChange(); } catch (e) { setMsg("Erreur : " + e.message); } };
   const move = (i, d) => setEd((e) => { const a = [...e.scIds]; const j = i + d; if (j < 0 || j >= a.length) return e; [a[i], a[j]] = [a[j], a[i]]; return { ...e, scIds: a }; });
   const save = (e) => {
@@ -46,7 +46,7 @@ export default function Parcours({ user, profil, isAdmin, scs, pcs, onChange }) 
           <div className="row item">
             <select className="grow" value={add} onChange={(e) => setAdd(e.target.value)}>
               <option value="">Ajouter un exercice…</option>
-              {scs.filter((x) => !ed.scIds.includes(x.id)).map((x) => <option key={x.id} value={x.id}>{x.titre}</option>)}
+              {scs.filter((x) => !ed.scIds.includes(x.id)).map((x) => <option key={x.id} value={x.id}>{x.titre}{x.kind === "rel" ? " · Relationnel" : x.kind === "calc" ? " · Calcul LIF" : ""}</option>)}
             </select>
             <button type="button" className="btn" onClick={() => { if (add) { setEd({ ...ed, scIds: [...ed.scIds, add] }); setAdd(""); } }}>Ajouter</button>
           </div>

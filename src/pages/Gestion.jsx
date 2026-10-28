@@ -1,4 +1,4 @@
-import { listCalculs } from "../lib/calculs";
+import { listExercices, typeExercice, listCatalogue } from "../lib/relation";
 import { useEffect, useState } from "react";
 import { Link, Navigate } from "react-router-dom";
 import Layout from "../components/Layout";
@@ -55,14 +55,14 @@ function Devoirs({ team, membres, scs, pcs, onChange }) {
   const [err, setErr] = useState("");
   const dev = team.devoirs || [];
   const now = Date.now();
-  const retards = dev.flatMap((d) => membres.filter((u) => statutDevoir(d, u.bilans, now) === "retard").map((u) => ({ u, d })));
+  const retards = dev.flatMap((d) => membres.filter((u) => statutDevoir(d, u.bilans, now, u.calculs) === "retard").map((u) => ({ u, d })));
   const add = async (e) => {
     e.preventDefault(); setErr("");
     const sc = scs.find((x) => x.id === scId);
     if (!sc) return setErr("Choisis un exercice.");
     if (!lim) return setErr("Indique une date limite.");
     if (dev.some((x) => x.scId === scId)) return setErr("Cet exercice est déjà dans la liste.");
-    try { await ajouterDevoir(team, { scId, titre: sc.titre, limite: limiteDepuisInput(lim) }); setScId(""); setLim(""); onChange(); } catch (x) { setErr(x.message); }
+    try { await ajouterDevoir(team, { scId, titre: sc.titre, limite: limiteDepuisInput(lim), ...(sc.kind && sc.kind !== "sc" ? { k: sc.kind } : {}) }); setScId(""); setLim(""); onChange(); } catch (x) { setErr(x.message); }
   };
   const assigner = async (e) => {
     e.preventDefault(); setErr("");
@@ -91,8 +91,8 @@ function Devoirs({ team, membres, scs, pcs, onChange }) {
           <thead><tr><th>Exercice</th><th>Échéance</th><th>Rendus</th><th>En retard</th><th></th></tr></thead>
           <tbody>
             {dev.map((d) => {
-              const ok = membres.filter((u) => statutDevoir(d, u.bilans, now) === "ok").length;
-              const r = membres.filter((u) => statutDevoir(d, u.bilans, now) === "retard").length;
+              const ok = membres.filter((u) => statutDevoir(d, u.bilans, now, u.calculs) === "ok").length;
+              const r = membres.filter((u) => statutDevoir(d, u.bilans, now, u.calculs) === "retard").length;
               return (
                 <tr key={d.scId}>
                   <td>{d.pc ? `${(d.rg || 0) + 1}. ` : ""}{d.titre}{d.pcT && <div className="muted" style={{ fontSize: ".8rem" }}>Parcours « {d.pcT} »</div>}</td><td>{fmtLimite(d.limite)}</td><td>{ok}/{membres.length}</td>
@@ -122,7 +122,7 @@ function Devoirs({ team, membres, scs, pcs, onChange }) {
       <form className="row item" onSubmit={add} style={{ marginTop: 8 }}>
         <select value={scId} onChange={(e) => setScId(e.target.value)}>
           <option value="">Exercice à ajouter…</option>
-          {scs.map((x) => <option key={x.id} value={x.id}>{x.titre}</option>)}
+          {scs.map((x) => <option key={x.id} value={x.id}>{x.titre}{x.kind === "rel" ? " · Relationnel" : x.kind === "calc" ? " · Calcul LIF" : ""}</option>)}
         </select>
         <input type="date" value={lim} onChange={(e) => setLim(e.target.value)} style={{ width: "auto" }} />
         <button className="btn primary">Ajouter</button>
@@ -150,7 +150,7 @@ function Equipe({ team, autres, scs, pcs, onChange }) {
   const [copie, setCopie] = useState(false);
   const load = () => listMembres(team.id).then(setM).catch((e) => setErr(e.message));
   const [calcEx, setCalcEx] = useState([]);
-  useEffect(() => { listCalculs(true).then(setCalcEx).catch(() => {}); }, []);
+  useEffect(() => { listExercices(true).then(setCalcEx).catch(() => {}); }, []);
   useEffect(() => { load(); }, [team.id]); // eslint-disable-line
   const run = async (fn) => { setErr(""); setConf(""); try { await fn(); } catch (e) { setErr(e.message); } };
   const two = (k, label, fn, cls = "") =>
@@ -189,6 +189,7 @@ function Equipe({ team, autres, scs, pcs, onChange }) {
                   <td>
                     <div className="row">
                       <button className="btn" onClick={() => setOpen(open === u.id ? null : u.id)}>{open === u.id ? "Masquer" : "Suivi"}</button>
+                      <Link className="btn" to={`/messages?avec=${u.id}`} title="Envoyer un message privé">✉</Link>
                       {autres.length > 0 && (
                         <select value="" onChange={(e) => { const t = autres.find((x) => x.id === e.target.value); if (t) run(async () => { await deplacerMembre(u.id, t); await load(); onChange(); }); }}>
                           <option value="">Déplacer vers…</option>
@@ -201,7 +202,7 @@ function Equipe({ team, autres, scs, pcs, onChange }) {
                 </tr>,
                 open === u.id && (
                   <tr key={u.id + "d"}><td colSpan={6}>
-                    {Object.keys(u.bilans || {}).length === 0 ? <span className="muted">Aucun exercice terminé.</span> : (
+                    {Object.keys(u.bilans || {}).length === 0 ? (Object.keys(u.calculs || {}).length === 0 ? <span className="muted">Aucun exercice terminé.</span> : null) : (
                       <table className="cmp">
                         <thead><tr><th>Exercice</th><th>Fin</th><th>Temps</th><th>Questions</th><th>Essentielles</th><th>Tent.</th></tr></thead>
                         <tbody>{Object.entries(u.bilans).map(([scId, b]) => [
@@ -213,8 +214,8 @@ function Equipe({ team, autres, scs, pcs, onChange }) {
                     )}
                     {Object.keys(u.calculs || {}).length > 0 && (
                       <table className="cmp" style={{ marginTop: 8 }}>
-                        <thead><tr><th>Calcul LIF</th><th>Essais</th><th>Dernier</th><th>Meilleur</th><th>Date</th></tr></thead>
-                        <tbody>{Object.entries(u.calculs).map(([id, l]) => { const e = calcEx.find((x) => x.id === id); const d = l[l.length - 1]; return <tr key={id}><td>{e ? e.titre : id}</td><td>{l.length}</td><td>{d.ok}/{d.tot}</td><td>{Math.max(...l.map((x) => x.ok))}/{d.tot}</td><td>{fmtDate(d.le)}</td></tr>; })}</tbody>
+                        <thead><tr><th>Exercice</th><th>Type</th><th>Essais</th><th>Dernier</th><th>Meilleur</th><th>Date</th></tr></thead>
+                        <tbody>{Object.entries(u.calculs).map(([id, l]) => { const e = calcEx.find((x) => x.id === id); const d = l[l.length - 1]; return <tr key={id}><td>{e ? e.titre : id}</td><td>{typeExercice(e)}</td><td>{l.length}</td><td>{d.ok}/{d.tot}</td><td>{Math.max(...l.map((x) => x.ok))}/{d.tot}</td><td>{fmtDate(d.le)}</td></tr>; })}</tbody>
                       </table>
                     )}
                   </td></tr>
@@ -333,7 +334,7 @@ export default function Gestion() {
   const [onglet, setOnglet] = useState("eq");
   const loadPcs = () => listParcours(user.uid, isAdmin).then(setPcs).catch(() => {});
   useEffect(() => { if (user) loadPcs(); }, [user?.uid, isAdmin]); // eslint-disable-line
-  useEffect(() => { if (user) listScenarios(true, { uid: user.uid, equipeId: profil?.equipeId }).then(setScs).catch(() => {}); }, [user?.uid]); // eslint-disable-line
+  useEffect(() => { if (user) listCatalogue({ uid: user.uid, equipeId: profil?.equipeId }).then(setScs).catch(() => {}); }, [user?.uid]); // eslint-disable-line
   const ok = Boolean(profil?.gestionnaire || isAdmin);
   const load = () => listMesEquipes(user.uid).then(setTeams).catch((e) => setErr(e.message));
   useEffect(() => { if (user && ok) load(); }, [user, ok]); // eslint-disable-line
@@ -347,7 +348,7 @@ export default function Gestion() {
   const onglets = [["eq", "Équipes"], ["tb", "Tableau de bord"], ["pc", "Parcours pédagogiques"], ["sa", "Séance en salle"], ["dm", "Demande de scénario"]];
   return (
     <Layout>
-      <h1>Espace gestionnaire</h1>
+      <div className="row between item"><h1>Espace gestionnaire</h1><Link className="btn" to="/messages">✉ Messagerie</Link></div>
       <div className="tabs" style={{ marginBottom: 14 }}>
         {onglets.map(([k, l]) => <button key={k} className={onglet === k ? "on" : ""} onClick={() => setOnglet(k)}>{l}</button>)}
       </div>
@@ -372,7 +373,7 @@ export default function Gestion() {
       )}
       {onglet === "tb" && <TableauBord teams={teams || []} scs={scs} />}
       {onglet === "pc" && <Parcours user={user} profil={profil} isAdmin={isAdmin} scs={scs} pcs={pcs} onChange={loadPcs} />}
-      {onglet === "sa" && <SalleCard scs={scs} />}
+      {onglet === "sa" && <SalleCard scs={scs.filter((x) => x.kind === "sc")} />}
       {onglet === "dm" && <DemandeScenario user={user} profil={profil} />}
     </Layout>
   );

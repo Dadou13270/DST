@@ -11,6 +11,7 @@ import { pdfSuivi } from "../lib/pdf";
 import { StagiaireNav } from "./Home";
 import FilMessages from "../components/FilMessages";
 import { repondreFormateur } from "../lib/equipes";
+import { listExercices, typeExercice } from "../lib/relation";
 
 function Fil({ profil, scId, uid, onSent }) {
   const [txt, setTxt] = useState("");
@@ -39,7 +40,10 @@ export default function Suivi() {
   useEffect(() => {
     listScenarios(true, { uid: user?.uid, equipeId: profil?.equipeId }).then(setList).catch(() => setList([]));
   }, [user?.uid, profil?.equipeId]); // eslint-disable-line
+  const [exs, setExs] = useState([]);
+  useEffect(() => { listExercices(isAdmin, { uid: user?.uid, equipeId: profil?.equipeId }).then(setExs); }, [isAdmin, user?.uid, profil?.equipeId]);
   const [recup, setRecup] = useState("");
+  const [filtre, setFiltre] = useState("");
   // Récupère les exercices terminés sur cet appareil mais absents du suivi (faits avant la mise à jour ou échec d'enregistrement).
   useEffect(() => {
     if (!list || !user || !profil || recup) return;
@@ -88,35 +92,67 @@ export default function Suivi() {
       <StagiaireNav />
       <div className="row between item"><h1>Mon suivi</h1><button className="btn" onClick={() => pdfSuivi(profil, bs, profil?.equipeNom)}>Exporter en PDF</button></div>
       {recup && recup !== "sync" && <p className={recup.startsWith("Récup") ? "err" : "ok-txt"}>{recup}</p>}
-      <div className="row">
-        <div className="card grow"><div className="muted">Exercices terminés</div><h2>{st.n} / {(list || []).length}</h2></div>
-        <div className="card grow"><div className="muted">Temps moyen</div><h2>{st.n ? fmtDuree(st.tmoy) : "—"}</h2></div>
-        <div className="card grow"><div className="muted">Questions essentielles posées</div><h2>{st.ess === null ? "—" : st.ess + " %"}</h2></div>
-      </div>
       {!list && <p>Chargement…</p>}
-      {(list || []).map((s) => {
-        const b = bs[s.id];
-        const ec = !b && (enCours(s.id) || Boolean(profil?.encours?.[s.id]));
+      {list && (() => {
+        const items = [
+          ...exs.map((ex) => {
+            const l = profil?.calculs?.[ex.id] || [], d = l[l.length - 1];
+            return { id: "e" + ex.id, rub: ex.rubrique || "Autres", titre: ex.titre, type: typeExercice(ex), etat: d ? "termine" : "nouveau",
+              info: d ? `${fmtDate(d.le)} · ${l.length} essai(s) · dernier ${d.ok}/${d.tot} · meilleur ${Math.max(...l.map((x) => x.ok))}/${d.tot}` : "",
+              to: ex.kind === "rel" ? `/relation/${ex.id}` : `/calculs/${ex.id}`, btn: d ? "Refaire" : "Commencer" };
+          }),
+          ...list.map((s) => {
+            const b = bs[s.id];
+            const ec = !b && (enCours(s.id) || Boolean(profil?.encours?.[s.id]));
+            return { id: "s" + s.id, rub: s.rubrique || "Autres", titre: s.titre, type: "Scénario", etat: b ? "termine" : ec ? "encours" : "nouveau", scId: s.id,
+              info: b ? `${fmtDate(b.fin)} · ${fmtDuree(b.duree || 0)} · ${b.nbQ} question(s)${b.essTot ? ` · essentielles ${b.essOk}/${b.essTot}` : ""}${b.cubTot ? ` · cubique ${b.cubOk}/${b.cubTot}` : ""}${b.nb > 1 ? ` · ${b.nb} tentatives` : ""}` : "",
+              to: `/scenario/${s.id}`, btn: b ? "Revoir mes réponses" : ec ? "Reprendre" : "Commencer" };
+          }),
+        ];
+        const cnt = (e) => items.filter((i) => !e || i.etat === e).length;
+        const ET = { termine: "Terminé", encours: "En cours", nouveau: "Non commencé" };
+        const ord = { encours: 0, nouveau: 1, termine: 2 };
+        const R = {};
+        items.filter((i) => !filtre || i.etat === filtre).forEach((i) => { (R[i.rub] = R[i.rub] || []).push(i); });
+        const names = Object.keys(R).sort((a, b) => a.localeCompare(b, "fr"));
         return (
-          <div className="card row between item" key={s.id}>
-            <div>
-              <strong>{s.titre}</strong>{" "}
-              <span className={b ? "tag ok" : "tag"}>{b ? "Terminé" : ec ? "En cours" : "Non commencé"}</span>
-              {b && (
-                <div className="muted">
-                  {fmtDate(b.fin)} · {fmtDuree(b.duree || 0)} · {b.nbQ} question(s)
-                  {b.essTot ? ` · essentielles ${b.essOk}/${b.essTot}` : ""}{b.cubTot ? ` · cubique ${b.cubOk}/${b.cubTot}` : ""}
-                  {b.nb > 1 ? ` · ${b.nb} tentatives` : ""}
-                </div>
-              )}
-              {profil?.commentaires?.[s.id] && <Fil profil={profil} scId={s.id} uid={user?.uid} onSent={refreshProfil} />}
+          <>
+            <div className="sv-kpis">
+              <div className="card"><div className="muted">Exercices terminés</div><h2>{cnt("termine")} / {items.length}</h2><div className="sv-bar"><i style={{ width: `${items.length ? Math.round((100 * cnt("termine")) / items.length) : 0}%` }} /></div></div>
+              <div className="card"><div className="muted">En cours</div><h2>{cnt("encours")}</h2></div>
+              <div className="card"><div className="muted">Temps moyen</div><h2>{st.n ? fmtDuree(st.tmoy) : "—"}</h2></div>
+              <div className="card"><div className="muted">Questions essentielles posées</div><h2>{st.ess === null ? "—" : st.ess + " %"}</h2></div>
             </div>
-            <Link className={b ? "btn" : "btn primary"} to={`/scenario/${s.id}`}>
-              {b ? "Revoir mes réponses" : ec ? "Reprendre" : "Commencer"}
-            </Link>
-          </div>
+            {items.length === 0 && <div className="card">Aucun exercice disponible.</div>}
+            {items.length > 0 && (
+              <div className="sv-pills">
+                {[["", "Tous"], ["encours", "En cours"], ["nouveau", "Non commencés"], ["termine", "Terminés"]].map(([k, l]) => (
+                  <button key={k} className={"sv-pill" + (filtre === k ? " on" : "")} onClick={() => setFiltre(k)}>{l}<em>{cnt(k)}</em></button>
+                ))}
+              </div>
+            )}
+            {items.length > 0 && names.length === 0 && <div className="card">Aucun exercice dans cette catégorie.</div>}
+            {names.map((k) => {
+              const all = items.filter((i) => i.rub === k), d = all.filter((i) => i.etat === "termine").length;
+              return (
+                <div className="card sv-rub" key={k}>
+                  <div className="sv-h"><h3>{k}</h3><span className="muted">{d} / {all.length} terminé{d > 1 ? "s" : ""}</span></div>
+                  <div className="sv-bar" style={{ margin: "0 0 4px" }}><i style={{ width: `${Math.round((100 * d) / all.length)}%` }} /></div>
+                  {[...R[k]].sort((a, b) => ord[a.etat] - ord[b.etat]).map((i) => (
+                    <div className="sv-row" key={i.id}>
+                      <div className="sv-t"><b>{i.titre}</b><span className="tag">{i.type}</span></div>
+                      <span className={"sv-st " + i.etat}>{ET[i.etat]}</span>
+                      <div className="sv-info">{i.info}</div>
+                      <Link className={i.etat === "termine" ? "btn" : "btn primary"} to={i.to}>{i.btn}</Link>
+                      {i.scId && profil?.commentaires?.[i.scId] && <div className="sv-fil"><Fil profil={profil} scId={i.scId} uid={user?.uid} onSent={refreshProfil} /></div>}
+                    </div>
+                  ))}
+                </div>
+              );
+            })}
+          </>
         );
-      })}
+      })()}
     </Layout>
   );
 }

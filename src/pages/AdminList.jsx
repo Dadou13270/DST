@@ -2,6 +2,7 @@ import { calcImg } from "../lib/calculImages";
 import { useEffect, useState } from "react";
 import { rubriquesDe } from "../lib/model";
 import { listCalculs, deleteCalcul, dupCalcul, seedCalculs } from "../lib/calculs";
+import { listRelations, deleteRelation, dupRelation, seedRelations, SEEDS_REL } from "../lib/relation";
 import Dominantes from "../components/Dominantes";
 import { Link, useNavigate } from "react-router-dom";
 import { listScenarios, deleteScenario, duplicateScenario, saveScenario, updateScenarioChamps } from "../lib/db";
@@ -14,7 +15,7 @@ export default function AdminList() {
   const [rub, setRub] = useState("all");
   const [rech, setRech] = useState("");
   const [calcEx, setCalcEx] = useState(null);
-  const refreshCalc = () => listCalculs(true).then(setCalcEx).catch(() => setCalcEx([]));
+  const refreshCalc = () => Promise.all([listCalculs(true).catch(() => []), listRelations(true).catch(() => [])]).then(([a, b]) => setCalcEx([...a, ...b]));
   useEffect(() => { refreshCalc(); }, []);
 
   // Import de fichiers JSON (dossier seeds/) : un fichier = un scénario, ignoré s'il existe déjà (même titre).
@@ -104,6 +105,7 @@ export default function AdminList() {
             <input type="file" accept=".json,application/json" multiple hidden onChange={importer} />
           </label>
           <button className="btn" onClick={() => nav("/admin/calcul/nouveau")}>+ Exercice de calcul</button>
+          <button className="btn" onClick={() => nav("/admin/relation/nouveau")}>+ Exercice relationnel</button>
           <button className="btn primary" onClick={() => nav("/admin/scenario/nouveau")}>
             + Nouveau scénario
           </button>
@@ -127,6 +129,9 @@ export default function AdminList() {
         </div>
       )}
 
+      {calcEx && SEEDS_REL.some((_, i) => !calcEx.some((x) => x.id === "rel" + (i + 1))) && (
+        <div className="card">Exercices relationnels (gestion du conflit) à importer. <button className="btn" onClick={() => seedRelations(calcEx.map((x) => x.id)).then(refreshCalc)}>Importer les exercices manquants ({SEEDS_REL.filter((_, i) => !calcEx.some((x) => x.id === "rel" + (i + 1))).length})</button></div>
+      )}
       {calcEx && calcEx.length === 0 && (
         <div className="card">Aucun exercice de calcul. <button className="btn" onClick={() => seedCalculs().then(refreshCalc)}>Importer les 6 exercices de calcul LIF</button></div>
       )}
@@ -134,22 +139,22 @@ export default function AdminList() {
       {list && ce.filter((x) => qok(x) && (rubOk === "all" || (x.rubrique || "Sans rubrique") === rubOk)).map((ex) => (
         <div className="card row between item" key={ex.id}>
           <div className="row">
-            {calcImg(ex) ? <img className="thumb" src={calcImg(ex)} alt="" /> : <div className="thumb ph" style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>🧮</div>}
+            {ex.kind === "rel" && ex.vignette ? <img className="thumb" src={ex.vignette} alt="" /> : calcImg(ex) ? <img className="thumb" src={calcImg(ex)} alt="" /> : <div className="thumb ph" style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>{ex.kind === "rel" ? "🗣️" : "🧮"}</div>}
             <div>
               <strong>{ex.titre}</strong>
               <div className="meta">
                 <span className={"st " + (ex.publie ? "ok" : "br")}>● {ex.publie ? "Publié" : "Brouillon"}</span>
                 <span><span className="muted">Rubrique :</span> <b>{ex.rubrique || "—"}</b></span>
-                <span className="tag">Exercice de calcul</span>
+                <span className="tag">{ex.kind === "rel" ? "Exercice relationnel" : "Exercice de calcul"}</span>
               </div>
-              <div className="muted">{ex.niveau} · {ex.S} m² · {ex.miscible ? "miscible" : "non miscible"} · C = {ex.C} %</div>
+              <div className="muted">{ex.kind === "rel" ? `${ex.niveau} · ${ex.contexte?.type} · ${ex.noeuds?.length || 0} nœuds` : `${ex.niveau} · ${ex.S} m² · ${ex.miscible ? "miscible" : "non miscible"} · C = ${ex.C} %`}</div>
             </div>
           </div>
           <div className="row">
-            <Link className="btn" to={`/calculs/${ex.id}`}>Tester</Link>
-            <Link className="btn" to={`/admin/calcul/${ex.id}`}>Modifier</Link>
-            <button className="btn" onClick={() => dupCalcul(ex).then(refreshCalc)}>Dupliquer</button>
-            <button className="btn danger" onClick={() => { if (window.confirm(`Supprimer définitivement « ${ex.titre} » ?`)) deleteCalcul(ex.id).then(refreshCalc); }}>Supprimer</button>
+            <Link className="btn" to={ex.kind === "rel" ? `/relation/${ex.id}` : `/calculs/${ex.id}`}>Tester</Link>
+            <Link className="btn" to={ex.kind === "rel" ? `/admin/relation/${ex.id}` : `/admin/calcul/${ex.id}`}>Modifier</Link>
+            <button className="btn" onClick={() => (ex.kind === "rel" ? dupRelation(ex) : dupCalcul(ex)).then(refreshCalc)}>Dupliquer</button>
+            <button className="btn danger" onClick={() => { if (window.confirm(`Supprimer définitivement « ${ex.titre} » ?`)) (ex.kind === "rel" ? deleteRelation(ex.id) : deleteCalcul(ex.id)).then(refreshCalc); }}>Supprimer</button>
           </div>
         </div>
       ))}

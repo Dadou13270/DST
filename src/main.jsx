@@ -1,3 +1,4 @@
+import { initStyle } from "./lib/nouveautes";
 import { appliquerPrefs } from "./lib/prefs";
 import React from "react";
 import ReactDOM from "react-dom/client";
@@ -6,6 +7,7 @@ import App from "./App";
 import "./styles.css";
 
 appliquerPrefs();
+initStyle();
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>

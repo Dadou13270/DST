@@ -6,6 +6,7 @@ import { compressImage } from "../lib/image";
 import { findAnswer } from "../lib/matching";
 import { newScenario, uid, SOIEC, SMES, CRM, TOUS, CUB, rubriquesDe } from "../lib/model";
 import { listScenarios } from "../lib/db";
+import { toutesRubriques } from "../lib/relation";
 import { varAutoOn, tirer } from "../lib/variantes";
 import BanqueQuestions from "../components/BanqueQuestions";
 import { listGestionnaires } from "../lib/demandesScenario";
@@ -91,7 +92,7 @@ export default function AdminEditor() {
   };
 
   useEffect(() => {
-    listScenarios(false).then((l) => setRubs(rubriquesDe(l))).catch(() => {});
+    toutesRubriques().then(setRubs).catch(() => {});
   }, []);
 
   useEffect(() => {

@@ -3,7 +3,7 @@ import { useAntiRobot } from "./AntiRobot";
 import { envoyerNetlify } from "../lib/netlify";
 import { Link } from "react-router-dom";
 import { creerDemande, listMesDemandes, STATUTS } from "../lib/demandesScenario";
-import { RUBRIQUES } from "../lib/model";
+import { toutesRubriques } from "../lib/relation";
 
 // Formulaire du gestionnaire : demander un scénario à l'administrateur
 export default function DemandeScenario({ user, profil }) {
@@ -13,6 +13,8 @@ export default function DemandeScenario({ user, profil }) {
   const [liste, setListe] = useState([]);
   const [msg, setMsg] = useState("");
   const ar = useAntiRobot();
+  const [rubs, setRubs] = useState([]);
+  useEffect(() => { toutesRubriques().then(setRubs).catch(() => {}); }, []);
   const charger = () => listMesDemandes(user.uid).then(setListe).catch(() => {});
   useEffect(() => { charger(); }, []); // eslint-disable-line
 
@@ -37,7 +39,7 @@ export default function DemandeScenario({ user, profil }) {
       <label>Rubrique</label>
       <select value={rubrique} onChange={(e) => setRubrique(e.target.value)}>
         <option value="">—</option>
-        {RUBRIQUES.map((r) => <option key={r}>{r}</option>)}
+        {rubs.map((r) => <option key={r}>{r}</option>)}
       </select>
       <label>Détails (lieu, enjeux, points à travailler)</label>
       <textarea rows={3} maxLength={800} value={details} onChange={(e) => setDetails(e.target.value)} />

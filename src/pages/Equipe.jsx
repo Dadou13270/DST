@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Layout from "../components/Layout";
 import { StagiaireNav } from "./Home";
 import { useAuth } from "../lib/auth";
@@ -6,6 +6,7 @@ import { Link } from "react-router-dom";
 import { useDevoirs } from "../lib/useDevoirs";
 import { fmtLimite } from "../lib/devoirs";
 import { rejoindre, quitterEquipe } from "../lib/equipes";
+import { monGestionnaire } from "../lib/messages";
 
 // Côté stagiaire : rejoindre / quitter une équipe avec un code d'accès.
 export default function Equipe() {
@@ -15,6 +16,8 @@ export default function Equipe() {
   const [err, setErr] = useState("");
   const [msg, setMsg] = useState("");
   const [conf, setConf] = useState(false);
+  const [gest, setGest] = useState(null);
+  useEffect(() => { monGestionnaire(profil).then(setGest).catch(() => {}); }, [profil?.equipeId]); // eslint-disable-line
   const run = async (fn, ok) => {
     setErr(""); setMsg(""); setConf(false);
     try { await fn(); await refreshProfil(); setMsg(ok); setCode(""); }
@@ -47,7 +50,8 @@ export default function Equipe() {
         <div className="card row between item">
           <div>
             <strong>{profil.equipeNom || "Équipe"}</strong> <span className="tag ok">Membre</span>
-            <div className="muted">Ton gestionnaire voit ton suivi (exercices terminés, temps, réponses).</div>
+            <div className="muted">Gestionnaire : {profil.equipeGest || gest?.nom || "—"}. Il voit ton suivi (exercices terminés, temps, réponses).</div>
+            {gest && <p style={{ margin: "8px 0 0" }}><Link className="btn primary" to={`/messages?avec=${gest.id}`}>✉ Ouvrir la conversation</Link></p>}
           </div>
           {conf ? (
             <button className="btn danger" onClick={() => run(() => quitterEquipe(user.uid), "Tu as quitté l'équipe.")}>Confirmer ?</button>

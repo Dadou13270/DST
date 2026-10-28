@@ -12,8 +12,8 @@ export const retirerDevoir = (team, scId) =>
   updateDoc(doc(db, "teams", team.id), { devoirs: (team.devoirs || []).filter((x) => x.scId !== scId) });
 
 // "ok" terminé · "retard" échéance dépassée · "attente" à rendre
-export const statutDevoir = (d, bilans, now = Date.now()) =>
-  (bilans || {})[d.scId] ? "ok" : d.limite && d.limite < now ? "retard" : "attente";
+export const statutDevoir = (d, bilans, now = Date.now(), calculs) =>
+  (bilans || {})[d.scId] || ((calculs || {})[d.scId] || []).length ? "ok" : d.limite && d.limite < now ? "retard" : "attente";
 export const fmtLimite = (ms) => (ms ? new Date(ms).toLocaleDateString("fr-FR") : "—");
 // Date saisie (aaaa-mm-jj) -> fin de journée locale
 export const limiteDepuisInput = (v) => (v ? new Date(v + "T23:59:59").getTime() : 0);
@@ -24,7 +24,7 @@ export const assignerParcours = (team, pc, scs, limite) => {
   const add = [];
   (pc.scIds || []).forEach((scId, i) => {
     const x = scs.find((y) => y.id === scId);
-    if (x && !have.has(scId)) add.push({ scId, titre: x.titre, limite, pc: pc.id, pcT: pc.titre, rg: i, pcO: pc.ordre ? 1 : 0 });
+    if (x && !have.has(scId)) add.push({ scId, titre: x.titre, limite, pc: pc.id, pcT: pc.titre, rg: i, pcO: pc.ordre ? 1 : 0, ...(x.kind && x.kind !== "sc" ? { k: x.kind } : {}) });
   });
   if (!add.length) return Promise.resolve(0);
   return updateDoc(doc(db, "teams", team.id), { devoirs: [...(team.devoirs || []), ...add] }).then(() => add.length);

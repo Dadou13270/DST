@@ -4,18 +4,21 @@ import { listScenarios, saveScenario, setReserve, initialiserVisibilite } from "
 import { listDemandes, majDemande, listGestionnaires, STATUTS } from "../lib/demandesScenario";
 import { newScenario } from "../lib/model";
 import { fmtDate } from "../lib/users";
+import { setStyle } from "../lib/nouveautes";
+import { listExercices, setReserveExercice, typeExercice } from "../lib/relation";
 
 export default function Parametres() {
   const nav = useNavigate();
   const [dem, setDem] = useState([]);
   const [scs, setScs] = useState([]);
   const [gests, setGests] = useState([]);
+  const [exs, setExs] = useState([]);
   const [msg, setMsg] = useState("");
 
   const charger = async () => {
     try {
-      const [d, s, g] = await Promise.all([listDemandes(), listScenarios(false), listGestionnaires()]);
-      setDem(d); setScs(s); setGests(g);
+      const [d, s, g, e] = await Promise.all([listDemandes(), listScenarios(false), listGestionnaires(), listExercices(true)]);
+      setDem(d); setScs(s); setGests(g); setExs(e);
     } catch (e) { setMsg("Erreur : " + e.message); }
   };
   useEffect(() => { charger(); }, []);
@@ -41,6 +44,16 @@ export default function Parametres() {
       {msg && <p className="muted">{msg}</p>}
 
       <div className="card">
+        <h3>Graphisme de l'application</h3>
+        <p className="muted">Choisis l'apparence pour tous les utilisateurs.</p>
+        <select defaultValue={document.documentElement.dataset.style === "b" ? "b" : ""}
+          onChange={(e) => setStyle(e.target.value).then(() => setMsg("Graphisme enregistré.")).catch((er) => setMsg("Erreur : " + er.message))}>
+          <option value="">Actuel (rouge opérationnel)</option>
+          <option value="b">B · Institutionnel (bleu marine)</option>
+        </select>
+      </div>
+
+      <div className="card">
         <h3>Demandes de scénarios des gestionnaires</h3>
         {dem.length === 0 && <p className="muted">Aucune demande pour le moment.</p>}
         {dem.map((r) => (
@@ -61,12 +74,22 @@ export default function Parametres() {
       </div>
 
       <div className="card">
-        <h3>Attribution des scénarios</h3>
+        <h3>Attribution des scénarios et exercices</h3>
         <p className="muted">Un scénario attribué à un gestionnaire n'est visible que par lui et les membres de ses équipes.</p>
         {scs.map((s) => (
           <div className="row between" key={s.id} style={{ margin: "6px 0" }}>
             <span>{s.titre} <span className="muted">{s.rubrique}</span></span>
             <select value={s.reserveA || ""} onChange={(e) => attribuer(s, e.target.value)}>
+              <option value="">Tous (public)</option>
+              {gests.map((g) => <option key={g.id} value={g.id}>{g.nom}</option>)}
+              {s.reserveA && !gests.some((g) => g.id === s.reserveA) && <option value={s.reserveA}>{nomGest(s.reserveA)}</option>}
+            </select>
+          </div>
+        ))}
+        {exs.map((s) => (
+          <div className="row between" key={s.id} style={{ margin: "6px 0" }}>
+            <span>{s.titre} <span className="muted">{s.rubrique}</span> <span className="tag">{typeExercice(s)}</span></span>
+            <select value={s.reserveA || ""} onChange={(e) => setReserveExercice(s, e.target.value).then(() => { setMsg("Attribution enregistrée."); charger(); })}>
               <option value="">Tous (public)</option>
               {gests.map((g) => <option key={g.id} value={g.id}>{g.nom}</option>)}
               {s.reserveA && !gests.some((g) => g.id === s.reserveA) && <option value={s.reserveA}>{nomGest(s.reserveA)}</option>}

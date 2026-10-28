@@ -101,6 +101,7 @@ export default function Layout({ children, extra }) {
           <div>
             <h4>Informations</h4>
             <ul>
+              <li><Link to="/site">Site de présentation</Link></li>
               <li><Link to="/a-propos">À propos</Link></li>
               <li><Link to="/nouveautes">Nouveautés</Link></li>
               <li><Link to="/tickets">Support</Link></li>
