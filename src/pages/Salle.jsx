@@ -5,6 +5,7 @@ import SalleChat from "../components/SalleChat";
 import { FriseSvg, FRISE_COL, frMmss } from "../components/Frise";
 import { useAuth } from "../lib/auth";
 import { getScenario } from "../lib/db";
+import { archiverSalle } from "../lib/seances";
 import { watchSalle, watchQuestions, watchParticipants, watchMessages, envoyerEvenement, setChrono, chronoReste, setOuverte, supprimerSalle, setTaches, TACHES_MODELES, etatSalle, libEtat, fmtDebut, setDebut, debutDepuisInput, inputDepuisDebut } from "../lib/salles";
 
 const hhmm = (t) => new Date(t).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
@@ -74,6 +75,7 @@ export default function Salle() {
   const [repT, setRepT] = useState("");
   const [feTache, setFeTache] = useState("");
   const [codeGrand, setCodeGrand] = useState(false);
+  const [arch, setArch] = useState(false);
   const [, tick] = useState(0);
   useEffect(() => { const t = setInterval(() => tick((n) => n + 1), 15000); return () => clearInterval(t); }, []);
 
@@ -108,6 +110,7 @@ export default function Salle() {
         <h1>Séance en salle</h1>
         <div className="row">
           <Link className="btn" to={`/gestion/salle/${code}/projection`} target="_blank">Projeter</Link>
+          <button className="btn" onClick={act(async () => { await archiverSalle(code); setErr(""); setArch(true); setTimeout(() => setArch(false), 3000); })}>{arch ? "Bilan archivé ✓" : "Archiver le bilan"}</button>
           <button className="btn" onClick={act(() => setOuverte(code, ferme))}>{ferme ? "Rouvrir" : "Clôturer"}</button>
           {conf
             ? <button className="btn danger" onClick={act(async () => { await supprimerSalle(code); nav("/gestion"); })}>Confirmer la suppression</button>

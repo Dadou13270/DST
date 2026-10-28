@@ -14,7 +14,7 @@ export default function RequireUser({ children }) {
         <p>Chargement…</p>
       </Layout>
     );
-  if (!user) return <Navigate to="/connexion" state={{ from: loc.pathname }} replace />;
+  if (!user) return <Navigate to="/connexion" state={{ from: loc.pathname + loc.search }} replace />;
   if (profil?.statut === "suspendu")
     return (
       <Layout right={<button className="link" onClick={logout}>Déconnexion</button>}>

@@ -31,3 +31,11 @@ export const assignerParcours = (team, pc, scs, limite) => {
 };
 export const retirerParcours = (team, pcId) =>
   updateDoc(doc(db, "teams", team.id), { devoirs: (team.devoirs || []).filter((x) => x.pc !== pcId) });
+
+// Modifier l'échéance d'un exercice à rendre, ou décaler tout un parcours (nouvelle date commune).
+export const modifierLimite = (team, scId, limite) =>
+  updateDoc(doc(db, "teams", team.id), { devoirs: (team.devoirs || []).map((x) => (x.scId === scId ? { ...x, limite } : x)) });
+export const modifierLimiteParcours = (team, pcId, limite) =>
+  updateDoc(doc(db, "teams", team.id), { devoirs: (team.devoirs || []).map((x) => (x.pc === pcId ? { ...x, limite } : x)) });
+// Date -> valeur d'un <input type="date">
+export const inputDepuisLimite = (ms) => (ms ? new Date(ms - new Date(ms).getTimezoneOffset() * 60000).toISOString().slice(0, 10) : "");

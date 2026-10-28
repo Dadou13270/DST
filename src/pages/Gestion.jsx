@@ -5,11 +5,12 @@ import { useEffect, useState } from "react";
 import { Link, Navigate } from "react-router-dom";
 import Layout from "../components/Layout";
 import { useAuth } from "../lib/auth";
-import { listUtilisateursCis, affecterMembre, createEquipe, listMesEquipes, listMembres, regenCode, retirerMembre, supprimerEquipe, deplacerMembre, envoyerMessageFormateur, marquerFilLu, effacerFil } from "../lib/equipes";
+import HistoriqueSeances from "../components/HistoriqueSeances";
+import { archiverEquipe, restaurerEquipe, dupliquerEquipe, listUtilisateursCis, affecterMembre, createEquipe, listMesEquipes, listMembres, regenCode, retirerMembre, supprimerEquipe, deplacerMembre, envoyerMessageFormateur, marquerFilLu, effacerFil } from "../lib/equipes";
 import { fmtDate, fmtDuree, statsOf } from "../lib/users";
 import { inscrireStagiaire, parseLignes } from "../lib/inscription";
 import { listScenarios } from "../lib/db";
-import { ajouterDevoir, retirerDevoir, statutDevoir, fmtLimite, limiteDepuisInput, assignerParcours, retirerParcours } from "../lib/devoirs";
+import { ajouterDevoir, retirerDevoir, statutDevoir, fmtLimite, limiteDepuisInput, assignerParcours, retirerParcours, modifierLimite, modifierLimiteParcours, inputDepuisLimite } from "../lib/devoirs";
 import { listParcours } from "../lib/parcours";
 import Parcours from "../components/Parcours";
 import Frise from "../components/Frise";
@@ -55,7 +56,13 @@ function Devoirs({ team, membres, scs, pcs, onChange }) {
   const [scId, setScId] = useState("");
   const [lim, setLim] = useState("");
   const [err, setErr] = useState("");
+  const [ed, setEd] = useState(null); // { k: "sc:<id>" | "pc:<id>", v }
   const dev = team.devoirs || [];
+  const saveLim = async () => {
+    if (!ed.v) return setErr("Indique une date.");
+    const l = limiteDepuisInput(ed.v);
+    try { await (ed.k.startsWith("pc:") ? modifierLimiteParcours(team, ed.k.slice(3), l) : modifierLimite(team, ed.k.slice(3), l)); setEd(null); setErr(""); onChange(); } catch (x) { setErr(x.message); }
+  };
   const now = Date.now();
   const retards = dev.flatMap((d) => membres.filter((u) => statutDevoir(d, u.bilans, now, u.calculs) === "retard").map((u) => ({ u, d })));
   const add = async (e) => {
@@ -97,7 +104,9 @@ function Devoirs({ team, membres, scs, pcs, onChange }) {
               const r = membres.filter((u) => statutDevoir(d, u.bilans, now, u.calculs) === "retard").length;
               return (
                 <tr key={d.scId}>
-                  <td>{d.pc ? `${(d.rg || 0) + 1}. ` : ""}{d.titre}{d.pcT && <div className="muted" style={{ fontSize: ".8rem" }}>Parcours « {d.pcT} »</div>}</td><td>{fmtLimite(d.limite)}</td><td>{ok}/{membres.length}</td>
+                  <td>{d.pc ? `${(d.rg || 0) + 1}. ` : ""}{d.titre}{d.pcT && <div className="muted" style={{ fontSize: ".8rem" }}>Parcours « {d.pcT} »</div>}</td><td>{ed?.k === "sc:" + d.scId
+                    ? <span className="row"><input type="date" value={ed.v} onChange={(e) => setEd({ ...ed, v: e.target.value })} style={{ width: "auto" }} /><button className="btn primary" onClick={saveLim}>OK</button><button className="btn" onClick={() => setEd(null)}>×</button></span>
+                    : <>{fmtLimite(d.limite)} <button className="btn" title="Modifier l'échéance" onClick={() => setEd({ k: "sc:" + d.scId, v: inputDepuisLimite(d.limite) })}>Modifier</button></>}</td><td>{ok}/{membres.length}</td>
                   <td>{r > 0 ? <span className="tag late">{r}</span> : "0"}</td>
                   <td><button className="btn danger" onClick={() => retirerDevoir(team, d.scId).then(onChange)}>Retirer</button></td>
                 </tr>
@@ -107,9 +116,15 @@ function Devoirs({ team, membres, scs, pcs, onChange }) {
         </table>
       )}
       {pcIds.length > 0 && (
-        <div className="row item" style={{ marginTop: 8 }}>
+        <div className="item" style={{ marginTop: 8 }}>
           {pcIds.map((id) => (
-            <button key={id} className="btn danger" onClick={() => retirerParcours(team, id).then(onChange)}>Retirer le parcours « {dev.find((x) => x.pc === id)?.pcT} »</button>
+            <div key={id} className="row item">
+              <strong>Parcours « {dev.find((x) => x.pc === id)?.pcT} »</strong>
+              {ed?.k === "pc:" + id
+                ? <><input type="date" value={ed.v} onChange={(e) => setEd({ ...ed, v: e.target.value })} style={{ width: "auto" }} /><button className="btn primary" onClick={saveLim}>Décaler tout le parcours</button><button className="btn" onClick={() => setEd(null)}>Annuler</button></>
+                : <button className="btn" onClick={() => setEd({ k: "pc:" + id, v: inputDepuisLimite(dev.find((x) => x.pc === id)?.limite) })}>Décaler l'échéance</button>}
+              <button className="btn danger" onClick={() => retirerParcours(team, id).then(onChange)}>Retirer</button>
+            </div>
           ))}
         </div>
       )}
@@ -150,6 +165,8 @@ function Equipe({ team, autres, scs, pcs, onChange }) {
   const [conf, setConf] = useState("");
   const [err, setErr] = useState("");
   const [copie, setCopie] = useState(false);
+  const [dup, setDup] = useState(null); // nom de la copie en cours de saisie
+  const [decal, setDecal] = useState(0);
   const load = () => listMembres(team.id).then(setM).catch((e) => setErr(e.message));
   const [calcEx, setCalcEx] = useState([]);
   useEffect(() => { listExercices(true).then(setCalcEx).catch(() => {}); }, []);
@@ -167,14 +184,30 @@ function Equipe({ team, autres, scs, pcs, onChange }) {
           <div className="muted">{m ? `${m.length} membre(s) · ${tot} exercice(s) terminé(s)` : "Chargement…"}</div>
         </div>
         <div className="row item">
+          {team.archivee ? <span className="tag">Archivée le {fmtLimite(team.archiveeLe)}</span> : <>
           <span className="muted">Code d'accès</span>
           <code style={{ fontSize: "1.3rem", letterSpacing: ".15em", fontWeight: 600 }}>{team.code}</code>
-          <button className="btn" onClick={() => { navigator.clipboard?.writeText(team.code); setCopie(true); setTimeout(() => setCopie(false), 1500); }}>{copie ? "Copié" : "Copier"}</button>
+          <button className="btn" onClick={() => { navigator.clipboard?.writeText(team.code); setCopie(true); setTimeout(() => setCopie(false), 1500); }}>{copie ? "Copié" : "Copier"}</button></>}
           <button className="btn" disabled={!m} onClick={() => pdfEquipe(team, m)}>Export PDF</button>
-          {two("rg", "Nouveau code", async () => { await regenCode(team); onChange(); })}
+          {!team.archivee && two("rg", "Nouveau code", async () => { await regenCode(team); onChange(); })}
+          {team.archivee
+            ? two("rs", "Restaurer", async () => { await restaurerEquipe(team); onChange(); }, "primary")
+            : <>
+                <button className="btn" onClick={() => setDup(team.nom + " (copie)")}>Dupliquer</button>
+                {two("ar", "Archiver", async () => { await archiverEquipe(team); onChange(); })}
+              </>}
           {two("del", "Supprimer l'équipe", async () => { await supprimerEquipe(team); onChange(); }, "danger")}
         </div>
       </div>
+      {dup !== null && (
+        <div className="row item">
+          <input className="grow" value={dup} onChange={(e) => setDup(e.target.value)} placeholder="Nom de la nouvelle équipe" />
+          <label className="row" style={{ gap: 4 }}>Décaler les échéances de <input type="number" value={decal} onChange={(e) => setDecal(Number(e.target.value) || 0)} style={{ width: 70 }} /> jours</label>
+          <button className="btn primary" disabled={dup.trim().length < 2} onClick={() => run(async () => { await dupliquerEquipe(team, dup.trim(), decal); setDup(null); setDecal(0); onChange(); })}>Créer la copie</button>
+          <button className="btn" onClick={() => setDup(null)}>Annuler</button>
+        </div>
+      )}
+      {dup !== null && <p className="muted" style={{ margin: 0 }}>La copie reprend les exercices à rendre (nouveau code d'accès, sans les membres).</p>}
       {err && <p className="err">{err}</p>}
       {m && <Devoirs team={team} membres={m} scs={scs} pcs={pcs} onChange={onChange} />}
       {m && m.length === 0 && <p className="muted">Aucun membre. Donne le code aux stagiaires : ils le saisissent dans « Mon équipe ».</p>}
@@ -349,7 +382,8 @@ export default function Gestion() {
     setErr("");
     try { await createEquipe(user.uid, profil.nom, nom.trim()); setNom(""); await load(); } catch (x) { setErr(x.message); }
   };
-  const onglets = [["eq", "Équipes"], ["tb", "Tableau de bord"], ["pc", "Parcours pédagogiques"], ["sa", "Séance en salle"], ["dm", "Demande de scénario"]];
+  const actives = (teams || []).filter((t) => !t.archivee), archivees = (teams || []).filter((t) => t.archivee);
+  const onglets = [["eq", "Équipes"], ["tb", "Tableau de bord"], ["pc", "Parcours pédagogiques"], ["sa", "Séance en salle"], ["hs", "Historique des séances"], ["dm", "Demande de scénario"]];
   return (
     <Layout>
       <div className="row between item"><h1>Espace gestionnaire</h1><Link className="btn" to="/messages">✉ Messagerie</Link></div>
@@ -362,20 +396,28 @@ export default function Gestion() {
         <input className="grow" placeholder="Nom de la nouvelle équipe (ex. FMPA Chef d'agrès 2026)" value={nom} onChange={(e) => setNom(e.target.value)} required minLength={2} />
         <button className="btn primary">Créer l'équipe</button>
       </form>
-      {teams && teams.length > 0 && <AffecterCis teams={teams} profil={profil} user={user} onDone={load} />}
-      {teams && teams.length > 0 && <Inscription teams={teams} user={user} onDone={load} />}
-      {teams && teams.length > 0 && (
+      {actives.length > 0 && <AffecterCis teams={actives} profil={profil} user={user} onDone={load} />}
+      {actives.length > 0 && <Inscription teams={actives} user={user} onDone={load} />}
+      {actives.length > 0 && (
         <p className="muted">
           Tu peux créer plusieurs équipes. Les stagiaires rejoignent avec le code de n'importe laquelle de tes équipes, puis tu les répartis avec « Déplacer vers… ».
         </p>
       )}
       {err && <div className="card warn">Erreur : {err} (les règles Firestore sont-elles republiées ?)</div>}
       {!teams && !err && <p>Chargement…</p>}
-      {teams && teams.length === 0 && <div className="card">Aucune équipe. Crée-en une : un code d'accès est généré.</div>}
-      {(teams || []).map((t) => <Equipe key={t.id} team={t} autres={teams.filter((x) => x.id !== t.id)} scs={scs} pcs={pcs} onChange={load} />)}
+      {teams && actives.length === 0 && <div className="card">Aucune équipe. Crée-en une : un code d'accès est généré.</div>}
+      {actives.map((t) => <Equipe key={t.id} team={t} autres={actives.filter((x) => x.id !== t.id)} scs={scs} pcs={pcs} onChange={load} />)}
+      {archivees.length > 0 && (
+        <>
+          <h2 style={{ marginTop: 24 }}>Équipes archivées ({archivees.length})</h2>
+          <p className="muted">Formations terminées : suivi conservé, plus d'inscription possible. « Restaurer » génère un nouveau code d'accès.</p>
+          {archivees.map((t) => <Equipe key={t.id} team={t} autres={[]} scs={scs} pcs={pcs} onChange={load} />)}
         </>
       )}
-      {onglet === "tb" && <TableauBord teams={teams || []} scs={scs} />}
+        </>
+      )}
+      {onglet === "hs" && <HistoriqueSeances user={user} />}
+      {onglet === "tb" && <TableauBord teams={actives} scs={scs} />}
       {onglet === "pc" && <Parcours user={user} profil={profil} isAdmin={isAdmin} scs={scs} pcs={pcs} onChange={loadPcs} />}
       {onglet === "sa" && <SalleCard scs={scs.filter((x) => x.kind === "sc")} />}
       {onglet === "dm" && <DemandeScenario user={user} profil={profil} />}

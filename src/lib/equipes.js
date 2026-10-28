@@ -48,6 +48,24 @@ export async function listMembres(teamId) {
 const quitter = { equipeId: deleteField(), equipeNom: deleteField(), equipeCode: deleteField(), equipeGest: deleteField() };
 export const retirerMembre = (uid) => updateDoc(doc(db, "users", uid), quitter);
 
+// Archivage en fin de formation : le code d'accès est libéré (plus d'inscription), membres et suivi conservés.
+export async function archiverEquipe(team) {
+  await updateDoc(doc(db, "teams", team.id), { archivee: true, archiveeLe: Date.now(), code: "" });
+  if (team.code) await deleteDoc(doc(db, "codes", team.code)).catch(() => {});
+}
+export async function restaurerEquipe(team) {
+  const code = await reserveCode(team.id, team.owner, team.nom, team.ownerNom);
+  await updateDoc(doc(db, "teams", team.id), { archivee: false, archiveeLe: deleteField(), code });
+}
+// Duplication : nouvelle équipe (nouveau code), mêmes exercices à rendre, sans les membres.
+// decalage (jours) : décale les échéances copiées.
+export async function dupliquerEquipe(team, nom, decalage = 0) {
+  const n = await createEquipe(team.owner, team.ownerNom, nom);
+  const dev = (team.devoirs || []).map((d) => ({ ...d, limite: d.limite ? d.limite + decalage * 86400000 : d.limite }));
+  if (dev.length) await updateDoc(doc(db, "teams", n.id), { devoirs: dev });
+  return n;
+}
+
 export async function supprimerEquipe(team) {
   const m = await listMembres(team.id);
   const b = writeBatch(db);

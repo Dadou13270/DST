@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../lib/auth";
 import { getSalle, normSalle, rejoindreSalle, etatSalle, fmtDebut } from "../lib/salles";
 
@@ -7,10 +7,11 @@ import { getSalle, normSalle, rejoindreSalle, etatSalle, fmtDebut } from "../lib
 export default function SalleJoin() {
   const { user, profil } = useAuth();
   const nav = useNavigate();
-  const [code, setCode] = useState("");
+  const [sp] = useSearchParams();
+  const [code, setCode] = useState(normSalle(sp.get("code") || ""));
   const [err, setErr] = useState("");
   const go = async (e) => {
-    e.preventDefault();
+    e?.preventDefault();
     setErr("");
     const c = normSalle(code);
     if (!c) return setErr("Saisis le code de la salle.");
@@ -23,6 +24,8 @@ export default function SalleJoin() {
       nav(`/scenario/${s.scId}?salle=${c}`);
     } catch (x) { setErr(x.message); }
   };
+  const auto = useRef(false);
+  useEffect(() => { if (code && sp.get("code") && user && profil && !auto.current) { auto.current = true; go(); } }, [user, profil]); // eslint-disable-line
   return (
     <form className="card row item" onSubmit={go}>
       <strong>Séance en salle</strong>

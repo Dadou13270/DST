@@ -1,6 +1,7 @@
 // Séance en salle : le formateur ouvre une salle (code à 5 caractères), les stagiaires la rejoignent,
 // leurs questions arrivent en direct chez le formateur.
 import { db } from "../firebase";
+import { archiverSalle } from "./seances";
 import {
   collection, doc, getDoc, setDoc, updateDoc, deleteDoc, getDocs, addDoc, onSnapshot, query, where, serverTimestamp,
 } from "firebase/firestore";
@@ -86,6 +87,7 @@ export const chronoReste = (ch, now = Date.now()) => Math.round(ch.duree - ((ch.
 export const setOuverte = (code, ouverte) => updateDoc(doc(db, "salles", code), { ouverte });
 
 export async function supprimerSalle(code) {
+  await archiverSalle(code).catch(() => {}); // bilan conservé dans l'historique
   for (const sub of ["questions", "participants", "messages"]) {
     const l = await getDocs(collection(db, "salles", code, sub));
     await Promise.all(l.docs.map((d) => deleteDoc(d.ref)));

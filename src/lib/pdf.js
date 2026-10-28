@@ -64,3 +64,26 @@ export async function pdfEquipe(team, membres) {
   piedPages(doc);
   doc.save(`equipe-${team.nom.replace(/\W+/g, "-")}.pdf`);
 }
+
+const hm = (t) => (t ? new Date(t).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }) : "—");
+export async function pdfSeance(s) {
+  const { doc, table } = await nouveau(`Bilan de séance : ${s.titre || "—"}`, `Formateur : ${s.ownerNom || "—"} · salle ${s.code}`);
+  const quand = s.debut ? new Date(s.debut).toLocaleString("fr-FR", { dateStyle: "long", timeStyle: "short" }) : s.creeLe ? new Date(s.creeLe).toLocaleString("fr-FR", { dateStyle: "long", timeStyle: "short" }) : "—";
+  table({ startY: 42, theme: "plain", columnStyles: { 0: { fontStyle: "bold", cellWidth: 50 } }, body: [
+    ["Date", quand], ["Stagiaires", String((s.stagiaires || []).length)], ["Questions posées", String((s.questions || []).length)],
+    ["Questions essentielles", s.essTot ? `${s.essOk}/${s.essTot}` : "—"], ["Évolutions transmises", String((s.evolutions || []).length)],
+  ] });
+  table({ startY: y(doc), head: [["Stagiaire", "Questions posées"]], body: (s.stagiaires || []).map((u) => [u.nom, String(u.nbQ)]) });
+  if ((s.essManquantes || []).length) table({ startY: y(doc, 10), head: [["Questions essentielles non posées"]], body: s.essManquantes.map((x) => [x]) });
+  if ((s.evolutions || []).length)
+    table({ startY: y(doc, 10), head: [["Heure", "Évolution", "Reçue", "Comprise", "En attente"]],
+      body: s.evolutions.map((e) => [hm(e.le), e.titre + (e.texte ? "\n" + e.texte : ""), `${e.recu}/${e.dest}`, `${e.comp}/${e.dest}`, (e.attente || []).join(", ") || "—"]) });
+  if ((s.consignes || []).length)
+    table({ startY: y(doc, 10), head: [["Consigne", "Stagiaire", "Réponse"]],
+      body: s.consignes.flatMap((c) => (s.stagiaires || []).map((u) => [c, u.nom, (u.taches || []).find((t) => t.titre === c)?.texte || "— pas de réponse"])) });
+  if ((s.questions || []).length)
+    table({ startY: y(doc, 10), head: [["Heure", "Stagiaire", "Interlocuteur", "Question", "Réponse"]],
+      body: s.questions.map((q) => [hm(q.le), q.nom, q.who, (q.ess ? "★ " : "") + q.q, q.a]), columnStyles: { 3: { cellWidth: 50 }, 4: { cellWidth: 55 } } });
+  piedPages(doc);
+  doc.save(`seance-${s.code}.pdf`);
+}

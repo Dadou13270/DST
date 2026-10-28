@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import QrCode from "./QrCode";
 import { useAuth } from "../lib/auth";
 import { creerSalle, watchMesSalles, etatSalle, libEtat, fmtDebut, debutDepuisInput, inputDepuisDebut, modifierSalle, supprimerSalle } from "../lib/salles";
 
 // Texte d'invitation prêt à copier pour une séance programmée
+export const lienSalle = (code) => `${window.location.origin}/seance?code=${code}`;
 export const texteInvitation = (r, nomFormateur) => {
   const quand = new Date(r.debut).toLocaleString("fr-FR", { dateStyle: "full", timeStyle: "short" }).replace(" à ", " à ");
   return `Bonjour,
@@ -14,8 +16,8 @@ Scénario : ${r.titre || "—"}
 Formateur : ${r.ownerNom || nomFormateur || "—"}
 
 Pour participer :
-1. Connectez-vous à l'application : ${window.location.origin}
-2. Dans « Exercices », saisissez le code de la séance : ${r.code}
+1. Ouvrez ce lien (ou scannez le QR code) : ${lienSalle(r.code)}
+2. Connectez-vous si besoin : le code de la séance (${r.code}) est déjà saisi.
 La salle s'ouvre à l'heure indiquée ci-dessus.
 
 À bientôt !`;
@@ -33,7 +35,10 @@ function Invitation({ r, nom }) {
   return (
     <div style={{ margin: "10px 0" }}>
       <div className="muted" style={{ marginBottom: 4 }}>Séance <strong>{r.code}</strong> · {r.titre}</div>
-      <textarea id={"inv-" + r.code} readOnly rows={11} value={txt} style={{ width: "100%" }} onFocus={(e) => e.target.select()} />
+      <div className="row" style={{ alignItems: "flex-start" }}>
+        <textarea id={"inv-" + r.code} className="grow" readOnly rows={11} value={txt} onFocus={(e) => e.target.select()} />
+        <div style={{ textAlign: "center" }}><QrCode valeur={lienSalle(r.code)} /><div className="muted">Scan = rejoindre</div></div>
+      </div>
       <button className="btn primary" onClick={copier}>{ok ? "Copié ✓" : "Copier le message"}</button>
     </div>
   );
