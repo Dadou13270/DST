@@ -11,7 +11,7 @@ import { doc, updateDoc, deleteField } from "firebase/firestore";
 import Dominantes from "../components/Dominantes";
 import Frise, { FRISE_COL, frMmss } from "../components/Frise";
 import SalleChat from "../components/SalleChat";
-import { posterQuestion, watchSalle, watchMessages, chronoReste } from "../lib/salles";
+import { posterQuestion, watchSalle, watchMessages, chronoReste, signalerEvo } from "../lib/salles";
 import { buildBilan, saveBilan } from "../lib/users";
 import { applyVars, tirer, varsDe } from "../lib/variantes";
 
@@ -130,7 +130,18 @@ export default function Player() {
 
   const [alerteId, setAlerteId] = useState(null);
   const [evoLibre, setEvoLibre] = useState(null);
-  const alerte = evoLibre && evoLibre.id === alerteId ? evoLibre : sc?.evolutif && alerteId ? (sc.evolutions || []).find((x) => x.id === alerteId) : null;
+  // Informations d'une évolution reçue (prévue par le scénario ou libre envoyée par le formateur)
+  const evoInfo = (k) => k.startsWith("libre_")
+    ? (evoLibre && evoLibre.id === k ? evoLibre : { id: k, titre: sess.evoTitres?.[k] || "Évolution", message: sess.evoMsgs?.[k] || "" })
+    : (sc?.evolutions || []).find((x) => x.id === k) || null;
+  const alerte = alerteId ? evoInfo(alerteId) : null;
+  // le formateur voit quand chaque évolution a été reçue puis comprise
+  const signalees = useRef(new Set());
+  useEffect(() => {
+    if (!salle || !user) return;
+    Object.keys(sess.evo || {}).forEach((k) => { if (!signalees.current.has(k)) { signalees.current.add(k); signalerEvo(salle, user.uid, k, "r"); } });
+  }, [sess.evo, salle, user]); // eslint-disable-line react-hooks/exhaustive-deps
+  const compris = () => { if (salle && user && alerteId) signalerEvo(salle, user.uid, alerteId, "c"); setAlerteId(null); };
   // Séance en salle : le formateur peut déclencher une évolution, en envoyer une libre ou répondre à la place d'un interlocuteur
   const [salleMsgs, setSalleMsgs] = useState([]);
   const [salleDoc, setSalleDoc] = useState(null);
@@ -159,6 +170,7 @@ export default function Player() {
     setSess((s) => {
       const evo = { ...(s.evo || {}) };
       const evoTitres = { ...(s.evoTitres || {}) };
+      const evoMsgs = { ...(s.evoMsgs || {}) };
       const log = [...s.log];
       const t = Math.max(0, Math.round((Date.now() - s.start) / 1000));
       nouveaux.forEach((m) => {
@@ -171,12 +183,13 @@ export default function Player() {
           const k = "libre_" + m.id;
           evo[k] = Date.now();
           evoTitres[k] = m.titre || "Évolution";
+          evoMsgs[k] = m.texte || "";
           log.push({ t, id: uid(), who: "__evo", question: "⚠ " + (m.titre || "Évolution de la situation"), answer: m.texte || "", sys: true, qaId: null });
         } else if (m.kind === "rep" && m.cible === user.uid && (m.le || 0) >= s.start - 60000) {
           log.push({ t, id: uid(), who: m.who, question: "", answer: m.texte || "", rep: true, qaId: null });
         }
       });
-      return { ...s, evo, evoTitres, log };
+      return { ...s, evo, evoTitres, evoMsgs, log };
     });
     if (alerteNew) { if (alerteNew.message !== undefined) setEvoLibre(alerteNew); setAlerteId(alerteNew.id); }
   }, [salleMsgs, sc, user, sess.start, sess.finished]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -382,7 +395,16 @@ export default function Player() {
             <strong>Évolution de la situation{alerte.titre ? ` : ${alerte.titre}` : ""}</strong>
             <p className="pre">{alerte.message}</p>
           </div>
-          <button className="btn primary" onClick={() => setAlerteId(null)}>Compris</button>
+          <button className="btn primary" onClick={compris}>Compris</button>
+        </div>
+      )}
+      {!alerte && Object.keys(sess.evo || {}).length > 0 && (
+        <div className="evorappel">
+          <span>⚠ Évolutions reçues :</span>
+          {Object.keys(sess.evo).sort((a, b) => sess.evo[a] - sess.evo[b]).map((k) => {
+            const e = evoInfo(k);
+            return e ? <button key={k} className="chip" title="Relire l'évolution" onClick={() => setAlerteId(k)}>{e.titre || "Évolution"} · {new Date(sess.evo[k]).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}</button> : null;
+          })}
         </div>
       )}
       <div className="play">

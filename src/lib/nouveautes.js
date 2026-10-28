@@ -59,18 +59,25 @@ export const NOUVEAUTES_INIT = [
 ];
 
 // Graphisme de l'application (réglage admin) : "" = actuel, "b" = institutionnel.
+export function appliquerCartes(v) {
+  if (v === "h") document.documentElement.dataset.cartes = "h"; else delete document.documentElement.dataset.cartes;
+  try { localStorage.setItem("op-cartes", v === "h" ? "h" : ""); } catch { /* ignore */ }
+}
 export function appliquerStyle(v) {
   document.documentElement.dataset.style = v === "b" ? "b" : "";
   try { localStorage.setItem("op-style", v === "b" ? "b" : ""); } catch { /* ignore */ }
 }
 export function initStyle() {
   try { if (localStorage.getItem("op-style") === "b") document.documentElement.dataset.style = "b"; } catch { /* ignore */ }
+  try { if (localStorage.getItem("op-cartes") === "h") document.documentElement.dataset.cartes = "h"; } catch { /* ignore */ }
   if (!auth) return () => {};
   let off = () => {};
   const offAuth = onAuthStateChanged(auth, (u) => {
     off();
-    off = u ? onSnapshot(doc(db, "nouveautes", "_reglages"), (d) => appliquerStyle(d.exists() ? d.data().style : ""), () => {}) : () => {};
+    off = u ? onSnapshot(doc(db, "nouveautes", "_reglages"), (d) => { appliquerStyle(d.exists() ? d.data().style : ""); appliquerCartes(d.exists() ? d.data().cartes : ""); }, () => {}) : () => {};
   });
   return () => { off(); offAuth(); };
 }
-export const setStyle = (v) => setDoc(doc(db, "nouveautes", "_reglages"), { style: v === "b" ? "b" : "" });
+export const setStyle = (v) => setDoc(doc(db, "nouveautes", "_reglages"), { style: v === "b" ? "b" : "" }, { merge: true });
+// Présentation des blocs d'exercices : "" = vertical (image en haut), "h" = image à gauche, texte à droite.
+export const setCartes = (v) => setDoc(doc(db, "nouveautes", "_reglages"), { cartes: v === "h" ? "h" : "" }, { merge: true });

@@ -4,7 +4,7 @@ import { listScenarios, saveScenario, setReserve, initialiserVisibilite } from "
 import { listDemandes, majDemande, listGestionnaires, STATUTS } from "../lib/demandesScenario";
 import { newScenario } from "../lib/model";
 import { fmtDate } from "../lib/users";
-import { setStyle } from "../lib/nouveautes";
+import { setStyle, setCartes } from "../lib/nouveautes";
 import { listExercices, setReserveExercice, typeExercice } from "../lib/relation";
 
 export default function Parametres() {
@@ -50,6 +50,16 @@ export default function Parametres() {
           onChange={(e) => setStyle(e.target.value).then(() => setMsg("Graphisme enregistré.")).catch((er) => setMsg("Erreur : " + er.message))}>
           <option value="">Actuel (rouge opérationnel)</option>
           <option value="b">B · Institutionnel (bleu marine)</option>
+        </select>
+      </div>
+
+      <div className="card">
+        <h3>Présentation des blocs d'exercices</h3>
+        <p className="muted">Disposition des exercices dans l'espace stagiaire, pour tous les utilisateurs. Chaque utilisateur peut ensuite choisir son nombre de colonnes.</p>
+        <select defaultValue={document.documentElement.dataset.cartes === "h" ? "h" : ""}
+          onChange={(e) => setCartes(e.target.value).then(() => setMsg("Présentation enregistrée.")).catch((er) => setMsg("Erreur : " + er.message))}>
+          <option value="">Actuelle (image en haut)</option>
+          <option value="h">Image à gauche, texte à droite</option>
         </select>
       </div>
 

@@ -49,7 +49,11 @@ export const watchParticipants = (code, cb) =>
     cb(q.docs.map((d) => ({ id: d.id, ...d.data() })).sort((a, b) => (a.nom || "").localeCompare(b.nom || "", "fr"))), () => cb([]));
 
 export const rejoindreSalle = (code, uid, nom) =>
-  setDoc(doc(db, "salles", code, "participants", uid), { uid, nom: nom || "Stagiaire", le: Date.now() });
+  setDoc(doc(db, "salles", code, "participants", uid), { uid, nom: nom || "Stagiaire", le: Date.now() }, { merge: true });
+
+// Suivi des évolutions côté stagiaire : champ "r" = reçue, "c" = comprise (horodatage), par clé d'évolution.
+export const signalerEvo = (code, uid, cle, champ) =>
+  setDoc(doc(db, "salles", code, "participants", uid), { evo: { [cle]: { [champ]: Date.now() } } }, { merge: true }).catch(() => {});
 
 export const posterQuestion = (code, uid, nom, who, whoNom, q, a, qaId) =>
   addDoc(collection(db, "salles", code, "questions"), { uid, nom: nom || "Stagiaire", who, whoNom, q, a, qaId: qaId || null, le: Date.now() }).catch(() => {});

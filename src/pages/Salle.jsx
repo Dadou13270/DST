@@ -164,6 +164,36 @@ export default function Salle() {
       </div>
       </div><div className="scol">
       <div className="card">
+        <h3 style={{ marginTop: 0 }}>Suivi des évolutions</h3>
+        {(() => {
+          const lignes = [
+            ...prevues.map((e) => ({ cle: e.id, titre: e.titre || "Évolution", texte: e.message || "", info: `T+${Number(e.delai) || 0} min`, le: evts.find((m) => m.kind === "evo" && m.evoId === e.id)?.le || 0 })),
+            ...evts.filter((m) => m.kind === "evo" && !m.evoId).map((m) => ({ cle: "libre_" + m.id, titre: m.titre || "Évolution libre", texte: m.texte || "", info: m.cible && m.cible !== "all" ? "→ " + (ps.find((u) => (u.uid || u.id) === m.cible)?.nom || "un stagiaire") : "à toute la salle", le: m.le || 0, cible: m.cible })),
+          ].map((l) => {
+            const dest = l.cible && l.cible !== "all" ? ps.filter((u) => (u.uid || u.id) === l.cible) : ps;
+            const recu = dest.filter((u) => u.evo?.[l.cle]?.r), comp = dest.filter((u) => u.evo?.[l.cle]?.c);
+            return { ...l, dest, recu, comp };
+          }).filter((l) => l.le || l.recu.length);
+          if (!lignes.length) return <p className="muted" style={{ margin: 0 }}>Aucune évolution transmise pour le moment.</p>;
+          return lignes.sort((a, b) => (a.le || 0) - (b.le || 0)).map((l) => {
+            const attente = l.dest.filter((u) => !u.evo?.[l.cle]?.c);
+            return (
+              <div key={l.cle} style={{ margin: "8px 0", paddingBottom: 6, borderBottom: "1px solid var(--line, #ddd)" }}>
+                <div className="row between">
+                  <span><strong>{l.titre}</strong> <span className="muted">{l.info}{l.le ? ` · envoyée à ${hhmm(l.le)}` : " · tombée automatiquement"}</span></span>
+                  <span className="row" style={{ gap: 6 }}>
+                    <span className="tag">Reçue {l.recu.length}/{l.dest.length}</span>
+                    <span className={l.dest.length && l.comp.length === l.dest.length ? "tag ok" : "tag"}>Comprise {l.comp.length}/{l.dest.length}</span>
+                  </span>
+                </div>
+                {l.texte && <div className="muted">{l.texte}</div>}
+                {l.dest.length > 0 && attente.length > 0 && <div className="muted">En attente : {attente.map((u) => u.nom || "Stagiaire").join(", ")}</div>}
+              </div>
+            );
+          });
+        })()}
+      </div>
+      <div className="card">
         <h3 style={{ marginTop: 0 }}>Stagiaires</h3>
         {ps.length === 0 ? <p className="muted">En attente des stagiaires…</p> : (
           <div className="chips">

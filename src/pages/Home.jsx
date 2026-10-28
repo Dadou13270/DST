@@ -43,6 +43,8 @@ export default function Home() {
   const [etat, setEtat] = useState("");
   const [typ, setTyp] = useState("");
   const [ferme, setFerme] = useState(() => { try { return JSON.parse(localStorage.getItem("op-rub") || "{}") || {}; } catch { return {}; } });
+  const [cols, setCols] = useState(() => { try { const v = localStorage.getItem("op-cols"); return ["2", "3", "4", "5"].includes(v) ? v : "5"; } catch { return "5"; } });
+  const suivCols = () => { const n = { "2": "3", "3": "4", "4": "5", "5": "2" }[cols] ?? "5"; setCols(n); try { localStorage.setItem("op-cols", n); } catch { /* */ } };
   const majFerme = (n) => { setFerme(n); try { localStorage.setItem("op-rub", JSON.stringify(n)); } catch { /* */ } };
   const norm = (t) => (t || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
   const vue = (list || []).filter((s) => {
@@ -118,6 +120,7 @@ export default function Home() {
           <select value={etat} onChange={(e) => setEtat(e.target.value)} aria-label="État">
             <option value="">Tous les états</option><option value="nouveau">Non commencés</option><option value="encours">En cours</option><option value="termine">Terminés</option>
           </select>
+          <button className="btn colbtn" onClick={suivCols} title="Changer le nombre de colonnes">▦ Colonnes : {cols}</button>
           {filtre && <button className="btn" onClick={() => { setQ(""); setRub(""); setDur(""); setEtat(""); setTyp(""); }}>Réinitialiser</button>}
           {filtre && <span className="muted">{vue.length + calcs.length} sur {list.length + calcEx.length}</span>}
         </div>
@@ -143,7 +146,7 @@ export default function Home() {
                 <span className="chev">▾</span><span className="rname">{r || "Autres"}</span> <span className="muted">({g.length + calcs.filter((c) => (c.rubrique || "") === r).length})</span>
               </button>
             </h3>
-            {!clos && <div className="grid">
+            {!clos && <div className="grid" data-cols={cols}>
               {calcs.filter((c) => (c.rubrique || "") === r).map((ex) => {
                 const l = essaisDe(ex.id), last = l[l.length - 1];
                 return (
