@@ -1,0 +1,275 @@
+{
+ "rubrique": "Gestion du conflit",
+ "publie": true,
+ "photo": "",
+ "vignette": "",
+ "debut": "n1",
+ "titre": "Arrêt cardiaque à domicile : l'épouse qui s'accroche à l'équipier",
+ "niveau": "Avancé",
+ "description": "Massage cardiaque en cours, épouse paniquée qui veut tout arrêter. Tenir la mission sans exclure la famille.",
+ "contexte": {
+  "texte": "Domicile, salon. Un homme de 62 ans est en arrêt cardiaque. Votre équipe pratique le massage et le DSA. Son épouse hurle, tire sur le bras de l'équipier qui masse et s'oppose aux gestes. Leur fille pleure dans l'entrée.",
+  "type": "Secours à personne",
+  "objectif": "Poursuivre la réanimation sans interruption jusqu'à l'arrivée du SMUR, en prenant soin de la famille",
+  "gravite": 5,
+  "tempsMax": 6,
+  "effectifs": 3,
+  "lieu": "Domicile, pièce exiguë",
+  "public": "quelques",
+  "alcool": false,
+  "arme": false,
+  "seuilRenfort": 70
+ },
+ "victime": {
+  "nom": "L'épouse",
+  "etat": "peur",
+  "tension": 80,
+  "confiance": 20,
+  "besoin": "proche",
+  "besoinTexte": "Sa détresse est une peur panique, pas de l'hostilité. Elle a besoin de comprendre que ces gestes brutaux l'aident, et de garder une place auprès de son mari.",
+  "declencheurs": [
+   "Gestes brutaux sans explication",
+   "Être tenue à l'écart",
+   "Phrases culpabilisantes",
+   "Contact physique"
+  ],
+  "apaisants": [
+   "Explication simple et vraie",
+   "Un équipier dédié",
+   "Lui confier une tâche utile",
+   "Être près de son mari sans gêner"
+  ]
+ },
+ "noeuds": [
+  {
+   "id": "n1",
+   "victime": "« Arrêtez ! Vous lui cassez les côtes ! Lâchez-le, c'est mon mari, laissez-moi lui parler ! »\n(Elle tire sur le bras de l'équipier qui masse.)",
+   "choix": [
+    {
+     "id": "a",
+     "texte": "Vous écartez fermement son bras.",
+     "technique": "contact",
+     "dT": 20,
+     "dC": -15,
+     "dB": 0,
+     "temps": 1,
+     "suite": "n2b",
+     "reaction": "Elle crie et s'agrippe encore plus.",
+     "conseil": "Même dans l'urgence, la contrainte physique nourrit la panique."
+    },
+    {
+     "id": "b",
+     "texte": "Vous vous placez face à elle, voix ferme et basse : « Je suis le chef d'équipe. Son cœur s'est arrêté. Ce massage fait circuler le sang à sa place, il peut casser des côtes, c'est normal, c'est ce qui peut le sauver. »",
+     "technique": "info",
+     "dT": -14,
+     "dC": 12,
+     "dB": 20,
+     "temps": 1,
+     "suite": "n2",
+     "reaction": "Elle vous écoute, haletante.",
+     "conseil": "Une explication simple, vraie et rapide donne du sens aux gestes."
+    },
+    {
+     "id": "c",
+     "texte": "« Madame, reculez ou on ne peut pas le sauver ! »",
+     "technique": "ordre",
+     "dT": 15,
+     "dC": -12,
+     "dB": 0,
+     "temps": 1,
+     "suite": "n2b",
+     "reaction": "« Vous me dites que c'est de ma faute ? »",
+     "conseil": "L'ordre et la menace implicite culpabilisent."
+    },
+    {
+     "id": "d",
+     "texte": "« Mon collègue va rester avec vous et vous explique tout. »",
+     "technique": "choix",
+     "dT": -8,
+     "dC": 6,
+     "dB": 10,
+     "temps": 1,
+     "suite": "n2",
+     "reaction": "Elle se tourne vers l'équipier désigné.",
+     "conseil": "Désigner un équipier dédié libère l'équipe et donne un interlocuteur."
+    }
+   ]
+  },
+  {
+   "id": "n2",
+   "victime": "« Il va mourir, hein ? Dites-moi la vérité… Je veux rester à côté de lui, laissez-moi lui tenir la main ! »",
+   "choix": [
+    {
+     "id": "a",
+     "texte": "« Vous avez très peur de le perdre et vous voulez rester près de lui. Venez à sa tête, prenez sa main, mais restez hors du massage. Mon collègue reste avec vous. »",
+     "technique": "validation",
+     "dT": -15,
+     "dC": 15,
+     "dB": 30,
+     "temps": 1,
+     "suite": "n3",
+     "reaction": "Elle s'agenouille et lui prend la main.",
+     "conseil": "Valider la peur, donner une place sûre et un accompagnant répond au besoin sans gêner la réanimation."
+    },
+    {
+     "id": "b",
+     "texte": "« Non, non, il va s'en sortir, c'est sûr. »",
+     "technique": "promesse",
+     "dT": -8,
+     "dC": -10,
+     "dB": 0,
+     "temps": 1,
+     "suite": "n3",
+     "reaction": "Elle vous regarde, sans y croire.",
+     "conseil": "Promettre l'issue est intenable : le risque est une rupture de confiance si l'état évolue."
+    },
+    {
+     "id": "c",
+     "texte": "« Ce n'est pas le moment, éloignez-vous. »",
+     "technique": "ordre",
+     "dT": 15,
+     "dC": -15,
+     "dB": 0,
+     "temps": 1,
+     "suite": "n2b",
+     "reaction": "« Vous n'avez pas le droit ! »",
+     "conseil": "Écarter la famille sans alternative ravive la panique."
+    }
+   ]
+  },
+  {
+   "id": "n2b",
+   "victime": "« Non ! Je veux pas ! Vous êtes en train de le tuer ! »\n(Elle s'agrippe ; la fille hurle ; le massage est interrompu.)",
+   "choix": [
+    {
+     "id": "a",
+     "texte": "« Je ne vous touche pas. Mon collègue est avec vous. Ces gestes sont ce qui peut le sauver. » Vous confiez la famille à un équipier.",
+     "technique": "securite",
+     "dT": -12,
+     "dC": 10,
+     "dB": 10,
+     "temps": 1,
+     "suite": "n2",
+     "reaction": "Elle se laisse guider, secouée.",
+     "conseil": "Confier la famille à un équipier dédié permet de reprendre le massage sans contrainte."
+    },
+    {
+     "id": "b",
+     "texte": "Vous demandez un renfort (SMUR renforcé et soutien à la famille) par radio.",
+     "technique": "renfort",
+     "dT": 0,
+     "dC": 0,
+     "dB": 0,
+     "temps": 2,
+     "suite": "fin:renfort",
+     "reaction": "Vous restez concentré sur le massage.",
+     "conseil": "Le renfort est légitime si la tension reste haute et que la réanimation est entravée."
+    },
+    {
+     "id": "c",
+     "texte": "« Si je m'arrête, ce sera de votre faute ! »",
+     "technique": "contre",
+     "dT": 18,
+     "dC": -15,
+     "dB": 0,
+     "temps": 1,
+     "suite": "n2b",
+     "reaction": "Elle éclate en sanglots et hurle.",
+     "conseil": "Culpabiliser une personne en panique aggrave tout."
+    }
+   ]
+  },
+  {
+   "id": "n3",
+   "victime": "« D'accord… D'accord. Je reste là. Dites-moi ce que je peux faire. »\n(Elle tremble ; la fille pleure derrière.)",
+   "choix": [
+    {
+     "id": "a",
+     "texte": "« Vous pouvez nous aider : donnez-moi ses médicaments et son nom complet, et à quelle heure il s'est effondré. Votre fille peut ouvrir la porte au SMUR. »",
+     "technique": "choix",
+     "dT": -15,
+     "dC": 15,
+     "dB": 30,
+     "temps": 1,
+     "suite": "n4",
+     "reaction": "Elle se redresse et s'exécute.",
+     "conseil": "Donner un rôle utile transforme la panique en action et fournit des informations utiles."
+    },
+    {
+     "id": "b",
+     "texte": "« Restez à côté de moi, je vous préviens dès qu'il y a du nouveau. »",
+     "technique": "ecoute",
+     "dT": -8,
+     "dC": 8,
+     "dB": 10,
+     "temps": 1,
+     "suite": "n4",
+     "reaction": "Elle acquiesce, silencieuse.",
+     "conseil": "Soutenant, mais ne donne pas de tâche utile."
+    },
+    {
+     "id": "c",
+     "texte": "« Ne vous occupez de rien, on gère. »",
+     "technique": "minimise",
+     "dT": 5,
+     "dC": -6,
+     "dB": 0,
+     "temps": 1,
+     "suite": "n3",
+     "reaction": "Elle se tord les mains.",
+     "conseil": "Exclure la famille de toute action laisse l'impuissance."
+    }
+   ]
+  },
+  {
+   "id": "n4",
+   "victime": "« Il y a du monde qui arrive… Qu'est-ce qui se passe maintenant ? »",
+   "choix": [
+    {
+     "id": "a",
+     "texte": "« Le médecin du SMUR arrive pour prendre le relais, on continue le massage. Quoi qu'il arrive, vous avez été là. Je reste avec vous et votre fille. »",
+     "technique": "info",
+     "dT": -15,
+     "dC": 15,
+     "dB": 25,
+     "temps": 1,
+     "suite": "fin:apaise",
+     "reaction": "Elle pleure doucement, entourée.",
+     "conseil": "Informer sur la suite, reconnaître sa présence et rester disponible clôture l'intervention en respectant la famille."
+    },
+    {
+     "id": "b",
+     "texte": "« Maintenant il est entre de bonnes mains, tout ira bien. »",
+     "technique": "promesse",
+     "dT": -5,
+     "dC": -6,
+     "dB": 5,
+     "temps": 1,
+     "suite": "fin:apaise",
+     "reaction": "Elle hoche la tête, fragile.",
+     "conseil": "L'apaisement est précaire : la promesse pourra se retourner contre vous."
+    }
+   ]
+  }
+ ],
+ "debrief": {
+  "points": [
+   "Expliquer en trois phrases pourquoi les gestes sont brutaux.",
+   "Désigner un équipier dédié à la famille.",
+   "Donner une place sûre et une tâche utile.",
+   "Ne jamais interrompre le massage pour gérer la famille."
+  ],
+  "erreurs": [
+   "Écarter physiquement la famille.",
+   "Culpabiliser (« ce sera de votre faute »).",
+   "Promettre une issue.",
+   "L'exclure de toute action."
+  ],
+  "principes": [
+   "La peur panique n'est pas de l'hostilité.",
+   "Le temps est critique : chaque minute perdue fait monter la tension et compromet la mission.",
+   "La mission clinique passe d'abord, la famille est prise en charge en parallèle."
+  ]
+ },
+ "jaugesMasquees": false
+}

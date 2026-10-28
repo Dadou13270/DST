@@ -1,0 +1,263 @@
+{
+ "rubrique": "Gestion du conflit",
+ "publie": true,
+ "photo": "",
+ "vignette": "",
+ "debut": "n1",
+ "titre": "Accident de la route : le conducteur qui refuse d'être évacué",
+ "niveau": "Initiation",
+ "description": "Conducteur pressé, douleur thoracique après un choc, déni et refus de soins. Découvrir ce qui le préoccupe vraiment.",
+ "contexte": {
+  "texte": "Collision légère en agglomération. Le conducteur, pâle, se tient la poitrine mais affirme qu'il n'a rien et veut repartir. Il a le choc de la ceinture et dit qu'il est en retard.",
+  "type": "Secours routier",
+  "objectif": "Réaliser le bilan et obtenir un accord éclairé pour l'évacuation",
+  "gravite": 3,
+  "tempsMax": 10,
+  "effectifs": 3,
+  "lieu": "Voie publique, circulation neutralisée",
+  "public": "aucun",
+  "alcool": false,
+  "arme": false,
+  "seuilRenfort": 70
+ },
+ "victime": {
+  "nom": "Le conducteur",
+  "etat": "deni",
+  "tension": 45,
+  "confiance": 40,
+  "besoin": "controle",
+  "besoinTexte": "Il minimise parce qu'il doit récupérer sa fille de 6 ans à 17 h et n'a personne d'autre. Il a besoin de garder la maîtrise de ses obligations et de trouver une solution concrète.",
+  "declencheurs": [
+   "Ordres secs",
+   "« Vous n'avez pas le choix »",
+   "Mépris de ses obligations",
+   "Promesses non tenables"
+  ],
+  "apaisants": [
+   "Question sur ce qui l'attend",
+   "Solution concrète pour sa fille",
+   "Information claire sur le risque",
+   "Décision partagée"
+  ]
+ },
+ "noeuds": [
+  {
+   "id": "n1",
+   "victime": "« Ça va, c'est juste un accrochage. J'ai rien du tout, je dois partir, je suis déjà en retard. Vous pouvez me laisser, merci. »\n(Il met la clé dans le contact, la main sur la poitrine.)",
+   "choix": [
+    {
+     "id": "a",
+     "texte": "« Un accrochage ? Avec la ceinture, vous pouvez avoir des lésions graves, vous n'avez pas le choix. »",
+     "technique": "ordre",
+     "dT": 12,
+     "dC": -10,
+     "dB": 0,
+     "temps": 1,
+     "suite": "n2b",
+     "reaction": "Il se crispe : « Si, j'ai le choix ! »",
+     "conseil": "« Vous n'avez pas le choix » provoque l'opposition."
+    },
+    {
+     "id": "b",
+     "texte": "« Je vois que vous êtes pressé, ça doit être important. Qu'est-ce qui vous attend ? Et je vois que vous vous tenez la poitrine. »",
+     "technique": "question",
+     "dT": -8,
+     "dC": 10,
+     "dB": 20,
+     "temps": 1,
+     "suite": "n2",
+     "reaction": "Il hésite et se détend.",
+     "conseil": "Question ouverte et constat factuel ouvrent le dialogue sur ce qui compte pour lui."
+    },
+    {
+     "id": "c",
+     "texte": "« Je ne vous retiens pas, mais laissez-moi trois minutes pour prendre votre tension. »",
+     "technique": "limite",
+     "dT": -6,
+     "dC": 6,
+     "dB": 5,
+     "temps": 1,
+     "suite": "n2",
+     "reaction": "Il accepte à contrecœur.",
+     "conseil": "Demande courte, limitée dans le temps : acceptable."
+    },
+    {
+     "id": "d",
+     "texte": "« Vous ne savez pas ce que vous avez, laissez les professionnels décider. »",
+     "technique": "contre",
+     "dT": 12,
+     "dC": -10,
+     "dB": 0,
+     "temps": 1,
+     "suite": "n2b",
+     "reaction": "« Je sais ce que je ressens. »",
+     "conseil": "Disqualifier son ressenti renforce le déni."
+    }
+   ]
+  },
+  {
+   "id": "n2",
+   "victime": "« Je dois récupérer ma fille à l'école à 17 h, elle a six ans, personne d'autre ne peut y aller. Et j'ai pas le temps pour les urgences, j'en ai pour des heures. »",
+   "choix": [
+    {
+     "id": "a",
+     "texte": "« Votre fille vous attend et vous êtes inquiet pour elle. Voyons ce qu'on peut organiser : qui peut aller la chercher ? Je vous aide à appeler. »",
+     "technique": "reformulation",
+     "dT": -14,
+     "dC": 14,
+     "dB": 35,
+     "temps": 2,
+     "suite": "n3",
+     "reaction": "Il respire, soulagé qu'on le comprenne.",
+     "conseil": "La reformulation reconnaît l'obligation et ouvre une solution concrète."
+    },
+    {
+     "id": "b",
+     "texte": "« L'école peut garder votre fille, ce n'est pas un problème. »",
+     "technique": "minimise",
+     "dT": 10,
+     "dC": -10,
+     "dB": 0,
+     "temps": 1,
+     "suite": "n2b",
+     "reaction": "« Vous ne comprenez pas ! »",
+     "conseil": "Minimiser son obligation nie sa préoccupation."
+    },
+    {
+     "id": "c",
+     "texte": "« Ne vous inquiétez pas, ce sera vite fait, vous serez à l'heure. »",
+     "technique": "promesse",
+     "dT": -6,
+     "dC": -8,
+     "dB": 5,
+     "temps": 1,
+     "suite": "n3",
+     "reaction": "Il hoche la tête, sceptique.",
+     "conseil": "Promesse sur l'horaire intenable."
+    }
+   ]
+  },
+  {
+   "id": "n2b",
+   "victime": "« Arrêtez de me harceler ! Je signe ce que vous voulez, je pars ! »",
+   "choix": [
+    {
+     "id": "a",
+     "texte": "« Vous avez le droit de refuser et je vous l'explique clairement : une douleur à la poitrine après un choc peut cacher une lésion grave. Laissez-moi deux minutes de bilan, ensuite c'est vous qui décidez. »",
+     "technique": "limite",
+     "dT": -12,
+     "dC": 10,
+     "dB": 15,
+     "temps": 2,
+     "suite": "n2",
+     "reaction": "Il hésite, puis s'immobilise.",
+     "conseil": "Limite cadrée et information honnête sur le risque respectent son autonomie."
+    },
+    {
+     "id": "b",
+     "texte": "Vous demandez l'avis du médecin régulateur par radio.",
+     "technique": "renfort",
+     "dT": 0,
+     "dC": 0,
+     "dB": 0,
+     "temps": 2,
+     "suite": "fin:renfort",
+     "reaction": "Vous restez à ses côtés.",
+     "conseil": "Avis médical prématuré ici : la tension n'a pas atteint le seuil, le dialogue n'est pas épuisé."
+    },
+    {
+     "id": "c",
+     "texte": "« Vous ne partez pas, c'est moi qui décide ! »",
+     "technique": "ordre",
+     "dT": 15,
+     "dC": -15,
+     "dB": 0,
+     "temps": 1,
+     "suite": "n2b",
+     "reaction": "Il ouvre la portière.",
+     "conseil": "L'autorité mal placée aggrave le refus."
+    }
+   ]
+  },
+  {
+   "id": "n3",
+   "victime": "« Ma sœur peut y aller… mais elle habite loin. Bon. Vous pensez vraiment que c'est nécessaire de venir avec vous ? »",
+   "choix": [
+    {
+     "id": "a",
+     "texte": "« Votre douleur à la poitrine est un signe à ne pas négliger. Votre sœur récupère votre fille, vous restez en contact téléphonique avec elle, et on vous emmène tout de suite. »",
+     "technique": "info",
+     "dT": -14,
+     "dC": 14,
+     "dB": 30,
+     "temps": 2,
+     "suite": "n4",
+     "reaction": "Il acquiesce.",
+     "conseil": "Une information claire sur le risque et une solution pour la fille lèvent l'obstacle."
+    },
+    {
+     "id": "b",
+     "texte": "« C'est à vous de voir, on est là si vous changez d'avis. »",
+     "technique": "ecoute",
+     "dT": -4,
+     "dC": 4,
+     "dB": 5,
+     "temps": 1,
+     "suite": "n4",
+     "reaction": "Il reste indécis.",
+     "conseil": "Trop passif : le risque médical n'est pas expliqué."
+    }
+   ]
+  },
+  {
+   "id": "n4",
+   "victime": "« D'accord… Je préviens ma sœur. Je peux garder mon téléphone ? »",
+   "choix": [
+    {
+     "id": "a",
+     "texte": "« Oui, gardez-le. Je note l'heure d'arrivée et je vous donne des nouvelles si besoin. Installez-vous sur le brancard. »",
+     "technique": "choix",
+     "dT": -12,
+     "dC": 14,
+     "dB": 20,
+     "temps": 1,
+     "suite": "fin:apaise",
+     "reaction": "Il s'installe, apaisé.",
+     "conseil": "Lui laisser son téléphone redonne du contrôle."
+    },
+    {
+     "id": "b",
+     "texte": "« Non, donnez-moi vos affaires. »",
+     "technique": "ordre",
+     "dT": 15,
+     "dC": -12,
+     "dB": 0,
+     "temps": 1,
+     "suite": "n2b",
+     "reaction": "« Hors de question ! »",
+     "conseil": "Retirer ses moyens de contact ravive la crainte."
+    }
+   ]
+  }
+ ],
+ "debrief": {
+  "points": [
+   "Chercher la raison cachée du refus avec une question ouverte.",
+   "Proposer une solution concrète à l'obligation.",
+   "Informer honnêtement sur le risque.",
+   "Partager la décision."
+  ],
+  "erreurs": [
+   "« Vous n'avez pas le choix ».",
+   "Minimiser l'obligation du patient.",
+   "Promettre l'horaire.",
+   "Retirer son téléphone."
+  ],
+  "principes": [
+   "Le déni cache souvent un besoin de contrôle ou une obligation.",
+   "Respecter l'autonomie n'empêche pas d'informer fermement.",
+   "Le renfort prématuré est pénalisé : épuiser d'abord le dialogue."
+  ]
+ },
+ "jaugesMasquees": false
+}

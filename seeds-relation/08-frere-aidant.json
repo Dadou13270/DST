@@ -1,0 +1,275 @@
+{
+ "rubrique": "Gestion du conflit",
+ "publie": true,
+ "photo": "",
+ "vignette": "",
+ "debut": "n1",
+ "titre": "Un frère épuisé : appel pour un proche en crise qui refuse de partir",
+ "niveau": "Avancé",
+ "description": "Un aidant à bout appelle les pompiers pour emmener son frère en rupture de traitement chez le médecin. Le frère refuse pour l'instant. Écoute, compassion, cadre.",
+ "contexte": {
+  "texte": "Domicile, matin. L'appelant est épuisé : son frère, suivi pour des troubles psychiques, est en rupture de traitement et en crise depuis des jours. Il a rendez-vous chez son médecin dans une heure et l'appelant veut que les pompiers l'emmènent. Le frère est assis au salon, agité mais sans violence, et dit non pour le moment.",
+  "type": "Secours à personne",
+  "objectif": "Évaluer le frère sans le contraindre, apaiser l'aidant et orienter vers une prise en charge adaptée",
+  "gravite": 2,
+  "tempsMax": 12,
+  "effectifs": 3,
+  "lieu": "Domicile, entrée et salon",
+  "public": "aucun",
+  "alcool": false,
+  "arme": false,
+  "seuilRenfort": 70
+ },
+ "victime": {
+  "nom": "Le frère aidant",
+  "etat": "colere",
+  "tension": 65,
+  "confiance": 25,
+  "besoin": "reconnaissance",
+  "besoinTexte": "Il est épuisé et seul. Il a besoin que son épuisement soit reconnu et qu'on partage la charge avec lui. Sa colère vient de l'impuissance, pas d'un manque d'affection pour son frère.",
+  "declencheurs": [
+   "« Calmez-vous »",
+   "« On n'est pas un taxi »",
+   "Promesses de prise en charge immédiate",
+   "Minimiser ses difficultés"
+  ],
+  "apaisants": [
+   "Remercier d'avoir appelé",
+   "Reconnaître sa fatigue",
+   "Expliquer ce qu'on peut faire",
+   "Proposer un relais concret"
+  ]
+ },
+ "noeuds": [
+  {
+   "id": "n1",
+   "victime": "« J'en peux plus ! Il est encore en crise, il ne prend plus ses médicaments, ça fait des mois que je gère tout seul ! Il a rendez-vous chez son médecin dans une heure, vous l'emmenez, c'est tout ! »\n(Dans le salon, son frère parle tout seul, les mains agitées.)",
+   "choix": [
+    {
+     "id": "a",
+     "texte": "« Monsieur, on n'est pas un taxi, on ne peut pas emmener quelqu'un contre son gré. »",
+     "technique": "contre",
+     "dT": 14,
+     "dC": -12,
+     "dB": 0,
+     "temps": 1,
+     "suite": "n2b",
+     "reaction": "« Alors vous servez à quoi ?! »",
+     "conseil": "La règle est juste mais la formule le blesse : il ne se sent pas entendu."
+    },
+    {
+     "id": "b",
+     "texte": "« Je vois que vous êtes épuisé et que vous portez ça seul depuis longtemps. Merci d'avoir appelé, vous avez bien fait. Dites-moi comment ça se passe depuis ce matin. »",
+     "technique": "empathie",
+     "dT": -14,
+     "dC": 14,
+     "dB": 25,
+     "temps": 1,
+     "suite": "n2",
+     "reaction": "Ses épaules s'abaissent, il prend une inspiration.",
+     "conseil": "Reconnaître l'épuisement et le remercier avec compassion ouvre la discussion."
+    },
+    {
+     "id": "c",
+     "texte": "« Ce n'est pas si grave, il y a des cas bien pires. »",
+     "technique": "minimise",
+     "dT": 12,
+     "dC": -12,
+     "dB": 0,
+     "temps": 1,
+     "suite": "n2b",
+     "reaction": "« Vous n'avez pas à comparer ! »",
+     "conseil": "Minimiser et comparer nient sa souffrance."
+    },
+    {
+     "id": "d",
+     "texte": "« Je vais le voir tout de suite. »",
+     "technique": "info",
+     "dT": 2,
+     "dC": -6,
+     "dB": -5,
+     "temps": 1,
+     "suite": "n2",
+     "reaction": "Il vous regarde passer en silence.",
+     "conseil": "Vous n'avez pas écouté l'aidant : il reste seul avec son épuisement."
+    }
+   ]
+  },
+  {
+   "id": "n2",
+   "victime": "« Je suis son seul proche. Je travaille, j'ai ma famille, et lui, c'est toujours des crises. Hier il n'a pas dormi, il a crié toute la nuit. Je ne sais plus quoi faire… Je voudrais juste que quelqu'un le prenne en charge. »",
+   "choix": [
+    {
+     "id": "a",
+     "texte": "« Vous êtes seul face à ça, fatigué, et vous voulez que quelqu'un prenne le relais. C'est tout à fait compréhensible. »",
+     "technique": "reformulation",
+     "dT": -14,
+     "dC": 14,
+     "dB": 35,
+     "temps": 1,
+     "suite": "n3",
+     "reaction": "Il baisse les yeux, ému.",
+     "conseil": "La reformulation valide son épuisement et son besoin de relais."
+    },
+    {
+     "id": "b",
+     "texte": "« On va le faire hospitaliser aujourd'hui, ne vous inquiétez pas. »",
+     "technique": "promesse",
+     "dT": -6,
+     "dC": -8,
+     "dB": 5,
+     "temps": 1,
+     "suite": "n3",
+     "reaction": "Il vous regarde, plein d'espoir.",
+     "conseil": "Promettre une hospitalisation : vous ne pouvez pas la garantir."
+    },
+    {
+     "id": "c",
+     "texte": "« Calmez-vous, on va gérer. »",
+     "technique": "ordre",
+     "dT": 12,
+     "dC": -10,
+     "dB": 0,
+     "temps": 1,
+     "suite": "n2b",
+     "reaction": "« Dites pas calmez-vous ! »",
+     "conseil": "« Calmez-vous » ne calme jamais."
+    }
+   ]
+  },
+  {
+   "id": "n2b",
+   "victime": "« Vous ne comprenez rien ! Personne ne comprend ! Tout le monde me dit de patienter ! »\n(Il hausse la voix ; dans le salon, le frère se met à crier.)",
+   "choix": [
+    {
+     "id": "a",
+     "texte": "Vous baissez la voix et vous vous écartez de l'entrée : « Je vous écoute. Je ne vais pas vous laisser seul avec ça. »",
+     "technique": "voix",
+     "dT": -10,
+     "dC": 8,
+     "dB": 10,
+     "temps": 1,
+     "suite": "n2",
+     "reaction": "Il s'arrête, la gorge nouée.",
+     "conseil": "La voix basse et la présence ancrent la conversation."
+    },
+    {
+     "id": "b",
+     "texte": "Vous demandez l'avis du médecin régulateur par radio.",
+     "technique": "renfort",
+     "dT": 0,
+     "dC": 0,
+     "dB": 0,
+     "temps": 2,
+     "suite": "fin:renfort",
+     "reaction": "Vous restez avec les deux frères en attendant.",
+     "conseil": "Justifié si le frère s'agite fortement ou si la tension de l'aidant reste très haute."
+    },
+    {
+     "id": "c",
+     "texte": "« Si vous criez, je ne pourrai pas l'examiner. »",
+     "technique": "ordre",
+     "dT": 12,
+     "dC": -12,
+     "dB": 0,
+     "temps": 1,
+     "suite": "n2b",
+     "reaction": "Il se détourne, excédé.",
+     "conseil": "La menace de ne pas aider aggrave sa détresse."
+    }
+   ]
+  },
+  {
+   "id": "n3",
+   "victime": "« Mon frère dit qu'il ne veut pas aller chez le médecin, pas aujourd'hui. Mais moi, je n'en peux plus de l'attendre ! Si vous pouviez au moins le forcer à… »",
+   "choix": [
+    {
+     "id": "a",
+     "texte": "« Vous voulez qu'il soit soigné et vous ne pouvez plus attendre. Je vais d'abord le rencontrer pour voir comment il va. On ne peut pas l'emmener contre son gré s'il n'est pas en danger, mais on cherche ensemble une solution. »",
+     "technique": "validation",
+     "dT": -12,
+     "dC": 12,
+     "dB": 25,
+     "temps": 2,
+     "suite": "n4",
+     "reaction": "Il acquiesce lentement.",
+     "conseil": "Validation de l'émotion, cadre légal expliqué avec douceur et solution commune."
+    },
+    {
+     "id": "b",
+     "texte": "« On l'emmènera, c'est sûr. »",
+     "technique": "promesse",
+     "dT": -5,
+     "dC": -10,
+     "dB": 0,
+     "temps": 1,
+     "suite": "n4",
+     "reaction": "Il semble rassuré, mais vous savez que vous ne pouvez pas le promettre.",
+     "conseil": "Promesse intenable : effondrement de la confiance si l'état du frère ne l'exige pas."
+    },
+    {
+     "id": "c",
+     "texte": "« C'est son droit de refuser. »",
+     "technique": "contre",
+     "dT": 12,
+     "dC": -10,
+     "dB": -5,
+     "temps": 1,
+     "suite": "n2b",
+     "reaction": "« Et mes droits à moi ? »",
+     "conseil": "Exact mais glacial : sans empathie, l'aidant se sent abandonné."
+    }
+   ]
+  },
+  {
+   "id": "n4",
+   "victime": "« Alors ? Il vous a dit quoi ? Vous allez l'emmener ? »\n(Vous revenez du salon : le frère est calmé, il vous a écouté.)",
+   "choix": [
+    {
+     "id": "a",
+     "texte": "« Votre frère est calme, il n'est pas en danger immédiat, et il refuse de partir pour l'instant : c'est son droit. Je vais appeler le médecin régulateur et son médecin pour avancer le rendez-vous ou organiser une visite, et je vous donne un contact de soutien pour les proches. Vous n'êtes pas seul. »",
+     "technique": "empathie",
+     "dT": -14,
+     "dC": 14,
+     "dB": 30,
+     "temps": 3,
+     "suite": "fin:apaise",
+     "reaction": "Il laisse échapper un soupir de soulagement.",
+     "conseil": "Compassion, cadre expliqué et solution concrète : l'aidant se sent soutenu, pas abandonné."
+    },
+    {
+     "id": "b",
+     "texte": "« Il sera pris en charge dans la journée, c'est promis. »",
+     "technique": "promesse",
+     "dT": -5,
+     "dC": -6,
+     "dB": 5,
+     "temps": 1,
+     "suite": "fin:apaise",
+     "reaction": "Il hoche la tête, confiant.",
+     "conseil": "Promesse risquée si la prise en charge n'a pas lieu."
+    }
+   ]
+  }
+ ],
+ "debrief": {
+  "points": [
+   "Remercier l'aidant d'avoir appelé et reconnaître son épuisement.",
+   "Reformuler : « vous êtes seul, vous voulez un relais ».",
+   "Expliquer le cadre (pas de contrainte sans danger) avec douceur.",
+   "Proposer un relais concret : régulation médicale, médecin traitant, soutien aux proches."
+  ],
+  "erreurs": [
+   "« On n'est pas un taxi ».",
+   "« Calmez-vous ».",
+   "Promettre une hospitalisation.",
+   "Renvoyer au droit de refuser sans chaleur."
+  ],
+  "principes": [
+   "Empathie, compassion, sympathie et écoute active : soutenir l'aidant autant que le patient.",
+   "Le refus d'une personne qui n'est pas en danger se respecte, on ne contraint pas.",
+   "Si danger pour lui ou pour autrui : avis du médecin régulateur, renfort justifié."
+  ]
+ },
+ "jaugesMasquees": false
+}

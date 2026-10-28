@@ -1,0 +1,287 @@
+{
+ "rubrique": "Gestion du conflit",
+ "publie": true,
+ "photo": "",
+ "vignette": "",
+ "debut": "n1",
+ "titre": "Domicile : le mari qui bloque la porte pendant le match",
+ "niveau": "Intermédiaire",
+ "description": "Son épouse s'est blessée à la cheville, lui veut regarder le match et refuse l'entrée des secours. Empathie, écoute active et vigilance.",
+ "contexte": {
+  "texte": "Soirée de match, appartement. L'épouse s'est blessée à la cheville dans la cuisine. Le mari entrouvre la porte, la bloque du pied et crie sur elle pour qu'elle se taise. On entend la télévision à fond et la femme gémir.",
+  "type": "Secours à personne",
+  "objectif": "Accéder à la victime, évaluer sa cheville et s'assurer qu'elle est en sécurité",
+  "gravite": 2,
+  "tempsMax": 10,
+  "effectifs": 3,
+  "lieu": "Palier d'un immeuble, puis domicile",
+  "public": "aucun",
+  "alcool": false,
+  "arme": false,
+  "seuilRenfort": 65
+ },
+ "victime": {
+  "nom": "Le mari",
+  "etat": "colere",
+  "tension": 60,
+  "confiance": 15,
+  "besoin": "reconnaissance",
+  "besoinTexte": "Il se sent dérangé et jugé. Derrière l'agacement, il a peur que la blessure bouleverse sa soirée et la vie à la maison. Il a besoin d'être entendu sans être condamné. Vigilance : vérifier que l'épouse est en sécurité, hors de sa présence.",
+  "declencheurs": [
+   "Reproche sur son match",
+   "Ordres secs",
+   "Entrer de force",
+   "Jugement moral"
+  ],
+  "apaisants": [
+   "Se présenter avec sympathie",
+   "Reconnaître son agacement",
+   "Rassurer sur le déroulé",
+   "Lui laisser un rôle"
+  ]
+ },
+ "noeuds": [
+  {
+   "id": "n1",
+   "victime": "« C'est bon, y a rien, elle a juste le pied tordu ! Je regarde le match, revenez plus tard ! »\n(Il bloque la porte du pied. Derrière lui, on entend la femme gémir ; il crie : « Tais-toi, je t'ai dit ! »)",
+   "choix": [
+    {
+     "id": "a",
+     "texte": "« Monsieur, laissez-nous entrer, c'est une urgence. On n'a pas de temps pour votre match. »",
+     "technique": "ordre",
+     "dT": 15,
+     "dC": -12,
+     "dB": 0,
+     "temps": 1,
+     "suite": "n2b",
+     "reaction": "Il serre la porte plus fort.",
+     "conseil": "Dévaloriser ce qui compte pour lui le braque."
+    },
+    {
+     "id": "b",
+     "texte": "Voix basse, souriant : « Bonsoir monsieur, je vois que vous suivez le match. Désolé de vous déranger, c'est mal tombé. On est là pour votre épouse, on fera au plus vite. Quel est le score ? »",
+     "technique": "empathie",
+     "dT": -12,
+     "dC": 12,
+     "dB": 15,
+     "temps": 1,
+     "suite": "n2",
+     "reaction": "Il lâche un soupir, la tension retombe d'un cran.",
+     "conseil": "Reconnaître sa contrariété avec sympathie et simplicité désamorce, sans céder sur la mission."
+    },
+    {
+     "id": "c",
+     "texte": "Vous demandez les forces de l'ordre dès maintenant.",
+     "technique": "renfort",
+     "dT": 0,
+     "dC": 0,
+     "dB": 0,
+     "temps": 2,
+     "suite": "fin:renfort",
+     "reaction": "Vous attendez sur le palier.",
+     "conseil": "Prématuré : la tension n'a pas atteint le seuil et le dialogue n'est pas épuisé."
+    },
+    {
+     "id": "d",
+     "texte": "Vous poussez la porte et passez devant lui.",
+     "technique": "contact",
+     "dT": 25,
+     "dC": -20,
+     "dB": 0,
+     "temps": 1,
+     "suite": "n2b",
+     "reaction": "Il vous saisit par le bras.",
+     "conseil": "Entrer de force transforme un agacement en conflit."
+    }
+   ]
+  },
+  {
+   "id": "n2",
+   "victime": "« Elle a glissé dans la cuisine… elle en fait toujours trop. Dans dix minutes elle sera là. Je veux juste finir le match, on a payé l'abonnement… Allez-y, mais vite. »\n(Il s'écarte à peine, les yeux sur l'écran.)",
+   "choix": [
+    {
+     "id": "a",
+     "texte": "« Vous voulez profiter de votre soirée, et ça vous agace que ça tombe maintenant. Je comprends. Mon collègue regarde sa cheville pendant que vous continuez le match. »",
+     "technique": "reformulation",
+     "dT": -12,
+     "dC": 12,
+     "dB": 25,
+     "temps": 1,
+     "suite": "n3",
+     "reaction": "Il hoche la tête.",
+     "conseil": "L'écoute active reformule son besoin et lui propose un cadre rassurant."
+    },
+    {
+     "id": "b",
+     "texte": "Vous demandez à votre collègue d'examiner l'épouse dans la cuisine, à l'écart, pendant que vous restez avec le mari devant l'écran.",
+     "technique": "securite",
+     "dT": -6,
+     "dC": 6,
+     "dB": 10,
+     "temps": 1,
+     "suite": "n3",
+     "reaction": "Il reste près de la télévision.",
+     "conseil": "Séparer discrètement les deux personnes permet d'évaluer la cheville ET la sécurité de l'épouse."
+    },
+    {
+     "id": "c",
+     "texte": "« Votre match, ce n'est pas grave : sa cheville peut être cassée. »",
+     "technique": "contre",
+     "dT": 12,
+     "dC": -10,
+     "dB": 0,
+     "temps": 1,
+     "suite": "n2b",
+     "reaction": "« Je vous ai demandé la paix ! »",
+     "conseil": "Remettre en cause ses priorités rouvre le conflit."
+    },
+    {
+     "id": "d",
+     "texte": "« Qu'est-ce qui s'est passé exactement ? »",
+     "technique": "question",
+     "dT": -6,
+     "dC": 8,
+     "dB": 10,
+     "temps": 1,
+     "suite": "n3",
+     "reaction": "Il raconte brièvement.",
+     "conseil": "La question ouverte l'implique sans le juger."
+    }
+   ]
+  },
+  {
+   "id": "n2b",
+   "victime": "« Je vous ai dit de me laisser tranquille ! Vous faites chier ! »\n(Il hausse la voix ; la femme se tait, le silence est lourd.)",
+   "choix": [
+    {
+     "id": "a",
+     "texte": "Vous reculez d'un pas, mains visibles : « Je comprends, on ne veut pas gâcher votre soirée. Mon collègue va juste voir votre épouse, vous restez ici avec moi. »",
+     "technique": "securite",
+     "dT": -10,
+     "dC": 8,
+     "dB": 5,
+     "temps": 1,
+     "suite": "n2",
+     "reaction": "Il vous fixe, un peu moins tendu.",
+     "conseil": "Reculer et proposer un cadre clair protège l'équipe et donne une porte de sortie."
+    },
+    {
+     "id": "b",
+     "texte": "Vous demandez les forces de l'ordre par radio, calmement, en gardant votre distance.",
+     "technique": "renfort",
+     "dT": 0,
+     "dC": 0,
+     "dB": 0,
+     "temps": 2,
+     "suite": "fin:renfort",
+     "reaction": "Vous gardez le contact visuel en attendant.",
+     "conseil": "Légitime si la tension atteint le seuil, surtout avec le silence inquiétant de l'épouse."
+    },
+    {
+     "id": "c",
+     "texte": "« Je dois entrer, c'est la loi ! »",
+     "technique": "ordre",
+     "dT": 12,
+     "dC": -12,
+     "dB": 0,
+     "temps": 1,
+     "suite": "n2b",
+     "reaction": "« La loi, je m'en fous ! »",
+     "conseil": "L'argument d'autorité aggrave l'opposition."
+    }
+   ]
+  },
+  {
+   "id": "n3",
+   "victime": "« Ça fait dix minutes que vous êtes là, j'ai raté un but ! Elle a déjà eu des chevilles qui traînent… Vous allez pas l'emmener, hein ? Qui va faire à manger ? »\n(Derrière l'agacement, de l'inquiétude.)",
+   "choix": [
+    {
+     "id": "a",
+     "texte": "« Vous vous demandez comment ça va se passer à la maison, c'est normal. Votre épouse a peut-être une entorse ou une fracture, il faut une radio. On vous explique tout, et on peut prévenir quelqu'un pour vous aider ce soir si vous voulez. »",
+     "technique": "empathie",
+     "dT": -14,
+     "dC": 14,
+     "dB": 30,
+     "temps": 2,
+     "suite": "n4",
+     "reaction": "Il se frotte la nuque, plus calme.",
+     "conseil": "Compassion et sympathie : on reconnaît ses craintes pratiques et on lui propose une aide concrète."
+    },
+    {
+     "id": "b",
+     "texte": "« Non non, elle va rester à la maison, ce n'est rien. »",
+     "technique": "promesse",
+     "dT": -6,
+     "dC": -8,
+     "dB": 5,
+     "temps": 1,
+     "suite": "n4",
+     "reaction": "Il se détend, mais l'épouse vous regarde, gênée.",
+     "conseil": "Promettre sans bilan : le risque est de décevoir et de masquer une fracture."
+    },
+    {
+     "id": "c",
+     "texte": "« Votre épouse passe avant votre match, monsieur. »",
+     "technique": "ordre",
+     "dT": 14,
+     "dC": -12,
+     "dB": -10,
+     "temps": 1,
+     "suite": "n2b",
+     "reaction": "« Vous me faites la leçon ? »",
+     "conseil": "Le jugement moral braque, même s'il est juste."
+    }
+   ]
+  },
+  {
+   "id": "n4",
+   "victime": "« Bon… si c'est nécessaire, elle peut y aller. Mais je viens avec vous ? »",
+   "choix": [
+    {
+     "id": "a",
+     "texte": "« Bien sûr, vous pouvez l'accompagner, ou nous rejoindre à la mi-temps : votre épouse sera entre de bonnes mains. Je note votre numéro pour vous donner des nouvelles. »",
+     "technique": "choix",
+     "dT": -14,
+     "dC": 14,
+     "dB": 25,
+     "temps": 2,
+     "suite": "fin:apaise",
+     "reaction": "Il acquiesce, rassuré.",
+     "conseil": "Un choix limité, des informations claires et un rôle respectent son besoin de contrôle."
+    },
+    {
+     "id": "b",
+     "texte": "« On part dans deux minutes. »",
+     "technique": "voix",
+     "dT": -4,
+     "dC": 4,
+     "dB": 8,
+     "temps": 1,
+     "suite": "fin:apaise",
+     "reaction": "Il hausse les épaules.",
+     "conseil": "Acceptable mais froid : peu d'empathie, besoin partiellement satisfait."
+    }
+   ]
+  }
+ ],
+ "debrief": {
+  "points": [
+   "Se présenter avec sympathie et reconnaître la contrariété.",
+   "Écoute active : reformuler son agacement et son inquiétude.",
+   "Séparer discrètement les personnes pour évaluer la sécurité de l'épouse.",
+   "Lui proposer une aide concrète pour la maison."
+  ],
+  "erreurs": [
+   "Dévaloriser son match.",
+   "Entrer de force.",
+   "Faire la leçon morale.",
+   "Promettre « ce n'est rien »."
+  ],
+  "principes": [
+   "L'agressivité masque souvent de la peur et de la gêne.",
+   "L'empathie n'excuse pas : elle désamorce, la mission reste la même.",
+   "Toujours rester vigilant sur d'éventuelles violences : voir la victime seule si possible, renfort justifié si la tension reste élevée."
+  ]
+ },
+ "jaugesMasquees": false
+}

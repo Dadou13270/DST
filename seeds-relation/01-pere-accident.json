@@ -1,0 +1,287 @@
+{
+ "titre": "Accident de la route : le père qui bloque l'ambulance",
+ "rubrique": "Gestion du conflit",
+ "niveau": "Intermédiaire",
+ "publie": true,
+ "description": "Un enfant blessé, un père en état de choc qui s'oppose à la prise en charge. Désamorcer vite pour embarquer l'enfant.",
+ "photo": "",
+ "vignette": "",
+ "contexte": {
+  "texte": "Accident de la circulation en agglomération. Un enfant de 7 ans, conscient, se plaint de la jambe. Son père, indemne, se plante devant la porte du VSAV et vous empêche d'approcher. Quelques passants regardent et filment.",
+  "type": "Secours routier",
+  "objectif": "Prendre en charge l'enfant et l'embarquer sans perdre de temps",
+  "gravite": 3,
+  "tempsMax": 8,
+  "effectifs": 3,
+  "lieu": "Voie publique, circulation neutralisée",
+  "public": "quelques",
+  "alcool": false,
+  "arme": false,
+  "seuilRenfort": 70
+ },
+ "victime": {
+  "nom": "Le père de l'enfant",
+  "etat": "colere",
+  "tension": 70,
+  "confiance": 15,
+  "besoin": "proche",
+  "besoinTexte": "Être informé de ce qui arrive à son fils et rester à ses côtés. Sa colère cache la peur et la culpabilité (il était distrait au moment de l'accident).",
+  "declencheurs": [
+   "Ordres secs",
+   "Reproches sur le délai d'arrivée",
+   "Séparation d'avec l'enfant",
+   "Contact physique"
+  ],
+  "apaisants": [
+   "Voix basse",
+   "Reformulation de son inquiétude",
+   "Informations simples sur l'état de l'enfant",
+   "Lui donner un rôle auprès de son fils"
+  ]
+ },
+ "debut": "n1",
+ "noeuds": [
+  {
+   "id": "n1",
+   "victime": "« Vous arrivez enfin ! Ça fait vingt minutes ! Personne ne bouge, vous ne touchez pas mon fils sans que je sache ce que vous faites ! »\n(Il se place devant la porte du VSAV, la voix forte, les poings serrés.)",
+   "choix": [
+    {
+     "id": "a",
+     "texte": "« Monsieur, calmez-vous, on est là pour aider, laissez-nous passer. »",
+     "technique": "ordre",
+     "dT": 12,
+     "dC": -8,
+     "dB": 0,
+     "temps": 1,
+     "suite": "n2b",
+     "reaction": "Il se rapproche, la voix monte.",
+     "conseil": "« Calmez-vous » est entendu comme un ordre et nie son émotion. Il se sent attaqué, la tension monte."
+    },
+    {
+     "id": "b",
+     "texte": "Vous vous placez de côté à une distance d'un bras et demi, mains visibles, voix basse : « Je vois que vous avez très peur pour votre fils. Je m'occupe de lui avec vous. »",
+     "technique": "validation",
+     "dT": -15,
+     "dC": 15,
+     "dB": 10,
+     "temps": 1,
+     "suite": "n2",
+     "reaction": "Ses épaules retombent un peu. Il ne crie plus.",
+     "conseil": "Nommer l'émotion, rester à distance de sécurité et baisser la voix désamorcent sans céder sur la mission."
+    },
+    {
+     "id": "c",
+     "texte": "« Ce n'est pas nous les retardataires : on est partis dès l'appel, c'est le trafic. »",
+     "technique": "contre",
+     "dT": 15,
+     "dC": -10,
+     "dB": 0,
+     "temps": 1,
+     "suite": "n2b",
+     "reaction": "« Je m'en fiche de vos excuses ! »",
+     "conseil": "Se justifier revient à contre-argumenter. Il ne cherche pas une explication mais un soutien."
+    },
+    {
+     "id": "d",
+     "texte": "Vous demandez discrètement à un équipier de contourner pour prendre l'enfant pendant que vous retenez le père par le bras.",
+     "technique": "contact",
+     "dT": 25,
+     "dC": -20,
+     "dB": 0,
+     "temps": 1,
+     "suite": "n2b",
+     "reaction": "Il se dégage violemment et vous repousse.",
+     "conseil": "Toucher ou contourner la personne est la pire réponse : perte de confiance totale et risque de violences."
+    }
+   ]
+  },
+  {
+   "id": "n2",
+   "victime": "« Il pleure, il a mal… Qu'est-ce qu'il a ? Vous allez lui faire quoi ? »\n(Il tremble, reste devant la porte mais ne crie plus.)",
+   "choix": [
+    {
+     "id": "a",
+     "texte": "« Il est conscient et il pleure : c'est un bon signe. Mon collègue examine sa jambe. Qu'avez-vous vu de l'accident ? »",
+     "technique": "info",
+     "dT": -12,
+     "dC": 12,
+     "dB": 25,
+     "temps": 2,
+     "suite": "n3",
+     "reaction": "Il reprend son souffle et commence à parler.",
+     "conseil": "Une information simple et vraie répond à son besoin. La question ouverte l'implique."
+    },
+    {
+     "id": "b",
+     "texte": "« Ne vous inquiétez pas, tout va bien se passer. »",
+     "technique": "minimise",
+     "dT": 6,
+     "dC": -8,
+     "dB": 0,
+     "temps": 1,
+     "suite": "n2b",
+     "reaction": "« Comment vous pouvez dire ça ? Vous ne savez rien ! »",
+     "conseil": "Minimiser sans informations réelles sonne faux et alimente la colère."
+    },
+    {
+     "id": "c",
+     "texte": "« Pour l'aider vite, j'ai besoin que vous vous écartiez de la porte. Vous préférez vous mettre à sa tête ou à ses côtés ? »",
+     "technique": "choix",
+     "dT": -10,
+     "dC": 8,
+     "dB": 10,
+     "temps": 1,
+     "suite": "n3",
+     "reaction": "Il hésite, puis fait un pas de côté.",
+     "conseil": "Une demande claire associée à un choix limité redonne du contrôle et obtient la coopération."
+    }
+   ]
+  },
+  {
+   "id": "n2b",
+   "victime": "« Vous ne m'écoutez pas ! Je filme tout, vous allez voir ! Dégagez ! »\n(Il attrape la poignée du VSAV. Les passants s'approchent.)",
+   "choix": [
+    {
+     "id": "a",
+     "texte": "Vous reculez d'un pas, bras visibles, de côté : « Je ne vous touche pas. Je recule. Je veux juste qu'on aide votre fils ensemble. »",
+     "technique": "securite",
+     "dT": -10,
+     "dC": 8,
+     "dB": 5,
+     "temps": 1,
+     "suite": "n2",
+     "reaction": "Il fixe votre mouvement. Le volume baisse.",
+     "conseil": "Reculer, rester de côté et montrer les mains protège l'équipe et signale que vous ne menacez pas."
+    },
+    {
+     "id": "b",
+     "texte": "Vous demandez des renforts (forces de l'ordre) par radio, calmement, en gardant le contact visuel.",
+     "technique": "renfort",
+     "dT": 0,
+     "dC": 0,
+     "dB": 0,
+     "temps": 2,
+     "suite": "fin:renfort",
+     "reaction": "Vous restez à distance en attendant l'arrivée des renforts.",
+     "conseil": "Le renfort est légitime quand la tension devient élevée et que l'objectif est bloqué. Demandé trop tôt, il est prématuré."
+    },
+    {
+     "id": "c",
+     "texte": "« Si vous continuez, j'appelle la police ! »",
+     "technique": "ordre",
+     "dT": 10,
+     "dC": -10,
+     "dB": 0,
+     "temps": 1,
+     "suite": "n2b",
+     "reaction": "« Appelez-la ! Ça ne change rien ! »",
+     "conseil": "La menace fige la situation et fait perdre la confiance."
+    }
+   ]
+  },
+  {
+   "id": "n3",
+   "victime": "« J'étais au téléphone deux secondes… C'est ma faute, non ? Je veux rester avec lui, je ne le laisse pas partir seul. »\n(Il s'effondre un peu, les mains tremblantes.)",
+   "choix": [
+    {
+     "id": "a",
+     "texte": "« Vous vous en voulez, et vous voulez rester près de lui. C'est normal. Ce n'est pas le moment de chercher une faute : il a besoin de vous calme. »",
+     "technique": "reformulation",
+     "dT": -15,
+     "dC": 15,
+     "dB": 35,
+     "temps": 2,
+     "suite": "n4",
+     "reaction": "Il acquiesce, les yeux humides.",
+     "conseil": "La reformulation nomme le besoin (rester près de l'enfant) et recentre sur ce qui est utile à l'enfant."
+    },
+    {
+     "id": "b",
+     "texte": "« Ce n'est pas votre faute et il ira très bien, je vous le promets. »",
+     "technique": "promesse",
+     "dT": -5,
+     "dC": -10,
+     "dB": 5,
+     "temps": 1,
+     "suite": "n4",
+     "reaction": "Il hoche la tête mais son regard reste méfiant.",
+     "conseil": "Promettre l'issue est intenable : si l'état évolue, la confiance s'effondre."
+    },
+    {
+     "id": "c",
+     "texte": "« Vous ne pouvez pas monter, c'est la règle. »",
+     "technique": "ordre",
+     "dT": 15,
+     "dC": -12,
+     "dB": -10,
+     "temps": 1,
+     "suite": "n2b",
+     "reaction": "« Alors vous ne partez pas avec lui ! »",
+     "conseil": "Un refus sec sans explication ni alternative rouvre le conflit."
+    }
+   ]
+  },
+  {
+   "id": "n4",
+   "victime": "« D'accord… Je peux monter avec lui ? Vous allez où ? »",
+   "choix": [
+    {
+     "id": "a",
+     "texte": "« Oui, vous êtes à ses côtés pendant qu'on le prépare. On va à l'hôpital le plus proche, ma collègue vous expliquera chaque geste. Vous voulez lui tenir la main ? »",
+     "technique": "info",
+     "dT": -15,
+     "dC": 15,
+     "dB": 30,
+     "temps": 2,
+     "suite": "fin:apaise",
+     "reaction": "Il prend la main de son fils, rassuré.",
+     "conseil": "Informer, donner un rôle utile et confirmer la destination répondent au besoin de contrôle et de présence."
+    },
+    {
+     "id": "b",
+     "texte": "« Pas question, vous nous gênez. »",
+     "technique": "ordre",
+     "dT": 25,
+     "dC": -20,
+     "dB": -10,
+     "temps": 1,
+     "suite": "n2b",
+     "reaction": "Il serre les poings : « Vous n'allez pas me l'enlever ! »",
+     "conseil": "Écarter le parent de l'enfant détruit le travail de désamorçage."
+    },
+    {
+     "id": "c",
+     "texte": "« On part dès que vous êtes installé, on y va. »",
+     "technique": "voix",
+     "dT": -5,
+     "dC": 5,
+     "dB": 10,
+     "temps": 1,
+     "suite": "fin:apaise",
+     "reaction": "Il monte sans discuter.",
+     "conseil": "Réponse acceptable mais pauvre en informations : le besoin reste partiellement couvert."
+    }
+   ]
+  }
+ ],
+ "debrief": {
+  "points": [
+   "Rester à distance de sécurité, de côté, mains visibles et voix basse.",
+   "Nommer l'émotion avant de demander quoi que ce soit.",
+   "Informer simplement et honnêtement sur l'état de l'enfant.",
+   "Donner un rôle utile au parent : tenir la main, monter à l'avant."
+  ],
+  "erreurs": [
+   "Dire « calmez-vous » ou donner des ordres secs.",
+   "Se justifier sur les délais.",
+   "Promettre une issue.",
+   "Contourner ou toucher le parent."
+  ],
+  "principes": [
+   "La colère cache ici la peur et la culpabilité : répondre au besoin, pas au comportement.",
+   "La sécurité de l'équipe passe avant la mission : reculer n'est pas perdre.",
+   "Le renfort se demande quand le seuil de tension est atteint et que l'objectif est bloqué."
+  ]
+ },
+ "jaugesMasquees": false
+}

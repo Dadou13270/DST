@@ -1,0 +1,275 @@
+{
+ "rubrique": "Gestion du conflit",
+ "publie": true,
+ "photo": "",
+ "vignette": "",
+ "debut": "n1",
+ "titre": "Devant le restaurant : le gérant qui veut qu'on emmène la personne sans-abri",
+ "niveau": "Intermédiaire",
+ "description": "Un restaurateur à bout appelle les pompiers pour évacuer un homme sans-abri non blessé. Compassion pour les deux, écoute active.",
+ "contexte": {
+  "texte": "Soirée, terrasse de restaurant. Un homme sans-abri est assis à même le sol près de l'entrée, calme, sans blessure apparente. Le gérant, agité, a appelé les pompiers pour qu'ils l'emmènent : les clients partent. Quelques clients regardent.",
+  "type": "Opérations diverses",
+  "objectif": "Évaluer l'état de la personne sans-abri, l'orienter avec son accord et apaiser le gérant",
+  "gravite": 1,
+  "tempsMax": 12,
+  "effectifs": 3,
+  "lieu": "Devant un restaurant, trottoir",
+  "public": "quelques",
+  "alcool": false,
+  "arme": false,
+  "seuilRenfort": 70
+ },
+ "victime": {
+  "nom": "Le gérant",
+  "etat": "colere",
+  "tension": 60,
+  "confiance": 25,
+  "besoin": "reconnaissance",
+  "besoinTexte": "Il est en difficulté financière et se sent démuni : il a besoin que sa détresse professionnelle soit reconnue et qu'on lui donne des options, pas qu'on le renvoie à son devoir. Derrière la colère, il n'est pas hostile à la personne.",
+  "declencheurs": [
+   "« Ce n'est pas notre rôle »",
+   "Minimiser ses difficultés",
+   "Ordres secs",
+   "Le ton de la leçon"
+  ],
+  "apaisants": [
+   "Reconnaître la pression qu'il subit",
+   "Lui proposer une action concrète",
+   "Rester respectueux envers l'homme sans-abri",
+   "Orientation vers un dispositif d'aide"
+  ]
+ },
+ "noeuds": [
+  {
+   "id": "n1",
+   "victime": "« Enfin ! Il est là depuis une heure, les clients s'en vont ! Emmenez-le, c'est votre boulot ! Il n'est pas blessé, mais il fait fuir tout le monde ! »",
+   "choix": [
+    {
+     "id": "a",
+     "texte": "« Monsieur, on ne peut pas emmener quelqu'un qui n'a rien : on n'est pas un service de nettoyage de rue. »",
+     "technique": "contre",
+     "dT": 14,
+     "dC": -12,
+     "dB": 0,
+     "temps": 1,
+     "suite": "n2b",
+     "reaction": "« Alors à quoi vous servez ? »",
+     "conseil": "Rappeler la règle sans l'écouter l'enflamme."
+    },
+    {
+     "id": "b",
+     "texte": "« Je vois que vous êtes à bout et que cette situation menace votre soirée. Je suis désolé. Je vais voir cet homme, en tenant compte de vous aussi. »",
+     "technique": "empathie",
+     "dT": -12,
+     "dC": 12,
+     "dB": 15,
+     "temps": 1,
+     "suite": "n2",
+     "reaction": "Il respire, moins défensif.",
+     "conseil": "Reconnaître sa pression avec sympathie ouvre la discussion."
+    },
+    {
+     "id": "c",
+     "texte": "« Ce n'est pas grave, il ne fait rien de mal. »",
+     "technique": "minimise",
+     "dT": 12,
+     "dC": -10,
+     "dB": 0,
+     "temps": 1,
+     "suite": "n2b",
+     "reaction": "« Pas grave pour vous ! »",
+     "conseil": "Minimiser sa difficulté la nie."
+    },
+    {
+     "id": "d",
+     "texte": "« Je vais le voir tout de suite. »",
+     "technique": "info",
+     "dT": 2,
+     "dC": -4,
+     "dB": 0,
+     "temps": 1,
+     "suite": "n2",
+     "reaction": "Il vous suit des yeux, sceptique.",
+     "conseil": "Neutre mais vous n'avez pas écouté le gérant : il reste insatisfait."
+    }
+   ]
+  },
+  {
+   "id": "n2",
+   "victime": "« Je n'ai rien contre lui, mais regardez : ma terrasse est vide. J'ai trois salariés à payer, ce mois-ci est déjà dur. Vous comprenez ça ? »",
+   "choix": [
+    {
+     "id": "a",
+     "texte": "« Vous avez peur pour votre soirée et pour vos salariés. C'est très stressant. Voyons ce qu'on peut faire. »",
+     "technique": "reformulation",
+     "dT": -12,
+     "dC": 12,
+     "dB": 30,
+     "temps": 1,
+     "suite": "n3",
+     "reaction": "Il baisse les épaules.",
+     "conseil": "L'écoute active reformule l'enjeu réel : la survie de son activité."
+    },
+    {
+     "id": "b",
+     "texte": "« On va l'évacuer, il sera parti dans cinq minutes. »",
+     "technique": "promesse",
+     "dT": -6,
+     "dC": -8,
+     "dB": 5,
+     "temps": 1,
+     "suite": "n3",
+     "reaction": "Il acquiesce, un peu soulagé.",
+     "conseil": "Promesse que vous ne pourrez peut-être pas tenir : il refuse peut-être de partir."
+    },
+    {
+     "id": "c",
+     "texte": "« Rentrez dans votre restaurant, on s'occupe de tout. »",
+     "technique": "ordre",
+     "dT": 10,
+     "dC": -10,
+     "dB": 0,
+     "temps": 1,
+     "suite": "n2b",
+     "reaction": "Il serre les dents.",
+     "conseil": "L'ordre sec nie son vécu."
+    }
+   ]
+  },
+  {
+   "id": "n2b",
+   "victime": "« Vous êtes tous pareils ! J'appelle le maire et la presse ! »\n(Les clients se retournent.)",
+   "choix": [
+    {
+     "id": "a",
+     "texte": "Vous vous placez à l'écart des clients, voix basse : « Je vous entends. On va régler ça calmement, ensemble. »",
+     "technique": "voix",
+     "dT": -10,
+     "dC": 8,
+     "dB": 5,
+     "temps": 1,
+     "suite": "n2",
+     "reaction": "Il baisse le ton.",
+     "conseil": "Éloigner le public et baisser la voix retirent la pression de l'audience."
+    },
+    {
+     "id": "b",
+     "texte": "Vous demandez la police municipale.",
+     "technique": "renfort",
+     "dT": 0,
+     "dC": 0,
+     "dB": 0,
+     "temps": 2,
+     "suite": "fin:renfort",
+     "reaction": "Vous attendez à distance.",
+     "conseil": "Légitime si la tension reste très élevée, mais prématuré dès les premiers échanges."
+    },
+    {
+     "id": "c",
+     "texte": "« Vous n'avez qu'à vous débrouiller. »",
+     "technique": "contre",
+     "dT": 15,
+     "dC": -15,
+     "dB": 0,
+     "temps": 1,
+     "suite": "n2b",
+     "reaction": "Il se détourne en grommelant des menaces.",
+     "conseil": "Abandonner le gérant aggrave tout."
+    }
+   ]
+  },
+  {
+   "id": "n3",
+   "victime": "« Je veux bien être correct avec lui… mais je ne sais pas quoi faire, je ne peux pas le jeter dehors. Qu'est-ce que je suis censé faire ? »",
+   "choix": [
+    {
+     "id": "a",
+     "texte": "« Je vais discuter avec lui, voir s'il va bien, s'il a faim ou besoin d'aide. Vous pouvez lui offrir un café, c'est possible ? Je vous indique ensuite comment contacter le dispositif d'hébergement d'urgence. »",
+     "technique": "choix",
+     "dT": -14,
+     "dC": 14,
+     "dB": 30,
+     "temps": 3,
+     "suite": "n4",
+     "reaction": "Il hoche la tête, rassuré d'avoir une marche à suivre.",
+     "conseil": "Une action concrète, de la compassion pour les deux et une orientation redonnent du contrôle au gérant."
+    },
+    {
+     "id": "b",
+     "texte": "« La police municipale peut intervenir si besoin, mais ce n'est pas notre domaine. »",
+     "technique": "info",
+     "dT": -4,
+     "dC": 0,
+     "dB": 5,
+     "temps": 1,
+     "suite": "n4",
+     "reaction": "Il soupire.",
+     "conseil": "Vrai mais froid : il n'obtient aucune solution immédiate."
+    },
+    {
+     "id": "c",
+     "texte": "« Laissez-le tranquille, il partira. »",
+     "technique": "minimise",
+     "dT": 8,
+     "dC": -8,
+     "dB": 0,
+     "temps": 1,
+     "suite": "n2b",
+     "reaction": "« Facile à dire ! »",
+     "conseil": "Pas d'écoute, pas de solution."
+    }
+   ]
+  },
+  {
+   "id": "n4",
+   "victime": "« Alors, il vous a dit quoi ? Il ne veut pas partir, il dit qu'il n'a nulle part où aller… »",
+   "choix": [
+    {
+     "id": "a",
+     "texte": "« Il va bien physiquement, il est juste fatigué. Il n'a pas d'endroit où dormir ce soir, c'est dur pour lui aussi. Je l'oriente vers un hébergement d'urgence, il se déplace dans quelques minutes. Merci de votre patience. »",
+     "technique": "empathie",
+     "dT": -14,
+     "dC": 14,
+     "dB": 25,
+     "temps": 2,
+     "suite": "fin:apaise",
+     "reaction": "Il hoche la tête, plus serein.",
+     "conseil": "Compassion pour les deux personnes et information claire apaisent."
+    },
+    {
+     "id": "b",
+     "texte": "« Il sera parti avant la fin du service. »",
+     "technique": "promesse",
+     "dT": -5,
+     "dC": -6,
+     "dB": 5,
+     "temps": 1,
+     "suite": "fin:apaise",
+     "reaction": "Il est mitigé.",
+     "conseil": "Promesse fragile : si l'homme ne veut pas partir, la confiance sera perdue."
+    }
+   ]
+  }
+ ],
+ "debrief": {
+  "points": [
+   "Écouter d'abord le gérant : sa détresse est réelle.",
+   "Aller voir l'homme avec respect : se présenter, vérifier sa santé, proposer de l'aide.",
+   "Offrir une action concrète au gérant.",
+   "Orienter vers un hébergement d'urgence, avec l'accord de la personne."
+  ],
+  "erreurs": [
+   "Rappeler sèchement que ce n'est pas votre rôle.",
+   "Minimiser les difficultés du gérant.",
+   "Promettre l'évacuation.",
+   "Ignorer le gérant pour s'occuper de l'homme."
+  ],
+  "principes": [
+   "Deux personnes en difficulté : la compassion s'adresse à chacune.",
+   "On ne contraint pas une personne qui n'est pas en danger : on propose et on oriente.",
+   "L'écoute active transforme une demande d'évacuation en solution partagée."
+  ]
+ },
+ "jaugesMasquees": false
+}

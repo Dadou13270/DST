@@ -1,0 +1,275 @@
+{
+ "rubrique": "Gestion du conflit",
+ "publie": true,
+ "photo": "",
+ "vignette": "",
+ "debut": "n1",
+ "titre": "Voie publique : l'homme alcoolisé qui refuse l'évacuation",
+ "niveau": "Avancé",
+ "description": "Chute avec plaie à la tête, alcool et public hostile. Préserver la dignité de la victime pour obtenir son accord.",
+ "contexte": {
+  "texte": "Soirée, centre-ville. Un homme d'une quarantaine d'années est tombé et saigne du cuir chevelu. Il sent l'alcool, se lève en vacillant et refuse tout examen. Un attroupement se forme, certains rient et filment.",
+  "type": "Secours à personne",
+  "objectif": "Examiner la victime (traumatisme crânien possible) et l'évacuer avec son accord",
+  "gravite": 3,
+  "tempsMax": 10,
+  "effectifs": 3,
+  "lieu": "Place publique, soirée",
+  "public": "foule",
+  "alcool": true,
+  "arme": false,
+  "seuilRenfort": 65
+ },
+ "victime": {
+  "nom": "Le blessé",
+  "etat": "colere",
+  "tension": 65,
+  "confiance": 10,
+  "besoin": "reconnaissance",
+  "besoinTexte": "Son agressivité protège sa dignité : il a honte d'être vu ainsi devant tout le monde. Il a besoin d'être respecté et de garder la face, pas d'être jugé sur son alcoolémie.",
+  "declencheurs": [
+   "Remarque sur l'alcool",
+   "Être touché ou saisi",
+   "Moqueries du public",
+   "Ordres devant la foule"
+  ],
+  "apaisants": [
+   "S'isoler à l'écart du public",
+   "Se présenter calmement",
+   "Lui laisser le choix des étapes",
+   "Le traiter avec respect"
+  ]
+ },
+ "noeuds": [
+  {
+   "id": "n1",
+   "victime": "« T'es qui toi ? Touche-moi pas ! J'ai rien, j'ai juste trébuché ! Allez tous vous faire voir ! »\n(Il se lève en vacillant, la foule rit.)",
+   "choix": [
+    {
+     "id": "a",
+     "texte": "« Monsieur, vous êtes saoul, asseyez-vous ou je fais venir la police. »",
+     "technique": "ordre",
+     "dT": 18,
+     "dC": -12,
+     "dB": 0,
+     "temps": 1,
+     "suite": "n2b",
+     "reaction": "Il avance d'un pas, le visage fermé.",
+     "conseil": "Humilier publiquement et menacer confirme sa honte et déclenche l'agressivité. L'alcool amplifie la montée."
+    },
+    {
+     "id": "b",
+     "texte": "Vous vous mettez à son niveau, voix posée : « Bonjour, je suis sapeur-pompier. Vous avez pris un sacré coup. Je peux regarder ça deux minutes ? »",
+     "technique": "voix",
+     "dT": -10,
+     "dC": 10,
+     "dB": 10,
+     "temps": 1,
+     "suite": "n2",
+     "reaction": "Il vous dévisage, moins tendu.",
+     "conseil": "Se présenter calmement, sans jugement, abaisse la tension même quand la personne est alcoolisée."
+    },
+    {
+     "id": "c",
+     "texte": "« Vous avez une plaie à la tête, vous n'êtes pas en état de décider. »",
+     "technique": "contre",
+     "dT": 12,
+     "dC": -8,
+     "dB": 0,
+     "temps": 1,
+     "suite": "n2b",
+     "reaction": "« Je décide ce que je veux ! »",
+     "conseil": "Contester sa capacité à décider devant le public fait monter l'agressivité."
+    },
+    {
+     "id": "d",
+     "texte": "Un équipier fait reculer la foule. Vous : « On va s'isoler un peu, vous n'avez pas besoin qu'on vous regarde. »",
+     "technique": "securite",
+     "dT": -12,
+     "dC": 8,
+     "dB": 15,
+     "temps": 2,
+     "suite": "n2",
+     "reaction": "Il hésite, puis vous suit du regard.",
+     "conseil": "Éloigner le public répond à son besoin de garder la face et sécurise la scène."
+    }
+   ]
+  },
+  {
+   "id": "n2",
+   "victime": "« Je suis pas bourré… j'ai juste bu deux bières. Et vous allez me prendre quoi, mon sac ? Tous ces gens qui me regardent, c'est la honte. »",
+   "choix": [
+    {
+     "id": "a",
+     "texte": "« Vous n'aimez pas être regardé comme ça, vous voulez qu'on garde ça entre nous. Je comprends. »",
+     "technique": "reformulation",
+     "dT": -12,
+     "dC": 12,
+     "dB": 30,
+     "temps": 1,
+     "suite": "n3",
+     "reaction": "Il baisse les yeux, soulagé.",
+     "conseil": "La reformulation met des mots sur la honte et fait émerger le vrai besoin : la dignité."
+    },
+    {
+     "id": "b",
+     "texte": "« Allez, ce n'est pas grave, tout le monde fait des erreurs. »",
+     "technique": "minimise",
+     "dT": 8,
+     "dC": -8,
+     "dB": 0,
+     "temps": 1,
+     "suite": "n2b",
+     "reaction": "« Me parlez pas comme à un gosse ! »",
+     "conseil": "Minimiser ou excuser sonne condescendant."
+    },
+    {
+     "id": "c",
+     "texte": "« Qu'est-ce qui s'est passé juste avant la chute ? »",
+     "technique": "question",
+     "dT": -6,
+     "dC": 8,
+     "dB": 10,
+     "temps": 2,
+     "suite": "n3",
+     "reaction": "Il raconte, un peu moins tendu.",
+     "conseil": "La question ouverte l'implique sans le juger, mais prend du temps."
+    }
+   ]
+  },
+  {
+   "id": "n2b",
+   "victime": "« Dégage ! Je vais te mettre une ! »\n(Il serre les poings, les spectateurs s'approchent.)",
+   "choix": [
+    {
+     "id": "a",
+     "texte": "Vous reculez, mains visibles, de côté. Un équipier écarte calmement le public.",
+     "technique": "securite",
+     "dT": -10,
+     "dC": 5,
+     "dB": 5,
+     "temps": 1,
+     "suite": "n2",
+     "reaction": "Il baisse un peu les poings.",
+     "conseil": "Reculer et dégager l'espace protège l'équipe et laisse une porte de sortie à la victime."
+    },
+    {
+     "id": "b",
+     "texte": "Vous demandez les forces de l'ordre par radio, à distance.",
+     "technique": "renfort",
+     "dT": 0,
+     "dC": 0,
+     "dB": 0,
+     "temps": 2,
+     "suite": "fin:renfort",
+     "reaction": "Vous gardez vos distances en attendant.",
+     "conseil": "Justifié ici si la tension a atteint le seuil : agressivité physique imminente et public à gérer."
+    },
+    {
+     "id": "c",
+     "texte": "Vous le saisissez par le bras pour l'asseoir de force.",
+     "technique": "contact",
+     "dT": 25,
+     "dC": -20,
+     "dB": 0,
+     "temps": 1,
+     "suite": "n2b",
+     "reaction": "Il se débat violemment.",
+     "conseil": "Le contact physique avec une personne alcoolisée devant le public est la pire option."
+    }
+   ]
+  },
+  {
+   "id": "n3",
+   "victime": "« Bon… j'ai mal à la tête, c'est vrai. Mais je veux pas aller aux urgences, je veux rentrer chez moi. »\n(Il s'assoit, un peu calmé.)",
+   "choix": [
+    {
+     "id": "a",
+     "texte": "« Je ne vous oblige à rien. Laissez-moi vérifier la plaie et vos pupilles, deux minutes à l'écart. Ensuite, on décide ensemble. »",
+     "technique": "choix",
+     "dT": -12,
+     "dC": 12,
+     "dB": 20,
+     "temps": 2,
+     "suite": "n4",
+     "reaction": "Il acquiesce lentement.",
+     "conseil": "Découper la demande en une étape courte et lui laisser la décision redonne du contrôle."
+    },
+    {
+     "id": "b",
+     "texte": "« Vous venez avec nous, c'est comme ça. »",
+     "technique": "ordre",
+     "dT": 15,
+     "dC": -12,
+     "dB": 0,
+     "temps": 1,
+     "suite": "n2b",
+     "reaction": "« Personne me force ! »",
+     "conseil": "L'ordre direct provoque l'opposition."
+    },
+    {
+     "id": "c",
+     "texte": "« On vous ramène chez vous après, promis. »",
+     "technique": "promesse",
+     "dT": -5,
+     "dC": -6,
+     "dB": 5,
+     "temps": 1,
+     "suite": "n4",
+     "reaction": "Il hoche la tête, méfiant.",
+     "conseil": "Promesse que vous ne pourrez peut-être pas tenir si l'état nécessite l'hôpital."
+    }
+   ]
+  },
+  {
+   "id": "n4",
+   "victime": "« D'accord… Mais pas devant eux. Et vous appelez pas ma femme. »",
+   "choix": [
+    {
+     "id": "a",
+     "texte": "« Vous montez dans le véhicule, porte fermée, personne ne verra. Pour votre femme, c'est vous qui décidez de la prévenir. Je vous explique chaque geste. »",
+     "technique": "info",
+     "dT": -15,
+     "dC": 15,
+     "dB": 30,
+     "temps": 2,
+     "suite": "fin:apaise",
+     "reaction": "Il monte sans discuter.",
+     "conseil": "Respecter son intimité, lui laisser les décisions qui lui appartiennent et informer chaque geste préserve sa dignité."
+    },
+    {
+     "id": "b",
+     "texte": "« D'accord, on s'installe tranquillement. »",
+     "technique": "ecoute",
+     "dT": -6,
+     "dC": 6,
+     "dB": 10,
+     "temps": 1,
+     "suite": "fin:apaise",
+     "reaction": "Il vous suit.",
+     "conseil": "Réponse acceptable mais peu d'informations : la dignité est partiellement préservée."
+    }
+   ]
+  }
+ ],
+ "debrief": {
+  "points": [
+   "Isoler la victime du public avant de discuter.",
+   "Se présenter, voix posée, sans jugement sur l'alcool.",
+   "Proposer des étapes courtes et laisser les décisions possibles.",
+   "Garder la sécurité de l'équipe : reculer et dégager l'espace."
+  ],
+  "erreurs": [
+   "Dire « vous êtes saoul ».",
+   "Menacer d'appeler la police devant le public.",
+   "Toucher ou saisir la personne.",
+   "Promettre un retour à domicile."
+  ],
+  "principes": [
+   "L'agressivité protège ici la dignité.",
+   "L'alcool amplifie les montées de tension et ralentit les baisses : prévoir plus de temps.",
+   "Le renfort est justifié lorsque la tension est très haute et que la sécurité est menacée."
+  ]
+ },
+ "jaugesMasquees": false
+}
