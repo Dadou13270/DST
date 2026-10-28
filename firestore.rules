@@ -168,10 +168,10 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
-    // Demandes de scénarios : créées par un gestionnaire, traitées par l'admin
+    // Demandes de scénarios : créées par un gestionnaire ou un stagiaire, traitées par l'admin
     match /demandesScenario/{rid} {
       allow read: if isAdmin() || (request.auth != null && resource.data.demandeur == request.auth.uid);
-      allow create: if isGest() && request.resource.data.demandeur == request.auth.uid && request.resource.data.statut == "nouvelle";
+      allow create: if request.auth != null && userActif() && request.resource.data.demandeur == request.auth.uid && request.resource.data.statut == "nouvelle";
       allow update, delete: if isAdmin();
     }
 
