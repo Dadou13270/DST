@@ -53,7 +53,7 @@ users/{uid}               email, nom, statut (actif|suspendu), creeLe, derniereC
 La progression du stagiaire est sauvegardée localement (navigateur) ; rien n'est écrit en base côté stagiaire.
 
 ## Scénarios fournis
-Le dossier `seeds/` contient les 20 scénarios complets (SOIEC, questions/réponses, illustrations) au format JSON, un fichier par scénario. Pour les importer : Paramètres → Scénarios → « Importer des scénarios (.json) », sélectionner tous les fichiers de `seeds/` (la photo est rangée automatiquement dans `media/photo`, les scénarios déjà présents sont ignorés).
+Le dossier `seeds/` contient les scénarios complets (SOIEC, questions/réponses, illustrations) au format JSON, un fichier par scénario. Pour les importer : Paramètres → Scénarios → « Importer des scénarios (.json) », sélectionner tous les fichiers de `seeds/` (la photo est rangée automatiquement dans `media/photo`, les scénarios déjà présents sont ignorés).
 `artefact-simulateur-soiec.html` est la version autonome publiée comme artefact.
 
 ## Nouveautés

@@ -65,7 +65,33 @@ service cloud.firestore {
             && get(/databases/$(database)/documents/teams/$(resource.data.equipeId)).data.owner == request.auth.uid
             && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["equipeId", "equipeNom", "equipeCode", "equipeGest"])
             && !("equipeId" in request.resource.data));
-      allow delete: if isAdmin() && request.auth.uid != uid;
+      // suppression : par un admin (pas lui-même), ou par la personne elle-même (droit à l'effacement ; un admin doit d'abord perdre ses droits)
+      allow delete: if (isAdmin() && request.auth.uid != uid) || (request.auth != null && request.auth.uid == uid && !isAdmin());
+    }
+
+    // Messagerie privée stagiaire <-> gestionnaire de son équipe : lisible uniquement par les deux participants.
+    match /messages/{id} {
+      function ownerEquipe(stag) {
+        return get(/databases/$(database)/documents/teams/$(get(/databases/$(database)/documents/users/$(stag)).data.equipeId)).data.owner;
+      }
+      allow read: if request.auth != null && (resource.data.stagId == request.auth.uid || resource.data.gestId == request.auth.uid);
+      allow create: if request.auth != null && request.resource.data.de == request.auth.uid
+        && (request.resource.data.de == request.resource.data.stagId || request.resource.data.de == request.resource.data.gestId)
+        && request.resource.data.texte is string && request.resource.data.texte.size() > 0 && request.resource.data.texte.size() <= 2000
+        && request.resource.data.lu == false
+        && ownerEquipe(request.resource.data.stagId) == request.resource.data.gestId;
+      allow update: if request.auth != null && resource.data.de != request.auth.uid
+        && (resource.data.stagId == request.auth.uid || resource.data.gestId == request.auth.uid)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["lu"]);
+      allow delete: if false;
+    }
+
+    // Journal d'audit : écriture par les admins (ou traces d'export / suppression de soi), lecture admin, jamais modifiable.
+    match /audit/{id} {
+      allow read: if isAdmin();
+      allow create: if request.auth != null && request.resource.data.par == request.auth.uid
+        && (isAdmin() || request.resource.data.action in ["export_donnees", "suppression_compte"]);
+      allow update, delete: if false;
     }
 
     // Équipes : créées par un gestionnaire, lues par le gestionnaire, un admin ou un membre
@@ -173,7 +199,17 @@ service cloud.firestore {
       allow update, delete: if isAdmin() || (isGest() && resource.data.owner == request.auth.uid);
     }
 
+    match /site/{id} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
     match /nouveautes/{id} {
+      allow read: if request.auth != null;
+      allow write: if isAdmin();
+    }
+
+    match /exercicesRelation/{id} {
       allow read: if request.auth != null;
       allow write: if isAdmin();
     }
