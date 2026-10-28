@@ -6,6 +6,8 @@ import {
   createUserWithEmailAndPassword,
   updateProfile,
   sendPasswordResetEmail,
+  GoogleAuthProvider,
+  signInWithPopup,
 } from "firebase/auth";
 import { doc, getDoc, setDoc, updateDoc, serverTimestamp } from "firebase/firestore";
 import { auth, db } from "../firebase";
@@ -74,11 +76,13 @@ export function AuthProvider({ children }) {
     return c.user;
   };
 
+  // Connexion / inscription avec Google : le profil users/{uid} est créé au premier passage (voir charge).
+  const loginGoogle = async () => (await signInWithPopup(auth, new GoogleAuthProvider())).user;
   const resetPassword = (email) => sendPasswordResetEmail(auth, email);
   const logout = () => (auth ? signOut(auth) : Promise.resolve());
 
   return (
-    <Ctx.Provider value={{ user, profil, isAdmin, loading, refreshProfil, login, register, resetPassword, logout }}>
+    <Ctx.Provider value={{ user, profil, isAdmin, loading, refreshProfil, login, loginGoogle, register, resetPassword, logout }}>
       {children}
     </Ctx.Provider>
   );

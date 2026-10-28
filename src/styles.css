@@ -405,3 +405,13 @@ html[data-theme="dark"] .evorappel{background:#3b2d10;color:#f1d58a;border-color
 
 .sv-tog{display:flex;align-items:center;gap:8px;width:100%;background:none;border:0;padding:2px 0;font:inherit;color:inherit;cursor:pointer;text-align:left}
 .sv-tog .chev{color:var(--red,#c42a1c);font-size:.8rem}
+
+/* page de connexion : deux blocs côte à côte */
+.login-hero{text-align:center;margin:26px auto 4px}.login-hero h1{margin:0}.login-hero p{margin:4px 0 0}
+.login-duo{display:grid;grid-template-columns:1fr 1fr;gap:20px;max-width:900px;margin:18px auto 40px;align-items:stretch}
+.login-card{margin:0;display:flex;flex-direction:column}.login-card h2{margin:0 0 2px}.login-card>.muted{margin:0 0 14px}
+.login-card.in{border-top:5px solid var(--red,#c42a1c)}.login-card.up{border-top:5px solid #1b2127}
+.login-card button.btn{margin-top:14px;width:100%}.login-card .gbtn{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:0;background:var(--card,#fff);color:var(--ink,#1b2127);border:1px solid var(--line,#d8dde1)}
+.login-card .gbtn:hover{background:var(--soft,#f5f6f7)}
+.lsep{display:flex;align-items:center;gap:10px;color:var(--mut,#667079);font-size:.85rem;margin:16px 0 4px}.lsep:before,.lsep:after{content:"";flex:1;height:1px;background:var(--line,#d8dde1)}
+@media(max-width:760px){.login-duo{grid-template-columns:1fr}}
