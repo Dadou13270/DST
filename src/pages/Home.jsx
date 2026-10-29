@@ -23,7 +23,8 @@ export function StagiaireNav() {
   const nonLus = nbNonLus(useMessages(user?.uid), user?.uid);
   return (
     <div className="tabs">
-      <Link to="/" className="tablink" title="Tous les scénarios"><button className={pathname === "/" || pathname.startsWith("/calculs") ? "on" : ""}>Exercices</button></Link>
+      <Link to="/" className="tablink" title="Tes exercices à réaliser"><button className={pathname === "/" ? "on" : ""}>Accueil</button></Link>
+      <Link to="/scenarios" className="tablink" title="Tous les scénarios"><button className={pathname === "/scenarios" || pathname.startsWith("/calculs") ? "on" : ""}>Scénarios</button></Link>
       <Link to="/suivi" className="tablink" title="Tes résultats et commentaires du formateur"><button className={pathname === "/suivi" ? "on" : ""}>Mon suivi</button></Link>
       <Link to="/fiches" className="tablink" title="Rappels courts : SOIEC, formules, messages"><button className={pathname === "/fiches" ? "on" : ""}>Fiches mémo</button></Link>
       <Link to="/equipe" className="tablink" title="Rejoindre une équipe avec un code"><button className={pathname === "/equipe" ? "on" : ""}>Mon équipe</button></Link>
@@ -34,7 +35,7 @@ export function StagiaireNav() {
   );
 }
 
-export default function Home() {
+export default function Home({ mode = "scenarios" }) {
   const { user, profil, isAdmin, logout } = useAuth();
   const devoirs = useDevoirs(profil);
   const [list, setList] = useState(null);
@@ -95,6 +96,46 @@ export default function Home() {
       .catch((e) => setErr(e.message));
   }, [user?.uid, profil?.equipeId]); // eslint-disable-line
 
+  if (mode === "accueil") {
+    const aRendre = devoirs.filter((d) => d.statut !== "ok");
+    const favs = (carnet.favoris || []).map((k) => {
+      const id = k.slice(2);
+      if (k[0] === "s") { const s = (list || []).find((x) => x.id === id); return s ? { k, titre: s.titre, to: `/scenario/${id}` } : null; }
+      const e = calcEx.find((x) => x.id === id);
+      return e ? { k, titre: e.titre, to: e.kind === "rel" ? `/relation/${id}` : `/calculs/${id}` } : null;
+    }).filter(Boolean);
+    return (
+      <Layout
+        right={
+          <>
+            {profil && <span>{profil.nom}</span>}
+            {isAdmin && <Link to="/admin">Paramètres</Link>}
+            <button className="link" onClick={logout}>Déconnexion</button>
+          </>
+        }
+      >
+        <StagiaireNav />
+        {profil?.mdpProvisoire && <div className="card alerte"><strong>Mot de passe provisoire.</strong> Change-le dans <Link to="/profil">Mon profil</Link>.</div>}
+        <h1>Accueil</h1>
+        {!configured && <div className="card warn">Firebase n'est pas configuré. Renseigne le fichier .env (voir README).</div>}
+        {aRendre.length > 0
+          ? <DevoirsCard devoirs={devoirs} />
+          : <div className="card"><strong>Exercices à réaliser</strong><p className="muted" style={{ margin: "4px 0 0" }}>Aucun exercice à rendre pour le moment.</p></div>}
+        {favs.length > 0 && (
+          <div className="card">
+            <strong>★ Mes favoris</strong>
+            {favs.map((f) => <div key={f.k} style={{ marginTop: 6 }}><Link to={f.to}>{f.titre}</Link></div>)}
+          </div>
+        )}
+        <div className="card">
+          <strong>Choisir un exercice</strong>
+          <p className="muted" style={{ margin: "4px 0 8px" }}>{charte.accueil}</p>
+          <Link to="/scenarios" className="btn primary">Parcourir tous les scénarios{list ? ` (${list.length + calcEx.length})` : ""}</Link>
+        </div>
+      </Layout>
+    );
+  }
+
   return (
     <Layout
       right={
@@ -106,8 +147,6 @@ export default function Home() {
       }
     >
       <StagiaireNav />
-      {devoirs.filter((d) => d.statut !== "ok").length > 0 && <DevoirsCard devoirs={devoirs} />}
-      {profil?.mdpProvisoire && <div className="card alerte"><strong>Mot de passe provisoire.</strong> Change-le dans <Link to="/profil">Mon profil</Link>.</div>}
       <h1>Choisis un scénario</h1>
       <p className="muted">{charte.accueil}</p>
 

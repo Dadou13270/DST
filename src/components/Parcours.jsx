@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { listParcours, saveParcours, supprimerParcours, dupliquerParcours } from "../lib/parcours";
 
-const vide = { id: null, titre: "", description: "", ordre: false, partage: false, scIds: [] };
+const vide = { id: null, titre: "", objectif: "", description: "", ordre: false, partage: false, scIds: [] };
 
 export default function Parcours({ user, profil, isAdmin, scs, pcs, onChange }) {
   const [ed, setEd] = useState(null);
@@ -29,6 +29,8 @@ export default function Parcours({ user, profil, isAdmin, scs, pcs, onChange }) 
         <form className="form" onSubmit={save}>
           <label>Nom du parcours</label>
           <input value={ed.titre} maxLength={80} onChange={(e) => setEd({ ...ed, titre: e.target.value })} placeholder="Ex. FMPA chef d'agrès" />
+          <label>Objectif du parcours</label>
+          <textarea rows={3} maxLength={600} value={ed.objectif || ""} onChange={(e) => setEd({ ...ed, objectif: e.target.value })} placeholder="Ce que le stagiaire saura faire à la fin du parcours (visible par les stagiaires)" />
           <label>Description (facultatif)</label>
           <textarea rows={2} maxLength={400} value={ed.description} onChange={(e) => setEd({ ...ed, description: e.target.value })} />
           <label className="check"><input type="checkbox" checked={ed.ordre} onChange={(e) => setEd({ ...ed, ordre: e.target.checked })} /> Ordre imposé (la prochaine étape est mise en avant, les suivantes restent grisées)</label>
@@ -67,6 +69,7 @@ export default function Parcours({ user, profil, isAdmin, scs, pcs, onChange }) 
                   <div>
                     <strong>{p.titre}</strong> {p.ordre && <span className="tag">Ordre imposé</span>} {p.partage && <span className="tag">Partagé</span>}
                     <div className="muted">{(p.scIds || []).length} exercice(s){p.owner !== user.uid ? ` · par ${p.ownerNom || "un gestionnaire"}` : ""}</div>
+                    {p.objectif && <div style={{ margin: "4px 0" }}><strong>Objectif :</strong> {p.objectif}</div>}
                     {p.description && <div className="muted">{p.description}</div>}
                     {(p.scIds || []).length > 0 && (
                       <button type="button" className="btn" style={{ marginTop: 6 }} onClick={() => setVus((v) => ({ ...v, [p.id]: !v[p.id] }))}>

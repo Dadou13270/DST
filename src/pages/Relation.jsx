@@ -130,7 +130,7 @@ export default function Relation() {
   return (
     <Layout>
       <StagiaireNav />
-      <div className="row between"><h1>{ex.titre}</h1><Link to="/"><button className="btn">Retour</button></Link></div>
+      <div className="row between"><h1>{ex.titre}</h1><Link to="/scenarios"><button className="btn">Retour</button></Link></div>
       {msg && <p className="muted">{msg}</p>}
       <RelationJeu key={k} ex={ex} onFini={fini} apercu={() => { setK(k + 1); setMsg(""); }} />
     </Layout>

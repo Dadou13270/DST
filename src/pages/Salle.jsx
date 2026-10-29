@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
 import Layout from "../components/Layout";
 import SalleChat from "../components/SalleChat";
+import FicheEval from "../components/FicheEval";
 import { FriseSvg, FRISE_COL, frMmss } from "../components/Frise";
 import { useAuth } from "../lib/auth";
 import { getScenario } from "../lib/db";
@@ -76,6 +77,7 @@ export default function Salle() {
   const [feTache, setFeTache] = useState("");
   const [codeGrand, setCodeGrand] = useState(false);
   const [arch, setArch] = useState(false);
+  const [fiche, setFiche] = useState("");
   const [, tick] = useState(0);
   useEffect(() => { const t = setInterval(() => tick((n) => n + 1), 15000); return () => clearInterval(t); }, []);
 
@@ -245,6 +247,21 @@ export default function Salle() {
           </div>
         )}
       </div>
+      {ps.length > 0 && sc && (
+        <div className="card">
+          <h3 style={{ marginTop: 0 }}>Fiche d'évaluation</h3>
+          <div className="row">
+            <select value={fiche} onChange={(e) => setFiche(e.target.value)}>
+              <option value="">Choisir un stagiaire…</option>
+              {ps.map((u) => <option key={u.uid} value={u.uid}>{u.nom || "Stagiaire"}</option>)}
+            </select>
+            <span className="muted">Note en direct pendant que le stagiaire passe. La fiche est visible ensuite dans son suivi.</span>
+          </div>
+          {fiche && ps.find((u) => u.uid === fiche) && (
+            <FicheEval key={fiche} src="salle" stag={{ id: fiche, nom: ps.find((u) => u.uid === fiche).nom || "Stagiaire" }} sc={{ id: salle.scId, titre: sc.titre, smes: !!sc.smes }} gest={{ uid: user.uid, nom: profil?.nom || "Formateur" }} />
+          )}
+        </div>
+      )}
       <div className="card">
         <h3 style={{ marginTop: 0 }}>Questions essentielles : {faites} / {ess.length} posées au moins une fois</h3>
         <div style={{ maxHeight: 280, overflow: "auto" }}>

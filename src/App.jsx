@@ -53,7 +53,8 @@ export default function App() {
     <AuthProvider>
       <Routes>
         <Route path="/connexion" element={<Login />} />
-        <Route path="/" element={<RequireUser><Home /></RequireUser>} />
+        <Route path="/" element={<RequireUser><Home mode="accueil" /></RequireUser>} />
+        <Route path="/scenarios" element={<RequireUser><Home mode="scenarios" /></RequireUser>} />
         <Route path="/aide-equipes" element={<AideEquipes />} />
         <Route path="/aide-salle" element={<AideSalle />} />
         <Route path="/site" element={<Site />} />
@@ -65,7 +66,7 @@ export default function App() {
         <Route path="/contact" element={<Contact />} />
         <Route path="/equipe" element={<RequireUser><Equipe /></RequireUser>} />
         <Route path="/seance" element={<RequireUser><Seance /></RequireUser>} />
-        <Route path="/calculs" element={<Navigate to="/" replace />} />
+        <Route path="/calculs" element={<Navigate to="/scenarios" replace />} />
         <Route path="/calculs/:id" element={<RequireUser><CalculExercice /></RequireUser>} />
         <Route path="/relation/:id" element={<RequireUser><Relation /></RequireUser>} />
         <Route path="/departement" element={<RequireUser><Departement /></RequireUser>} />

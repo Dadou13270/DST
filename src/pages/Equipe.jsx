@@ -32,18 +32,27 @@ export default function Equipe() {
       {devoirs.length > 0 && (
         <div className="card">
           <h3 style={{ margin: 0 }}>Exercices à rendre</h3>
-          {devoirs.map((d) => (
-            <div className="row between item" key={d.scId} style={{ marginTop: 8 }}>
-              <div>
-                <strong>{d.titre}</strong>{" "}
-                <span className={d.statut === "ok" ? "tag ok" : d.statut === "retard" ? "tag late" : "tag"}>
-                  {d.statut === "ok" ? "Rendu" : d.statut === "retard" ? "En retard" : "À rendre"}
-                </span>
-                <div className="muted">Avant le {fmtLimite(d.limite)}</div>
+          {[...new Set(devoirs.map((d) => d.pc || ""))].map((k) => {
+            const it = devoirs.filter((d) => (d.pc || "") === k).sort((a, b) => (a.rg || 0) - (b.rg || 0));
+            const obj = it.find((d) => d.pcJ)?.pcJ;
+            return (
+              <div key={k || "_"}>
+                {k && <div style={{ marginTop: 12 }}><strong>Parcours « {it[0].pcT} »</strong>{obj && <div className="refdoc"><strong>Objectif du parcours :</strong> <span style={{ whiteSpace: "pre-line" }}>{obj}</span></div>}</div>}
+                {it.map((d) => (
+                  <div className="row between item" key={d.scId} style={{ marginTop: 8 }}>
+                    <div>
+                      <strong>{k ? `${(d.rg || 0) + 1}. ` : ""}{d.titre}</strong>{" "}
+                      <span className={d.statut === "ok" ? "tag ok" : d.statut === "retard" ? "tag late" : "tag"}>
+                        {d.statut === "ok" ? "Rendu" : d.statut === "retard" ? "En retard" : "À rendre"}
+                      </span>
+                      <div className="muted">Avant le {fmtLimite(d.limite)}</div>
+                    </div>
+                    <Link className={d.statut === "ok" ? "btn" : "btn primary"} to={`/scenario/${d.scId}`}>{d.statut === "ok" ? "Revoir" : "Faire l'exercice"}</Link>
+                  </div>
+                ))}
               </div>
-              <Link className={d.statut === "ok" ? "btn" : "btn primary"} to={`/scenario/${d.scId}`}>{d.statut === "ok" ? "Revoir" : "Faire l'exercice"}</Link>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
       {profil?.equipeId ? (

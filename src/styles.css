@@ -463,3 +463,21 @@ html[data-cartes="h"] .scn .cdr{background:rgba(255,255,255,.92);color:#333}
 .exfloat button,.exfloat a{font:inherit;font-weight:700;border:0;border-radius:10px;background:var(--red,#c42a1c);color:#fff;padding:10px 16px;cursor:pointer;text-decoration:none}
 .play{padding-bottom:84px}
 @media(max-width:600px){.exfloat{left:8px;right:8px;justify-content:space-between}}
+
+/* Fiche d'évaluation */
+.fiche{margin:8px 0}.fiche-sec{border:1px solid var(--line,#d8dde1);border-radius:10px;padding:10px;margin:10px 0}
+.fiche-crit{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:8px 0;border-top:1px solid var(--line,#d8dde1)}
+.fiche-crit.col{flex-direction:column}.fiche-sec>strong+.fiche-crit{border-top:0}
+.fiche-lv{display:flex;gap:6px;flex-wrap:wrap}
+.fiche-lv button{font:inherit;font-size:.82rem;border:1px solid var(--line,#d8dde1);background:var(--card,#fff);color:inherit;border-radius:8px;padding:5px 10px;cursor:pointer}
+.fiche-lv button.on{color:#fff;border-color:transparent}.fiche-lv button.n0.on{background:#c42a1c}.fiche-lv button.n1.on{background:#b7791f}.fiche-lv button.n2.on{background:#2f6fd6}.fiche-lv button.n3.on{background:#16794a}
+.fiche-niv{font-weight:600}.fiche-niv.n0{color:#c42a1c}.fiche-niv.n1{color:#b7791f}.fiche-niv.n2{color:#2f6fd6}.fiche-niv.n3{color:#16794a}
+.fiche-res{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin:8px 0}.fiche-big{font-size:1.8rem;font-weight:700}
+.fiche-dec{font-weight:700;padding:5px 14px;border-radius:99px;color:#fff;background:#667079}.fiche-dec.ok{background:#16794a}.fiche-dec.ko{background:#c42a1c}.fiche-dec.mid{background:#b7791f}
+.fiche-bar{flex-basis:100%;height:8px;background:var(--line,#d8dde1);border-radius:9px;overflow:hidden}.fiche-bar i{display:block;height:100%;background:#16794a}
+.fiche-2{display:grid;grid-template-columns:1fr 1fr;gap:12px}@media(max-width:640px){.fiche-2{grid-template-columns:1fr}}
+.fiche-ed{display:grid;gap:6px}
+.fiche-leg{display:flex;gap:10px;flex-wrap:wrap;font-size:.82rem;color:var(--mut,#667079);margin-top:8px}
+.fiche .card{margin:12px 0}.fiche-crit.col{border-top:1px solid var(--line,#d8dde1);padding:10px 0;gap:4px}
+.fiche-res{margin:8px 0}
+.fiche .card h2+.fiche-crit{border-top:0}

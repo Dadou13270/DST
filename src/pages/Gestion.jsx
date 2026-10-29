@@ -17,6 +17,8 @@ import { listScenarios } from "../lib/db";
 import { ajouterDevoir, retirerDevoir, statutDevoir, fmtLimite, limiteDepuisInput, assignerParcours, retirerParcours, relancer, MODELE_RELANCE, modifierLimite, modifierLimiteParcours, inputDepuisLimite } from "../lib/devoirs";
 import { listParcours } from "../lib/parcours";
 import Parcours from "../components/Parcours";
+import FicheEval from "../components/FicheEval";
+import { evaluationExistante } from "../lib/fiche";
 import Frise from "../components/Frise";
 import FilMessages, { nonLus, nonLusMembre } from "../components/FilMessages";
 import TableauBord from "../components/TableauBord";
@@ -140,7 +142,7 @@ function Devoirs({ team, membres, scs, pcs, onChange }) {
         <div className="item" style={{ marginTop: 8 }}>
           {pcIds.map((id) => (
             <div key={id} className="row item">
-              <strong>Parcours « {dev.find((x) => x.pc === id)?.pcT} »</strong>
+              <strong>Parcours « {dev.find((x) => x.pc === id)?.pcT} »</strong>{dev.find((x) => x.pc === id)?.pcJ && <span className="muted"> — Objectif : {dev.find((x) => x.pc === id).pcJ}</span>}
               {ed?.k === "pc:" + id
                 ? <><input type="date" value={ed.v} onChange={(e) => setEd({ ...ed, v: e.target.value })} style={{ width: "auto" }} /><button className="btn primary" onClick={saveLim}>Décaler tout le parcours</button><button className="btn" onClick={() => setEd(null)}>Annuler</button></>
                 : <button className="btn" onClick={() => setEd({ k: "pc:" + id, v: inputDepuisLimite(dev.find((x) => x.pc === id)?.limite) })}>Décaler l'échéance</button>}
@@ -271,6 +273,7 @@ function Equipe({ team, autres, scs, pcs, onChange }) {
                           b.auto && <tr key={scId + "a"}><td colSpan={6}><AutoBilan auto={b.auto} /></td></tr>,
                           b.taches && <tr key={scId + "t"}><td colSpan={6}><TachesBilan taches={b.taches} /></td></tr>,
                           <tr key={scId + "c"}><td colSpan={6}><Commentaire u={u} scId={scId} auteur={profil?.nom || "Formateur"} onSaved={load} /></td></tr>,
+                          <tr key={scId + "e"}><td colSpan={6}><FicheZone u={u} scId={scId} titre={b.titre} smes={!!scs.find((x) => x.id === scId)?.smes} user={user} profil={profil} /></td></tr>,
                         ])}</tbody>
                       </table>
                     )}
@@ -287,6 +290,19 @@ function Equipe({ team, autres, scs, pcs, onChange }) {
           </tbody>
         </table>
       )}
+    </div>
+  );
+}
+
+// Fiche d'évaluation d'un exercice terminé (dans le suivi du stagiaire)
+function FicheZone({ u, scId, titre, smes, user, profil }) {
+  const [ouvert, setOuvert] = useState(false);
+  const [ex, setEx] = useState(undefined);
+  useEffect(() => { evaluationExistante(u.id, scId, user.uid).then(setEx).catch(() => setEx(null)); }, [u.id, scId, ouvert]); // eslint-disable-line
+  return (
+    <div>
+      <button className="btn" onClick={() => setOuvert(!ouvert)}>{ouvert ? "Masquer la fiche d'évaluation" : ex ? `Fiche d'évaluation : ${ex.decision} (${ex.pct} %)` : "Remplir la fiche d'évaluation"}</button>
+      {ouvert && <FicheEval stag={{ id: u.id, nom: u.nom }} sc={{ id: scId, titre, smes }} gest={{ uid: user.uid, nom: profil?.nom || "Formateur" }} />}
     </div>
   );
 }
@@ -405,6 +421,19 @@ export default function Gestion() {
     if (!teams || !profil?.departement) return;
     teams.filter((t) => t.owner === user.uid && !t.departement).forEach((t) => updateDoc(doc(db, "teams", t.id), { departement: profil.departement }).catch(() => {}));
   }, [teams?.length, profil?.departement]); // eslint-disable-line
+  // propage l'objectif d'un parcours dans les exercices déjà assignés à mes équipes
+  useEffect(() => {
+    if (!teams || !pcs.length || !user) return;
+    teams.filter((t) => t.owner === user.uid).forEach((t) => {
+      let ch = false;
+      const nd = (t.devoirs || []).map((d) => {
+        const p = d.pc ? pcs.find((x) => x.id === d.pc) : null;
+        if (!p || (d.pcJ || "") === (p.objectif || "")) return d;
+        ch = true; const { pcJ, ...r } = d; return p.objectif ? { ...r, pcJ: p.objectif } : r; // eslint-disable-line no-unused-vars
+      });
+      if (ch) updateDoc(doc(db, "teams", t.id), { devoirs: nd }).catch(() => {});
+    });
+  }, [teams, pcs]); // eslint-disable-line
   if (loading || !profil) return <Layout><p>Chargement…</p></Layout>;
   if (!ok) return <Navigate to="/" replace />;
   const creer = async (e) => {

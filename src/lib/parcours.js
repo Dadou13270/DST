@@ -17,7 +17,7 @@ export async function listParcours(uid, isAdmin) {
 export async function saveParcours(id, data, uid, nom) {
   const ref = id ? doc(db, "parcours", id) : doc(col());
   await setDoc(ref, {
-    titre: data.titre.trim(), description: (data.description || "").trim(), scIds: data.scIds,
+    titre: data.titre.trim(), objectif: (data.objectif || "").trim(), description: (data.description || "").trim(), scIds: data.scIds,
     ordre: !!data.ordre, partage: !!data.partage,
     owner: data.owner || uid, ownerNom: data.ownerNom || nom || "", maj: Date.now(),
   });

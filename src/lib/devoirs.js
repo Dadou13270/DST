@@ -25,7 +25,7 @@ export const assignerParcours = (team, pc, scs, limite) => {
   const add = [];
   (pc.scIds || []).forEach((scId, i) => {
     const x = scs.find((y) => y.id === scId);
-    if (x && !have.has(scId)) add.push({ scId, titre: x.titre, limite, pc: pc.id, pcT: pc.titre, rg: i, pcO: pc.ordre ? 1 : 0, ...(x.kind && x.kind !== "sc" ? { k: x.kind } : {}) });
+    if (x && !have.has(scId)) add.push({ scId, titre: x.titre, limite, pc: pc.id, pcT: pc.titre, rg: i, pcO: pc.ordre ? 1 : 0, ...(pc.objectif ? { pcJ: pc.objectif } : {}), ...(x.kind && x.kind !== "sc" ? { k: x.kind } : {}) });
   });
   if (!add.length) return Promise.resolve(0);
   return updateDoc(doc(db, "teams", team.id), { devoirs: [...(team.devoirs || []), ...add] }).then(() => add.length);

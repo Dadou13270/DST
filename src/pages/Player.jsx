@@ -309,7 +309,7 @@ export default function Player() {
       ...(sc.commandement ? [] : [{ label: "Message d'ambiance", mine: sess.notes.message, ref: sc.correction.message }]),
       ...CRM.map((r) => ({ label: `Compte rendu – ${r.titre}`, mine: sess.notes[r.k], ref: sc.correction[r.k] }))];
     return (
-      <Layout wide right={<Link to="/">Scénarios</Link>}>
+      <Layout wide right={<Link to="/scenarios">Scénarios</Link>}>
         <div className="row between">
           <h1>Bilan : {sc.titre}</h1>
           <div className="row">

@@ -101,7 +101,7 @@ export function CalculExercice() {
   return (
     <Layout>
       <StagiaireNav />
-      <div className="row between"><h1>{ex.titre}</h1><Link to="/"><button className="btn">Retour</button></Link></div>
+      <div className="row between"><h1>{ex.titre}</h1><Link to="/scenarios"><button className="btn">Retour</button></Link></div>
       {calcImg(ex) && <img src={calcImg(ex)} alt="Illustration de l'exercice" style={{ width: "100%", maxHeight: 260, objectFit: "cover", borderRadius: 10, marginBottom: 12 }} />}
       <div className="tabs" style={{ marginBottom: 12 }}>
         <button className={tab === "ex" ? "on" : ""} onClick={() => setTab("ex")}>Exercice</button>

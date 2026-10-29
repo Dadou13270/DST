@@ -59,7 +59,7 @@ export default function Layout({ children, extra }) {
           </span>
           {user && (
             <>
-              <Link to="/" title="Exercices, suivi, équipe et profil" className={adm || pathname.startsWith("/gestion") ? "navbtn" : "navbtn on"}>Espace stagiaire</Link>
+              <Link to="/" title="Exercices, suivi, équipe et profil" className={adm || pathname.startsWith("/gestion") || pathname.startsWith("/departement") ? "navbtn" : "navbtn on"}>Espace stagiaire</Link>
               {(profil?.gestionnaire || isAdmin) && <Link to="/gestion" className={pathname.startsWith("/gestion") ? "navbtn on" : "navbtn"}>Espace gestionnaire</Link>}
               {(profil?.adminDept || isAdmin) && <Link to="/departement" className={pathname.startsWith("/departement") ? "navbtn on" : "navbtn"}>Espace département</Link>}
               {isAdmin && <Link to="/admin" className={adm ? "navbtn on" : "navbtn"}>Espace admin</Link>}

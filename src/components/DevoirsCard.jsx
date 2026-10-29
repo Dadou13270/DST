@@ -13,7 +13,7 @@ export default function DevoirsCard({ devoirs }) {
     </div>
   );
   return (
-    <div className={"card" + (late ? " alerte" : "")}>
+    <div className="card">
       <strong>{late ? "Exercices en retard" : "Exercices à rendre"}</strong>
       {[...groupes.entries()].map(([k, it]) => {
         const reste = it.filter((d) => d.statut !== "ok");
@@ -25,6 +25,7 @@ export default function DevoirsCard({ devoirs }) {
         return (
           <div key={k} style={{ margin: "8px 0 4px" }}>
             <strong>Parcours « {it[0].pcT} »</strong> <span className="muted">{fait}/{it.length} terminé(s)</span>
+            {it.find((d) => d.pcJ)?.pcJ && <div className="refdoc"><strong>Objectif du parcours :</strong> <span style={{ whiteSpace: "pre-line" }}>{it.find((d) => d.pcJ).pcJ}</span></div>}
             <div style={{ height: 6, background: "var(--line, #ddd)", borderRadius: 9, overflow: "hidden", margin: "4px 0" }}>
               <i style={{ display: "block", height: "100%", width: `${Math.round((fait / it.length) * 100)}%`, background: "#2e9e5b" }} />
             </div>

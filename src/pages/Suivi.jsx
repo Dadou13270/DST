@@ -12,6 +12,8 @@ import { mergeScenario } from "../lib/model";
 import { pdfSuivi, pdfDossier } from "../lib/pdf";
 import { useCarnet } from "../lib/carnet";
 import { StagiaireNav } from "./Home";
+import { FicheLecture } from "../components/FicheEval";
+import { evaluationsDe } from "../lib/fiche";
 import FilMessages from "../components/FilMessages";
 import { repondreFormateur } from "../lib/equipes";
 import { listExercices, typeExercice } from "../lib/relation";
@@ -46,6 +48,9 @@ function Fil({ profil, scId, uid, onSent }) {
 
 export default function Suivi() {
   const { user, profil, isAdmin, logout, refreshProfil } = useAuth();
+  const [evals, setEvals] = useState([]);
+  const [evOuv, setEvOuv] = useState(null);
+  useEffect(() => { if (user) evaluationsDe(user.uid).then(setEvals).catch(() => {}); }, [user?.uid]); // eslint-disable-line
   const [list, setList] = useState(null);
   useEffect(() => {
     listScenarios(true, { uid: user?.uid, equipeId: profil?.equipeId }).then(setList).catch(() => setList([]));
@@ -113,6 +118,19 @@ export default function Suivi() {
       <StagiaireNav />
       <div className="row between item"><h1>Mon suivi</h1><span className="row"><button className="btn" onClick={() => pdfSuivi(profil, bs, profil?.equipeNom)}>Exporter en PDF</button> <button className="btn primary" title="Bilans, auto-évaluations, commentaires et notes personnelles" onClick={() => dossier()}>Mon dossier PDF</button></span></div>
       {recup && recup !== "sync" && <p className={recup.startsWith("Récup") ? "err" : "ok-txt"}>{recup}</p>}
+      {evals.length > 0 && (
+        <div className="card">
+          <h3 style={{ marginTop: 0 }}>Mes fiches d'évaluation</h3>
+          {evals.map((e) => (
+            <div key={e.id} style={{ marginBottom: 6 }}>
+              <button className="btn" onClick={() => setEvOuv(evOuv === e.id ? null : e.id)}>
+                {evOuv === e.id ? "▾" : "▸"} {e.scTitre} · <span className={"fiche-dec " + ({ "Validé": "ok", "Non validé": "ko", "À consolider": "mid" }[e.decision] || "")}>{e.decision}</span> {e.pct} %
+              </button>
+              {evOuv === e.id && <FicheLecture e={e} />}
+            </div>
+          ))}
+        </div>
+      )}
       {!list && <p>Chargement…</p>}
       {list && (() => {
         const items = [
