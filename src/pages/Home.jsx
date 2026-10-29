@@ -16,6 +16,8 @@ import { listExercices } from "../lib/relation";
 import { useCharte } from "../lib/charte";
 import { useCarnet } from "../lib/carnet";
 import { useMessages, nbNonLus } from "../lib/messages";
+import { nouveautes, useLu } from "../lib/competences";
+import { evaluationsDe } from "../lib/fiche";
 
 export function StagiaireNav() {
   const { pathname } = useLocation();
@@ -38,6 +40,9 @@ export function StagiaireNav() {
 export default function Home({ mode = "scenarios" }) {
   const { user, profil, isAdmin, logout } = useAuth();
   const devoirs = useDevoirs(profil);
+  const { lu, marquer } = useLu(user?.uid);
+  const [evalsN, setEvalsN] = useState([]);
+  useEffect(() => { if (user && configured) evaluationsDe(user.uid).then(setEvalsN).catch(() => {}); }, [user?.uid]); // eslint-disable-line
   const [list, setList] = useState(null);
   const [calcEx, setCalcEx] = useState([]);
   useEffect(() => { if (configured) listExercices(isAdmin, { uid: user?.uid, equipeId: profil?.equipeId }).then(setCalcEx).catch(() => {}); }, [isAdmin, user?.uid, profil?.equipeId]);
@@ -98,6 +103,7 @@ export default function Home({ mode = "scenarios" }) {
 
   if (mode === "accueil") {
     const aRendre = devoirs.filter((d) => d.statut !== "ok");
+    const nvx = nouveautes({ devoirs, profil, evals: evalsN, lu });
     const favs = (carnet.favoris || []).map((k) => {
       const id = k.slice(2);
       if (k[0] === "s") { const s = (list || []).find((x) => x.id === id); return s ? { k, titre: s.titre, to: `/scenario/${id}` } : null; }
@@ -118,6 +124,12 @@ export default function Home({ mode = "scenarios" }) {
         {profil?.mdpProvisoire && <div className="card alerte"><strong>Mot de passe provisoire.</strong> Change-le dans <Link to="/profil">Mon profil</Link>.</div>}
         <h1>Accueil</h1>
         {!configured && <div className="card warn">Firebase n'est pas configuré. Renseigne le fichier .env (voir README).</div>}
+        {nvx.length > 0 && (
+          <div className="card nvx">
+            <div className="row between"><strong>🔔 Nouveau pour toi ({nvx.length})</strong><button className="btn" onClick={marquer}>Marquer comme lu</button></div>
+            {nvx.map((n, i) => <div key={i} style={{ marginTop: 6 }}>{n.ic} {n.to ? <Link to={n.to}>{n.txt}</Link> : n.txt} <span className="muted">· {new Date(n.t).toLocaleDateString("fr-FR")}</span></div>)}
+          </div>
+        )}
         {aRendre.length > 0
           ? <DevoirsCard devoirs={devoirs} />
           : <div className="card"><strong>Exercices à réaliser</strong><p className="muted" style={{ margin: "4px 0 0" }}>Aucun exercice à rendre pour le moment.</p></div>}

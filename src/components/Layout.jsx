@@ -85,16 +85,24 @@ export default function Layout({ children, extra }) {
             <b>{charte.nom}</b>
             <span>{charte.slogan}</span>
           </div>
-          {user && <div>
+          <div>
             <h4>Application</h4>
             <ul>
-              <li><Link to="/">Exercices</Link></li>
-              <li><Link to="/suivi">Mon suivi</Link></li>
-              <li><Link to="/equipe">Mon équipe</Link></li>
-              <li><Link to="/profil">Mon profil</Link></li>
-              <li><Link to="/carte">Carte des inscrits</Link></li>
+              {user && <>
+                <li><Link to="/">Exercices</Link></li>
+                <li><Link to="/suivi">Mon suivi</Link></li>
+                <li><Link to="/equipe">Mon équipe</Link></li>
+                <li><Link to="/profil">Mon profil</Link></li>
+                <li><Link to="/carte">Carte des inscrits</Link></li>
+              </>}
+              <li><Link to="/site">Site de présentation</Link></li>
+              {user && <>
+                <li><Link to="/nouveautes">Nouveautés</Link></li>
+                <li><Link to="/demande-scenario">Demander un scénario</Link></li>
+                <li><a href="#" onClick={(e) => { e.preventDefault(); rouvrirVisite(); }}>Visite guidée</a></li>
+              </>}
             </ul>
-          </div>}
+          </div>
           {user && <div>
             <h4>Gestionnaires</h4>
             <ul>
@@ -106,21 +114,19 @@ export default function Layout({ children, extra }) {
           <div>
             <h4>Informations</h4>
             <ul>
-              <li><Link to="/site">Site de présentation</Link></li>
               <li><Link to="/a-propos">À propos</Link></li>
+              <li><Link to="/confidentialite">Politique de confidentialité</Link></li>
+              <li><Link to="/mentions-legales">Mentions légales</Link></li>
+              <li><Link to="/cgu">Conditions d'utilisation (CGU)</Link></li>
+              <li><Link to="/contact">Contact</Link></li>
               {user && <>
-                <li><Link to="/nouveautes">Nouveautés</Link></li>
-                <li><Link to="/demande-scenario">Demander un scénario</Link></li>
                 <li><Link to="/tickets">Support</Link></li>
-                <li><Link to="/cgu">Conditions d'utilisation (CGU)</Link></li>
-                <li><a href="#" onClick={(e) => { e.preventDefault(); rouvrirVisite(); }}>Visite guidée</a></li>
-                <li><Link to="/contact">Contact</Link></li>
                 <li><a href="#" onClick={(e) => { e.preventDefault(); setAvisOpen(true); }}>Avis et suggestions</a></li>
               </>}
             </ul>
           </div>
         </div>
-        <div className="fcopy">© {new Date().getFullYear()} {charte.nom} — Tous droits réservés{user && <> · <Link to="/cgu">CGU</Link></>}</div>
+        <div className="fcopy"><span>© {new Date().getFullYear()} {charte.nom} — Tous droits réservés</span><nav><Link to="/cgu">CGU</Link><Link to="/confidentialite">Confidentialité</Link><Link to="/mentions-legales">Mentions légales</Link></nav></div>
       </footer>
       {avisOpen && <AvisModal onClose={() => setAvisOpen(false)} />}
     </>

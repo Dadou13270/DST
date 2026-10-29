@@ -30,7 +30,8 @@ import APropos from "./pages/APropos";
 import Nouveautes from "./pages/Nouveautes";
 import Tickets from "./pages/Tickets";
 import AdminTickets from "./pages/AdminTickets";
-import Cgu from "./pages/Cgu";
+import Legal from "./pages/Legal";
+import AdminLegal from "./pages/AdminLegal";
 import Relation from "./pages/Relation";
 import AdminRelation from "./pages/AdminRelation";
 import Site from "./pages/Site";
@@ -62,7 +63,9 @@ export default function App() {
         <Route path="/nouveautes" element={<Nouveautes />} />
         <Route path="/demande-scenario" element={<RequireUser><DemanderScenario /></RequireUser>} />
         <Route path="/tickets" element={<RequireUser><Tickets /></RequireUser>} />
-        <Route path="/cgu" element={<Cgu />} />
+        <Route path="/cgu" element={<Legal k="cgu" />} />
+        <Route path="/confidentialite" element={<Legal k="confidentialite" />} />
+        <Route path="/mentions-legales" element={<Legal k="mentions" />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="/equipe" element={<RequireUser><Equipe /></RequireUser>} />
         <Route path="/seance" element={<RequireUser><Seance /></RequireUser>} />
@@ -90,6 +93,7 @@ export default function App() {
           <Route path="attribution" element={<Attribution />} />
           <Route path="gestionnaires" element={<AdminGestionnaires />} />
           <Route path="annonces" element={<AdminAnnonces />} />
+          <Route path="legal" element={<AdminLegal />} />
           <Route path="tickets" element={<AdminTickets />} />
           <Route path="site" element={<AdminSite />} />
           <Route path="journal" element={<AdminAudit />} />

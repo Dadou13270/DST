@@ -88,6 +88,7 @@ export default function AdminGate() {
         <Link to="/admin/parametres" className="tablink"><button className={pathname.startsWith("/admin/parametres") ? "on" : ""}>Paramètres</button></Link>
         <Link to="/admin/tickets" className="tablink"><button className={pathname.startsWith("/admin/tickets") ? "on" : ""}>Tickets</button></Link>
         <Link to="/admin/site" className="tablink"><button className={pathname.startsWith("/admin/site") ? "on" : ""}>Site</button></Link>
+        <Link to="/admin/legal" className="tablink"><button className={pathname.startsWith("/admin/legal") ? "on" : ""}>Pages légales</button></Link>
         <Link to="/admin/journal" className="tablink"><button className={pathname.startsWith("/admin/journal") ? "on" : ""}>Journal</button></Link>
       </div>
       <Outlet />

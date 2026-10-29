@@ -12,11 +12,25 @@ import { mergeScenario } from "../lib/model";
 import { pdfSuivi, pdfDossier } from "../lib/pdf";
 import { useCarnet } from "../lib/carnet";
 import { StagiaireNav } from "./Home";
+import { competences } from "../lib/competences";
+import CourbeFiches from "../components/CourbeFiches";
 import { FicheLecture } from "../components/FicheEval";
 import { evaluationsDe } from "../lib/fiche";
 import FilMessages from "../components/FilMessages";
 import { repondreFormateur } from "../lib/equipes";
 import { listExercices, typeExercice } from "../lib/relation";
+
+function Repliable({ titre, children }) {
+  const [ouvert, setOuvert] = useState(false);
+  return (
+    <div className="sv-fil">
+      <button type="button" className="sv-tog" aria-expanded={ouvert} onClick={() => setOuvert(!ouvert)}>
+        <span className="chev" style={{ display: "inline-block", transition: ".15s", transform: ouvert ? "rotate(90deg)" : "none" }}>▶</span> <strong>{titre}</strong>
+      </button>
+      {ouvert && children}
+    </div>
+  );
+}
 
 function Fil({ profil, scId, uid, onSent }) {
   const [txt, setTxt] = useState("");
@@ -50,7 +64,7 @@ export default function Suivi() {
   const { user, profil, isAdmin, logout, refreshProfil } = useAuth();
   const [evals, setEvals] = useState([]);
   const [evOuv, setEvOuv] = useState(null);
-  useEffect(() => { if (user) evaluationsDe(user.uid).then(setEvals).catch(() => {}); }, [user?.uid]); // eslint-disable-line
+  useEffect(() => { if (user) evaluationsDe(user.uid).then((l) => setEvals(l.filter((e) => e.decision !== "À compléter"))).catch(() => {}); }, [user?.uid]); // eslint-disable-line
   const [list, setList] = useState(null);
   useEffect(() => {
     listScenarios(true, { uid: user?.uid, equipeId: profil?.equipeId }).then(setList).catch(() => setList([]));
@@ -94,6 +108,7 @@ export default function Suivi() {
       titres,
       notes: Object.entries(carnet.notes).map(([k, n]) => ({ titre: titres[k] || k, texte: n.texte })),
       favoris: carnet.favoris.map((k) => titres[k]).filter(Boolean),
+      fiches: evals,
     });
   };
   const st = statsOf(bs);
@@ -118,6 +133,26 @@ export default function Suivi() {
       <StagiaireNav />
       <div className="row between item"><h1>Mon suivi</h1><span className="row"><button className="btn" onClick={() => pdfSuivi(profil, bs, profil?.equipeNom)}>Exporter en PDF</button> <button className="btn primary" title="Bilans, auto-évaluations, commentaires et notes personnelles" onClick={() => dossier()}>Mon dossier PDF</button></span></div>
       {recup && recup !== "sync" && <p className={recup.startsWith("Récup") ? "err" : "ok-txt"}>{recup}</p>}
+      {(() => {
+        const cp = competences(evals);
+        if (!cp.nb) return null;
+        const col = (titre, l, coul) => (
+          <div className="cp-col" style={{ borderTopColor: coul }}>
+            <h4 style={{ margin: 0 }}>{titre} <span className="muted">({l.length})</span></h4>
+            {l.length ? l.map((x) => <div key={x.n} className="cp-it">{x.n}{x.e ? <span className="tag late" style={{ marginLeft: 6 }}>Éliminatoire</span> : null}<span className="muted"> · {x.moy.toFixed(1)}/3</span></div>) : <p className="muted" style={{ margin: "6px 0 0" }}>Rien pour l'instant.</p>}
+          </div>
+        );
+        return (
+          <div className="card">
+            <h3 style={{ marginTop: 0 }}>Mes compétences <span className="muted" style={{ fontWeight: 400, fontSize: 14 }}>· d'après {cp.nb} fiche{cp.nb > 1 ? "s" : ""} d'évaluation</span></h3>
+            <CourbeFiches evals={evals} />
+            {cp.sections.map((s) => (
+              <div key={s.t} className="cp-bar"><span>{s.t}</span><div><i style={{ width: s.pct + "%", background: s.pct >= 70 ? "#1f8a4c" : s.pct >= 50 ? "#d98a00" : "#c42a1c" }} /></div><b>{s.pct} %</b></div>
+            ))}
+            <div className="cp-cols">{col("Acquis", cp.acquis, "#1f8a4c")}{col("En cours", cp.encours, "#d98a00")}{col("À travailler", cp.travailler, "#c42a1c")}</div>
+          </div>
+        );
+      })()}
       {evals.length > 0 && (
         <div className="card">
           <h3 style={{ marginTop: 0 }}>Mes fiches d'évaluation</h3>
@@ -184,8 +219,8 @@ export default function Suivi() {
                       <div className="sv-info">{i.info}</div>
                       <Link className={i.etat === "termine" ? "btn" : "btn primary"} to={i.to}>{i.btn}</Link>
                       {carnet.notes[i.id[0] + ":" + i.id.slice(1)] && <div className="carnet-note"><b>✎ Ma note :</b> {carnet.notes[i.id[0] + ":" + i.id.slice(1)].texte}</div>}
-                      {i.scId && bs[i.scId]?.auto && <div className="sv-fil"><AutoBilan auto={bs[i.scId].auto} /></div>}
-                      {i.scId && bs[i.scId]?.taches && <div className="sv-fil"><TachesBilan taches={bs[i.scId].taches} /></div>}
+                      {i.scId && bs[i.scId]?.auto && <Repliable titre="Auto-évaluation du stagiaire"><AutoBilan auto={bs[i.scId].auto} sansTitre /></Repliable>}
+                      {i.scId && bs[i.scId]?.taches && <Repliable titre="Consignes de la séance en salle"><TachesBilan taches={bs[i.scId].taches} sansTitre /></Repliable>}
                       {i.scId && profil?.commentaires?.[i.scId] && <div className="sv-fil"><Fil profil={profil} scId={i.scId} uid={user?.uid} onSent={refreshProfil} /></div>}
                     </div>
                   ))}

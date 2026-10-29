@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { FICHE_SMES, NIVEAUX, calculer, chargerModele, enregistrerModele, evaluationExistante, modeleDefaut, pdfFiche, sansSmes, sauverEvaluation, supprimerEvaluation } from "../lib/fiche";
 
 const uid = () => "c" + Math.random().toString(36).slice(2, 8);
@@ -55,8 +55,9 @@ export function FicheLecture({ e }) {
 }
 
 // Saisie par le gestionnaire. stag : {id, nom} · sc : {id, titre, smes} · gest : {uid, nom}
-export default function FicheEval({ stag, sc, gest, src = "suivi", onSaved }) {
+export default function FicheEval({ stag, sc, gest, src = "suivi", onSaved, onSuivant, autoSave }) {
   const [e, setE] = useState(null);
+  const ref = useRef({ e: null, snap: "" }); // état courant + dernier état enregistré (enregistrement automatique en quittant la fiche)
   const [edit, setEdit] = useState(false);
   const [msg, setMsg] = useState("");
   const [conf, setConf] = useState(false);
@@ -65,14 +66,21 @@ export default function FicheEval({ stag, sc, gest, src = "suivi", onSaved }) {
     (async () => {
       const ex = await evaluationExistante(stag.id, sc.id, gest.uid).catch(() => null);
       if (!vivant) return;
-      if (ex) return setE(ex);
+      if (ex) { ref.current.snap = JSON.stringify(ex); return setE(ex); }
       let m = await chargerModele(gest.uid);
       if (!sc.smes) m = sansSmes(m);
-      setE({ stagId: stag.id, stagNom: stag.nom, gestId: gest.uid, gestNom: gest.nom, scId: sc.id, scTitre: sc.titre, smes: !!sc.smes, sections: m, forts: "", progres: "", src });
+      const n = { stagId: stag.id, stagNom: stag.nom, gestId: gest.uid, gestNom: gest.nom, scId: sc.id, scTitre: sc.titre, smes: !!sc.smes, sections: m, forts: "", progres: "", src };
+      ref.current.snap = JSON.stringify(n);
+      setE(n);
     })();
-    return () => { vivant = false; };
+    return () => {
+      vivant = false;
+      const { e: cur, snap } = ref.current;
+      if (autoSave && cur && JSON.stringify(cur) !== snap && cur.sections.some((x) => x.c.some((c) => c.v !== undefined && c.v !== null))) sauverEvaluation(cur).then((d) => onSaved && onSaved(d)).catch(() => {});
+    };
   }, [stag.id, sc.id, gest.uid]); // eslint-disable-line
   if (!e) return <p className="muted">Chargement de la fiche…</p>;
+  ref.current.e = e;
   const maj = (f) => setE((x) => { const n = JSON.parse(JSON.stringify(x)); f(n); return n; });
   const noter = (si, ci, v) => maj((n) => { n.sections[si].c[ci].v = v; });
   const ajouter = (si) => maj((n) => { n.sections[si].c.push({ id: uid(), n: "Nouveau critère", d: "", k: 2, e: 0 }); });
@@ -81,8 +89,14 @@ export default function FicheEval({ stag, sc, gest, src = "suivi", onSaved }) {
     const sec = on ? (m.find((x) => x.id === "smes") || FICHE_SMES) : null;
     maj((n) => { n.smes = on; n.sections = n.sections.filter((x) => x.id !== "smes"); if (on) n.sections.push(JSON.parse(JSON.stringify(sec))); });
   };
-  const run = async (f, ok) => { setMsg("…"); try { await f(); setMsg(ok); } catch (x) { setMsg("Erreur : " + x.message); } };
-  const save = () => run(async () => { const d = await sauverEvaluation(e); setE(d); onSaved && onSaved(d); }, "Fiche enregistrée. Le stagiaire la voit dans son suivi.");
+  const run = async (f, ok) => { setMsg("…"); try { await f(); setMsg(ok); return true; } catch (x) { setMsg("Erreur : " + x.message); return false; } };
+  const save = async () => {
+    let brouillon = false;
+    const ok = await run(async () => { const d = await sauverEvaluation(e); brouillon = d.decision === "À compléter"; ref.current.snap = JSON.stringify(d); ref.current.e = d; setE(d); onSaved && onSaved(d); }, "OK");
+    if (!ok) return false;
+    setMsg(brouillon ? "Brouillon enregistré : le stagiaire ne le voit pas encore (tous les critères ne sont pas notés)." : "Fiche enregistrée. Le stagiaire la voit dans son suivi.");
+    return true;
+  };
   const r = calculer(e.sections);
   const pts = (sec) => ({ t: sec.c.reduce((n, c) => n + (c.v ?? 0) * c.k, 0), m: sec.c.reduce((n, c) => n + 3 * c.k, 0) });
   return (
@@ -138,7 +152,8 @@ export default function FicheEval({ stag, sc, gest, src = "suivi", onSaved }) {
           <div><label>Axes de progrès</label><textarea rows={3} value={e.progres || ""} onChange={(x) => setE({ ...e, progres: x.target.value })} placeholder="Ce qu'il faut retravailler avant la prochaine séance…" /></div>
         </div>
         <div className="row item">
-          <button className="btn primary" onClick={save}>Enregistrer la fiche ({r.decision})</button>
+          <button className="btn primary" onClick={save}>{r.decision === "À compléter" ? "Enregistrer le brouillon" : `Enregistrer la fiche (${r.decision})`}</button>
+          {onSuivant && <button className="btn primary" onClick={async () => { if (await save()) onSuivant(); }}>Enregistrer et suivant →</button>}
           <button className="btn" onClick={() => pdfFiche(e)}>Exporter en PDF</button>
           {edit && <button className="btn" onClick={() => run(() => enregistrerModele(gest.uid, e.smes ? e.sections : [...e.sections, ...(modeleDefaut().filter((x) => x.id === "smes"))]), "Fiche de référence enregistrée.")}>Enregistrer comme fiche de référence</button>}
           {edit && <button className="btn" onClick={() => { let m = modeleDefaut(); if (!e.smes) m = sansSmes(m); maj((n) => { n.sections = m.map((x, i) => ({ ...x, c: x.c.map((c) => ({ ...c, v: (n.sections[i]?.c.find((y) => y.id === c.id) || {}).v })) })); }); }}>Rétablir la fiche d'origine</button>}

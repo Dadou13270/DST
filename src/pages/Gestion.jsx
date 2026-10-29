@@ -17,8 +17,10 @@ import { listScenarios } from "../lib/db";
 import { ajouterDevoir, retirerDevoir, statutDevoir, fmtLimite, limiteDepuisInput, assignerParcours, retirerParcours, relancer, MODELE_RELANCE, modifierLimite, modifierLimiteParcours, inputDepuisLimite } from "../lib/devoirs";
 import { listParcours } from "../lib/parcours";
 import Parcours from "../components/Parcours";
+import ATraiter from "../components/ATraiter";
+import CourbeFiches from "../components/CourbeFiches";
 import FicheEval from "../components/FicheEval";
-import { evaluationExistante } from "../lib/fiche";
+import { evaluationExistante, evaluationsDe } from "../lib/fiche";
 import Frise from "../components/Frise";
 import FilMessages, { nonLus, nonLusMembre } from "../components/FilMessages";
 import TableauBord from "../components/TableauBord";
@@ -175,13 +177,17 @@ function Devoirs({ team, membres, scs, pcs, onChange }) {
 function FriseBilan({ b, sc }) {
   const [on, setOn] = useState(false);
   if (!sc) return null;
-  if (!on) return <button className="btn" onClick={() => setOn(true)}>Voir la chronologie</button>;
+  const entete = (
+    <div className="row between"><h4 style={{ margin: 0 }}>Chronologie</h4>
+      <button className="btn" onClick={() => setOn(!on)}>{on ? "Masquer la chronologie" : "Voir la chronologie"}</button></div>
+  );
+  if (!on) return entete;
   const sess = { log: (b.log || []).map((l) => ({ ...l, who: l.who })), start: b.fin - (b.duree || 0) * 1000, finishedAt: b.fin, evoT: b.evos };
   const interName = (id) => (sc.interlocuteurs || []).find((i) => i.id === id)?.nom || "?";
-  return <Frise sc={sc} sess={sess} interName={interName} />;
+  return <>{entete}<div style={{ marginTop: 10 }}><Frise sc={sc} sess={sess} interName={interName} /></div></>;
 }
 
-function Equipe({ team, autres, scs, pcs, onChange }) {
+function Equipe({ team, autres, scs, pcs, onChange, cible }) {
   const { profil, user, isAdmin } = useAuth();
   const proprio = team.owner === user.uid || isAdmin;
   const [m, setM] = useState(null);
@@ -192,6 +198,7 @@ function Equipe({ team, autres, scs, pcs, onChange }) {
   const [dup, setDup] = useState(null); // nom de la copie en cours de saisie
   const [decal, setDecal] = useState(0);
   const load = () => listMembres(team.id).then(setM).catch((e) => setErr(e.message));
+  useEffect(() => { if (cible && cible.tid === team.id) { setOpen(cible.uid); setTimeout(() => document.getElementById("eq-" + team.id)?.scrollIntoView({ behavior: "smooth", block: "start" }), 300); } }, [cible]); // eslint-disable-line
   const [calcEx, setCalcEx] = useState([]);
   useEffect(() => { listExercices(true).then(setCalcEx).catch(() => {}); }, []);
   useEffect(() => { load(); }, [team.id]); // eslint-disable-line
@@ -201,7 +208,7 @@ function Equipe({ team, autres, scs, pcs, onChange }) {
       : <button className={`btn ${cls}`} onClick={() => setConf(k)}>{label}</button>;
   const tot = (m || []).reduce((a, u) => a + statsOf(u.bilans).n, 0);
   return (
-    <div className="card">
+    <div className="card" id={"eq-" + team.id}>
       <div className="row between item">
         <div>
           <h2 style={{ margin: 0 }}>{team.nom}</h2>
@@ -264,6 +271,7 @@ function Equipe({ team, autres, scs, pcs, onChange }) {
                 </tr>,
                 open === u.id && (
                   <tr key={u.id + "d"}><td colSpan={6}>
+                    <CourbeStag u={u} user={user} />
                     {Object.keys(u.bilans || {}).length === 0 ? (Object.keys(u.calculs || {}).length === 0 ? <span className="muted">Aucun exercice terminé.</span> : null) : (
                       <div className="ex-liste">
                         {Object.entries(u.bilans).map(([scId, b]) => (
@@ -279,7 +287,7 @@ function Equipe({ team, autres, scs, pcs, onChange }) {
                                 <div><span className="muted">Tentatives</span><strong>{b.nb || 1}</strong></div>
                               </div>
                             </div>
-                            <div className="card"><h4>Chronologie</h4><FriseBilan b={b} sc={scs.find((x) => x.id === scId)} /></div>
+                            <div className="card"><FriseBilan b={b} sc={scs.find((x) => x.id === scId)} /></div>
                             {b.auto && <div className="card"><h4>Auto-évaluation</h4><AutoBilan auto={b.auto} /></div>}
                             {b.taches && <div className="card"><h4>Consignes du formateur</h4><TachesBilan taches={b.taches} /></div>}
                             <div className="card"><h4>Commentaire du formateur</h4><Commentaire u={u} scId={scId} auteur={profil?.nom || "Formateur"} onSaved={load} /></div>
@@ -306,6 +314,13 @@ function Equipe({ team, autres, scs, pcs, onChange }) {
 }
 
 // Fiche d'évaluation d'un exercice terminé (dans le suivi du stagiaire)
+function CourbeStag({ u, user }) {
+  const [ev, setEv] = useState([]);
+  useEffect(() => { evaluationsDe(u.id, user.uid).then(setEv).catch(() => {}); }, [u.id]); // eslint-disable-line
+  if (!ev.length) return null;
+  return <div className="card"><CourbeFiches evals={ev} /></div>;
+}
+
 function FicheZone({ u, scId, titre, smes, user, profil }) {
   const [ouvert, setOuvert] = useState(false);
   const [ex, setEx] = useState(undefined);
@@ -314,8 +329,10 @@ function FicheZone({ u, scId, titre, smes, user, profil }) {
     <>
       <div className="card">
         <div className="row between">
-          <h4 style={{ margin: 0 }}>Fiche d'évaluation</h4>
-          <button className="btn" onClick={() => setOuvert(!ouvert)}>{ouvert ? "Masquer la fiche" : ex ? `Ouvrir la fiche : ${ex.decision} (${ex.pct} %)` : "Remplir la fiche d'évaluation"}</button>
+          <div className="row" style={{ gap: 10 }}><h4 style={{ margin: 0 }}>Fiche d'évaluation</h4>
+            {ex && ex.decision !== "À compléter" && <span style={{ background: ex.decision === "Validé" ? "#1f8a4c" : ex.decision === "Non validé" ? "#c42a1c" : "#d98a00", color: "#fff", borderRadius: 999, padding: "3px 12px", fontSize: 13, fontWeight: 700 }}>{"✔ Complétée · " + ex.decision + " · " + ex.pct + " %" + (ex.maj ? " · " + new Date(ex.maj).toLocaleDateString("fr-FR") : "")}</span>}
+            {ex && ex.decision === "À compléter" && <span style={{ background: "#6b7280", color: "#fff", borderRadius: 999, padding: "3px 12px", fontSize: 13, fontWeight: 700 }}>Brouillon enregistré</span>}</div>
+          <button className="btn" onClick={() => setOuvert(!ouvert)}>{ouvert ? "Masquer la fiche" : ex ? "Ouvrir la fiche" : "Remplir la fiche d'évaluation"}</button>
         </div>
       </div>
       {ouvert && <FicheEval stag={{ id: u.id, nom: u.nom }} sc={{ id: scId, titre, smes }} gest={{ uid: user.uid, nom: profil?.nom || "Formateur" }} />}
@@ -425,7 +442,8 @@ export default function Gestion() {
   const [err, setErr] = useState("");
   const [scs, setScs] = useState([]);
   const [pcs, setPcs] = useState([]);
-  const [onglet, setOnglet] = useState("eq");
+  const [onglet, setOnglet] = useState("ac");
+  const [cible, setCible] = useState(null);
   const loadPcs = () => listParcours(user.uid, isAdmin).then(setPcs).catch(() => {});
   useEffect(() => { if (user) loadPcs(); }, [user?.uid, isAdmin]); // eslint-disable-line
   useEffect(() => { if (user) listCatalogue({ uid: user.uid, equipeId: profil?.equipeId }).then(setScs).catch(() => {}); }, [user?.uid]); // eslint-disable-line
@@ -458,13 +476,13 @@ export default function Gestion() {
     try { await createEquipe(user.uid, profil.nom, nom.trim(), profil.departement || ""); setNom(""); await load(); } catch (x) { setErr(x.message); }
   };
   const actives = (teams || []).filter((t) => !t.archivee), archivees = (teams || []).filter((t) => t.archivee);
-  const onglets = [["eq", "Équipes"], ["tb", "Tableau de bord"], ["pc", "Parcours pédagogiques"], ["sa", "Séance en salle"], ["ca", "Calendrier"], ["hs", "Historique des séances"], ["dm", "Demande de scénario"]];
+  const onglets = [["ac", "Accueil"], ["eq", "Équipes"], ["tb", "Tableau de bord"], ["pc", "Parcours pédagogiques"], ["sa", "Séance en salle"], ["ca", "Calendrier"], ["hs", "Historique des séances"], ["dm", "Demande de scénario"]];
   return (
     <Layout>
-      <div className="row between item"><h1>Espace gestionnaire</h1><Link className="btn" to="/messages">✉ Messagerie</Link></div>
-      <div className="tabs" style={{ marginBottom: 14 }}>
+      <div className="tabs">
         {onglets.map(([k, l]) => <button key={k} className={onglet === k ? "on" : ""} onClick={() => setOnglet(k)}>{l}</button>)}
       </div>
+      <div className="row between item"><h1>Espace gestionnaire</h1><Link className="btn" to="/messages">✉ Messagerie</Link></div>
       {onglet === "eq" && (
         <>
           <form className="card row item" onSubmit={creer}>
@@ -481,7 +499,7 @@ export default function Gestion() {
       {err && <div className="card warn">Erreur : {err} (les règles Firestore sont-elles republiées ?)</div>}
       {!teams && !err && <p>Chargement…</p>}
       {teams && actives.length === 0 && <div className="card">Aucune équipe. Crée-en une : un code d'accès est généré.</div>}
-      {actives.map((t) => <Equipe key={t.id} team={t} autres={actives.filter((x) => x.id !== t.id)} scs={scs} pcs={pcs} onChange={load} />)}
+      {actives.map((t) => <Equipe key={t.id} team={t} autres={actives.filter((x) => x.id !== t.id)} scs={scs} pcs={pcs} onChange={load} cible={cible} />)}
       {archivees.length > 0 && (
         <>
           <h2 style={{ marginTop: 24 }}>Équipes archivées ({archivees.length})</h2>
@@ -491,6 +509,7 @@ export default function Gestion() {
       )}
         </>
       )}
+      {onglet === "ac" && (actives.length > 0 ? <ATraiter teams={actives} user={user} profil={profil} onOuvrir={(tid, uid) => { setCible({ tid, uid, n: Date.now() }); setOnglet("eq"); }} /> : <div className="card">{teams ? "Aucune équipe. Crée-en une dans l'onglet Équipes." : "Chargement…"}</div>)}
       {onglet === "ca" && <CalendrierSeances user={user} onHistorique={() => setOnglet("hs")} />}
       {onglet === "hs" && <HistoriqueSeances user={user} />}
       {onglet === "tb" && <TableauBord teams={actives} scs={scs} />}

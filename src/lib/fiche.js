@@ -75,6 +75,9 @@ export async function evaluationsDe(stagId, gestId) {
   const q = gestId ? query(collection(db, "evaluations"), where("stagId", "==", stagId), where("gestId", "==", gestId)) : query(collection(db, "evaluations"), where("stagId", "==", stagId));
   return (await getDocs(q)).docs.map((d) => ({ id: d.id, ...d.data() })).sort((a, b) => (b.maj || 0) - (a.maj || 0));
 }
+export async function evaluationsDeGest(gestId) {
+  return (await getDocs(query(collection(db, "evaluations"), where("gestId", "==", gestId)))).docs.map((d) => ({ id: d.id, ...d.data() }));
+}
 export const evaluationExistante = async (stagId, scId, gestId) => {
   const s = await getDoc(doc(db, "evaluations", idEval(stagId, scId, gestId)));
   return s.exists() ? { id: s.id, ...s.data() } : null;

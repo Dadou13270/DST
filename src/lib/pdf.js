@@ -2,6 +2,8 @@ import { nomApp, rvbCharte } from "./charte";
 import { fmtDate, fmtDuree, statsOf } from "./users";
 import { filDe } from "../components/FilMessages";
 import { statutDevoir } from "./devoirs";
+import { calculer, NIVEAUX } from "./fiche";
+import { competences } from "./competences";
 
 const dateJour = () => new Date().toLocaleDateString("fr-FR", { dateStyle: "long" });
 
@@ -40,7 +42,7 @@ export async function pdfSuivi(profil, bilans, equipe) {
 }
 
 // Dossier personnel du stagiaire : bilans, auto-évaluations, consignes, commentaires, résultats de calcul, notes privées, favoris.
-export async function pdfDossier(profil, bilans, equipe, { titres = {}, notes = [], favoris = [] } = {}) {
+export async function pdfDossier(profil, bilans, equipe, { titres = {}, notes = [], favoris = [], fiches = [] } = {}) {
   const { doc, table } = await nouveau("Mon dossier de formation", profil?.nom || "Stagiaire");
   const st = statsOf(bilans);
   table({ startY: 42, theme: "plain", columnStyles: { 0: { fontStyle: "bold", cellWidth: 55 } }, body: [
@@ -58,6 +60,19 @@ export async function pdfDossier(profil, bilans, equipe, { titres = {}, notes = 
   }
   const fils = Object.entries(profil?.commentaires || {}).flatMap(([id, c]) => filDe(c, (profil.reponses || {})[id]).map((m) => [bilans?.[id]?.titre || titres["s:" + id] || id, `${m.de === "f" ? m.nom + " (formateur)" : "Moi"}, ${fmtDate(m.le)}`, m.texte]));
   if (fils.length) table({ startY: y(doc, 10), head: [["Exercice", "Auteur", "Commentaire"]], body: fils, columnStyles: { 0: { cellWidth: 45 }, 1: { cellWidth: 45 } } });
+  const cp = competences(fiches);
+  if (cp.nb) {
+    table({ startY: y(doc, 10), head: [["Mes compétences (d'après " + cp.nb + " fiche(s))", "Détail"]], columnStyles: { 0: { cellWidth: 55, fontStyle: "bold" } }, body: [
+      ["Acquis", cp.acquis.map((x) => x.n).join("\n") || "—"], ["En cours", cp.encours.map((x) => x.n).join("\n") || "—"], ["À travailler", cp.travailler.map((x) => x.n).join("\n") || "—"] ] });
+    table({ startY: y(doc, 6), head: [["Rubrique de la fiche", "Réussite"]], body: cp.sections.map((s) => [s.t, s.pct + " %"]), columnStyles: { 1: { cellWidth: 25 } } });
+  }
+  fiches.filter((e) => e.sections).forEach((e) => {
+    const r = calculer(e.sections);
+    const corps = [];
+    e.sections.forEach((s) => { corps.push([{ content: s.t, colSpan: 3, styles: { fontStyle: "bold", fillColor: [238, 240, 243] } }]); s.c.forEach((c) => corps.push([c.n + (c.e ? " (éliminatoire)" : ""), String(c.k), c.v === undefined || c.v === null ? "—" : `${c.v} · ${NIVEAUX[c.v]}`])); });
+    table({ startY: y(doc, 10), head: [[`Fiche d'évaluation · ${e.scTitre || ""} · ${r.decision} (${r.pct} %) · ${e.gestNom || "—"}, ${fmtDate(e.maj)}`, "Coef.", "Niveau"]], body: corps, columnStyles: { 1: { cellWidth: 14 }, 2: { cellWidth: 34 } } });
+    if (e.forts || e.progres) table({ startY: y(doc, 4), head: [["Points forts", "Axes de progrès"]], body: [[e.forts || "—", e.progres || "—"]] });
+  });
   if (notes.length) table({ startY: y(doc, 10), head: [["Mes notes personnelles", ""]], body: notes.map((n) => [n.titre, n.texte]), columnStyles: { 0: { cellWidth: 55, fontStyle: "bold" } } });
   if (favoris.length) table({ startY: y(doc, 10), head: [["Mes exercices favoris"]], body: favoris.map((t) => ["★ " + t]) });
   piedPages(doc);

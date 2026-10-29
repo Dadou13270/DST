@@ -4,11 +4,11 @@ export const AUTO_CH = [
   { k: "ana", titre: "Analyser", q: "Qu'en ai-je analysé ?" },
   { k: "dec", titre: "Décider", q: "Qu'ai-je décidé ?" },
 ];
-export default function AutoBilan({ auto }) {
+export default function AutoBilan({ auto, sansTitre }) {
   if (!auto || !AUTO_CH.some((c) => auto[c.k])) return null;
   return (
     <div className="taches-bilan">
-      <strong>Auto-évaluation du stagiaire</strong>
+      {!sansTitre && <strong>Auto-évaluation du stagiaire</strong>}
       {AUTO_CH.map((c) => <div key={c.k} className="tb-item"><div className="muted">{c.titre}</div><p className="pre" style={{ margin: "2px 0 0" }}>{auto[c.k] || "—"}</p></div>)}
     </div>
   );

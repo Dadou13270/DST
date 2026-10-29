@@ -3,6 +3,7 @@ import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
 import Layout from "../components/Layout";
 import SalleChat from "../components/SalleChat";
 import FicheEval from "../components/FicheEval";
+import { evaluationsDeGest } from "../lib/fiche";
 import { FriseSvg, FRISE_COL, frMmss } from "../components/Frise";
 import { useAuth } from "../lib/auth";
 import { getScenario } from "../lib/db";
@@ -78,6 +79,10 @@ export default function Salle() {
   const [codeGrand, setCodeGrand] = useState(false);
   const [arch, setArch] = useState(false);
   const [fiche, setFiche] = useState("");
+  const [aTraiter, setATraiter] = useState(false);
+  const [evs, setEvs] = useState({});
+  const recharger = () => { if (user && salle?.scId) evaluationsDeGest(user.uid).then((l) => { const m = {}; l.filter((e) => e.scId === salle.scId).forEach((e) => { m[e.stagId] = e; }); setEvs(m); }).catch(() => {}); };
+  useEffect(() => { recharger(); }, [user?.uid, salle?.scId]); // eslint-disable-line
   const [, tick] = useState(0);
   useEffect(() => { const t = setInterval(() => tick((n) => n + 1), 15000); return () => clearInterval(t); }, []);
 
@@ -247,21 +252,42 @@ export default function Salle() {
           </div>
         )}
       </div>
-      {ps.length > 0 && sc && (
-        <div className="card">
-          <h3 style={{ marginTop: 0 }}>Fiche d'évaluation</h3>
-          <div className="row">
-            <select value={fiche} onChange={(e) => setFiche(e.target.value)}>
-              <option value="">Choisir un stagiaire…</option>
-              {ps.map((u) => <option key={u.uid} value={u.uid}>{u.nom || "Stagiaire"}</option>)}
-            </select>
-            <span className="muted">Note en direct pendant que le stagiaire passe. La fiche est visible ensuite dans son suivi.</span>
+      {ps.length > 0 && sc && (() => {
+        const etat = (u) => { const e = evs[u.uid]; return !e ? "a" : e.decision === "À compléter" ? "brouillon" : "fait"; };
+        const notes = ps.filter((u) => etat(u) === "fait").length;
+        const vus = aTraiter ? ps.filter((u) => etat(u) !== "fait" || u.uid === fiche) : ps;
+        const suivant = () => {
+          const i = ps.findIndex((u) => u.uid === fiche);
+          const ordre = [...ps.slice(i + 1), ...ps.slice(0, Math.max(i, 0))];
+          const n = ordre.find((u) => etat(u) !== "fait" && u.uid !== fiche) || ordre[0];
+          recharger();
+          if (n) setFiche(n.uid);
+        };
+        const rec = ps.filter((u) => etat(u) === "fait").map((u) => evs[u.uid]);
+        const agg = new Map();
+        rec.forEach((e) => e.sections.forEach((x) => x.c.forEach((c) => { if (c.v === undefined || c.v === null) return; const a = agg.get(c.n) || { n: c.n, t: 0, k: 0 }; a.t += c.v; a.k++; agg.set(c.n, a); })));
+        const faibles = [...agg.values()].map((a) => ({ n: a.n, m: a.t / a.k })).sort((a, b) => a.m - b.m).slice(0, 3);
+        return (
+          <div className="card">
+            <div className="row between"><h3 style={{ margin: 0 }}>Fiche d'évaluation</h3><span className="muted"><strong>{notes} / {ps.length}</strong> stagiaire{ps.length > 1 ? "s" : ""} noté{notes > 1 ? "s" : ""}</span></div>
+            <p className="muted" style={{ margin: "4px 0 8px" }}>Choisis un stagiaire, note, puis « Enregistrer et suivant ». Changer de stagiaire enregistre automatiquement un brouillon que le stagiaire ne voit pas : la fiche lui est visible une fois tous les critères notés.</p>
+            <label className="check" style={{ marginBottom: 8 }}><input type="checkbox" checked={aTraiter} onChange={(e) => setATraiter(e.target.checked)} /> Seulement ceux à noter</label>
+            <div className="row" style={{ gap: 6 }}>
+              {vus.map((u) => { const st = etat(u); return <button key={u.uid} className={"btn" + (u.uid === fiche ? " primary" : "")} title={st === "fait" ? "Fiche terminée" : st === "brouillon" ? "Brouillon (invisible du stagiaire)" : "À noter"} onClick={() => setFiche(u.uid)}>{st === "fait" ? "✔" : st === "brouillon" ? "✎" : "○"} {u.nom || "Stagiaire"}</button>; })}
+            </div>
+            {fiche && ps.find((u) => u.uid === fiche) && (
+              <FicheEval key={fiche} src="salle" autoSave onSaved={recharger} onSuivant={suivant} stag={{ id: fiche, nom: ps.find((u) => u.uid === fiche).nom || "Stagiaire" }} sc={{ id: salle.scId, titre: sc.titre, smes: !!sc.smes }} gest={{ uid: user.uid, nom: profil?.nom || "Formateur" }} />
+            )}
+            {rec.length > 0 && (
+              <div className="card" style={{ marginTop: 12 }}>
+                <h4 style={{ margin: "0 0 6px" }}>Récapitulatif de la séance</h4>
+                <table className="cmp" style={{ minWidth: 0 }}><thead><tr><th>Stagiaire</th><th>Décision</th><th>Résultat</th></tr></thead><tbody>{rec.map((e) => <tr key={e.stagId}><td>{e.stagNom}</td><td>{e.decision}</td><td>{e.pct} %</td></tr>)}</tbody></table>
+                <p className="muted" style={{ margin: "8px 0 0" }}>Critères les plus faibles du groupe : {faibles.map((x) => `${x.n} (${x.m.toFixed(1)}/3)`).join(" · ")}</p>
+              </div>
+            )}
           </div>
-          {fiche && ps.find((u) => u.uid === fiche) && (
-            <FicheEval key={fiche} src="salle" stag={{ id: fiche, nom: ps.find((u) => u.uid === fiche).nom || "Stagiaire" }} sc={{ id: salle.scId, titre: sc.titre, smes: !!sc.smes }} gest={{ uid: user.uid, nom: profil?.nom || "Formateur" }} />
-          )}
-        </div>
-      )}
+        );
+      })()}
       <div className="card">
         <h3 style={{ marginTop: 0 }}>Questions essentielles : {faites} / {ess.length} posées au moins une fois</h3>
         <div style={{ maxHeight: 280, overflow: "auto" }}>

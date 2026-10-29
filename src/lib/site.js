@@ -55,7 +55,7 @@ export function watchSite(cb) {
   if (!db) { cb({ config: null, sections: [], vide: true }); return () => {}; }
   return onSnapshot(collection(db, "site"), (s) => {
     let config = null; const sections = [];
-    s.docs.forEach((d) => { if (d.id === "config") config = d.data(); else sections.push({ id: d.id, ...d.data() }); });
+    s.docs.forEach((d) => { if (d.id === "config") config = d.data(); else if (!d.id.startsWith("legal-")) sections.push({ id: d.id, ...d.data() }); });
     sections.sort((a, b) => (a.ordre || 0) - (b.ordre || 0));
     cb({ config, sections, vide: !config && !sections.length });
   }, () => cb({ config: null, sections: [], vide: true, erreur: true }));

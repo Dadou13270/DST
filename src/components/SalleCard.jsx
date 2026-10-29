@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import CoFormateurs from "./CoFormateurs";
 import QrCode from "./QrCode";
+import { copierAvecQr, imageInvitation, telecharger } from "../lib/invitation";
 import { useAuth } from "../lib/auth";
 import { creerSalle, watchMesSalles, etatSalle, libEtat, fmtDebut, debutDepuisInput, inputDepuisDebut, modifierSalle, supprimerSalle } from "../lib/salles";
 
@@ -26,6 +27,7 @@ La salle s'ouvre à l'heure indiquée ci-dessus.
 
 function Invitation({ r, nom }) {
   const [ok, setOk] = useState(false);
+  const [info, setInfo] = useState("");
   const txt = texteInvitation(r, nom);
   const copier = async () => {
     try { await navigator.clipboard.writeText(txt); } catch {
@@ -40,7 +42,12 @@ function Invitation({ r, nom }) {
         <textarea id={"inv-" + r.code} className="grow" readOnly rows={11} value={txt} onFocus={(e) => e.target.select()} />
         <div style={{ textAlign: "center" }}><QrCode valeur={lienSalle(r.code)} /><div className="muted">Scan = rejoindre</div></div>
       </div>
-      <button className="btn primary" onClick={copier}>{ok ? "Copié ✓" : "Copier le message"}</button>
+      <div className="row item">
+        <button className="btn primary" onClick={copier}>{ok ? "Copié ✓" : "Copier le message"}</button>
+        <button className="btn" title="Texte + QR code à coller dans un e-mail" onClick={async () => { try { await copierAvecQr(txt, lienSalle(r.code)); setInfo("Message avec QR code copié : colle-le dans ton e-mail."); } catch { setInfo("Copie impossible ici : télécharge l'image."); } }}>Copier avec le QR code</button>
+        <button className="btn" title="Image prête à envoyer par SMS, WhatsApp ou e-mail" onClick={async () => { try { telecharger(await imageInvitation(txt, lienSalle(r.code)), `invitation-${r.code}.png`); setInfo("Image téléchargée : joins-la à ton message."); } catch { setInfo("Création de l'image impossible."); } }}>Télécharger l'invitation (image)</button>
+        {info && <span className="muted">{info}</span>}
+      </div>
     </div>
   );
 }
