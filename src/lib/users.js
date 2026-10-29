@@ -1,6 +1,6 @@
 import { essentielles, nbQuestions } from "./evolutif";
 import { db } from "../firebase";
-import { collection, doc, getDocs, setDoc, updateDoc, deleteDoc } from "firebase/firestore";
+import { collection, doc, getDocs, setDoc, updateDoc, deleteDoc, deleteField } from "firebase/firestore";
 import { cubStat } from "./model";
 import { evTimes } from "../components/Frise";
 
@@ -11,6 +11,8 @@ export async function listUsers() {
     .map((d) => ({ id: d.id, ...d.data(), admin: admins.has(d.id) }))
     .sort((x, y) => (x.nom || "").localeCompare(y.nom || "", "fr"));
 }
+export const setAdminDept = (uid, dept) =>
+  updateDoc(doc(db, "users", uid), { adminDept: dept || deleteField() });
 export const setStatut = (uid, statut) => updateDoc(doc(db, "users", uid), { statut });
 export const setAdmin = (uid, on) =>
   on ? setDoc(doc(db, "admins", uid), { actif: true }) : deleteDoc(doc(db, "admins", uid));

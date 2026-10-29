@@ -1,3 +1,4 @@
+import { CadresEdit } from "../components/Cadres";
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { listRelations, saveRelation, newRelation, controler, TECH, ETATS, BESOINS, TYPES_INTER, FINS } from "../lib/relation";
@@ -52,6 +53,7 @@ export default function AdminRelation() {
             <div><label>Publié</label><select value={e.publie ? "1" : "0"} onChange={(ev) => set("publie", ev.target.value === "1")}><option value="0">Brouillon</option><option value="1">Publié</option></select></div>
             <div><label>Jauges</label><select value={e.jaugesMasquees ? "1" : "0"} onChange={(ev) => set("jaugesMasquees", ev.target.value === "1")}><option value="0">Visibles (guidé)</option><option value="1">Masquées (expert)</option></select></div>
           </div>
+          <CadresEdit value={e.cadres} onChange={(v) => set("cadres", v)} />
           <label>Photo (optionnelle)</label>
           <div className="row">{e.vignette && <img src={e.vignette} alt="" style={{ height: 60, borderRadius: 6 }} />}<input type="file" accept="image/*" onChange={(ev) => photo(ev.target.files[0])} />{e.photo && <button className="btn" onClick={() => setE({ ...e, photo: "", vignette: "" })}>Retirer</button>}</div>
         </div>

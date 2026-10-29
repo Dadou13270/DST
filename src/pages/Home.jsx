@@ -1,6 +1,7 @@
 import { calcImg } from "../lib/calculImages";
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
+import { CadresBadges, CADRES } from "../components/Cadres";
 import Dominantes from "../components/Dominantes";
 import Layout from "../components/Layout";
 import { configured } from "../firebase";
@@ -12,6 +13,8 @@ import { etatExercice } from "../lib/etat";
 import { rubriquesDe, RI } from "../lib/model";
 import { listCalculs } from "../lib/calculs";
 import { listExercices } from "../lib/relation";
+import { useCharte } from "../lib/charte";
+import { useCarnet } from "../lib/carnet";
 import { useMessages, nbNonLus } from "../lib/messages";
 
 export function StagiaireNav() {
@@ -22,6 +25,7 @@ export function StagiaireNav() {
     <div className="tabs">
       <Link to="/" className="tablink" title="Tous les scénarios"><button className={pathname === "/" || pathname.startsWith("/calculs") ? "on" : ""}>Exercices</button></Link>
       <Link to="/suivi" className="tablink" title="Tes résultats et commentaires du formateur"><button className={pathname === "/suivi" ? "on" : ""}>Mon suivi</button></Link>
+      <Link to="/fiches" className="tablink" title="Rappels courts : SOIEC, formules, messages"><button className={pathname === "/fiches" ? "on" : ""}>Fiches mémo</button></Link>
       <Link to="/equipe" className="tablink" title="Rejoindre une équipe avec un code"><button className={pathname === "/equipe" ? "on" : ""}>Mon équipe</button></Link>
       <Link to="/seance" className="tablink" title="Rejoindre une séance en salle avec un code"><button className={pathname === "/seance" ? "on" : ""}>Séance en salle</button></Link>
       <Link to="/messages" className="tablink" title="Messages privés avec ton gestionnaire"><button className={pathname === "/messages" ? "on" : ""}>Messages{nonLus > 0 && <span className="tabbadge">{nonLus}</span>}</button></Link>
@@ -42,6 +46,17 @@ export default function Home() {
   const [dur, setDur] = useState("");
   const [etat, setEtat] = useState("");
   const [typ, setTyp] = useState("");
+  const [soloFav, setSoloFav] = useState(false);
+  const [cadre, setCadre] = useState(() => { try { return localStorage.getItem("op-cadre") || ""; } catch { return ""; } });
+  const majCadre = (v) => { setCadre(v); try { localStorage.setItem("op-cadre", v); } catch { /* */ } };
+  const charte = useCharte();
+  const { carnet, basculerFavori } = useCarnet(user?.uid);
+  const estFav = (k) => carnet.favoris.includes(k);
+  const etoile = (k) => (
+    <span role="button" tabIndex={0} className={"fav" + (estFav(k) ? " on" : "")} title={estFav(k) ? "Retirer des favoris" : "Mettre en favori"} aria-label="Favori" aria-pressed={estFav(k)}
+      onClick={(e) => { e.preventDefault(); e.stopPropagation(); basculerFavori(k); }}
+      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); e.stopPropagation(); basculerFavori(k); } }}>{estFav(k) ? "★" : "☆"}</span>
+  );
   const [ferme, setFerme] = useState(() => { try { return JSON.parse(localStorage.getItem("op-rub") || "{}") || {}; } catch { return {}; } });
   const [cols, setCols] = useState(() => { try { const v = localStorage.getItem("op-cols"); return ["2", "3", "4", "5"].includes(v) ? v : "5"; } catch { return "5"; } });
   const suivCols = () => { const n = { "2": "3", "3": "4", "4": "5", "5": "2" }[cols] ?? "5"; setCols(n); try { localStorage.setItem("op-cols", n); } catch { /* */ } };
@@ -56,9 +71,11 @@ export default function Home() {
     if (dur === "20" && !(d > 10 && d <= 20)) return false;
     if (dur === "21" && !(d > 20)) return false;
     if (etat && etatExercice(profil, s.id) !== etat) return false;
+    if (soloFav && !estFav("s:" + s.id)) return false;
+    if (cadre && !(s.cadres || []).includes(cadre)) return false;
     return true;
   });
-  const filtre = Boolean(q || rub || dur || etat || typ);
+  const filtre = Boolean(q || rub || dur || etat || typ || soloFav || cadre);
   const essaisDe = (id) => (profil?.calculs || {})[id] || [];
   const calcs = calcEx.filter((ex) => {
     if (typ === "soiec" || (typ === "calc" && ex.kind === "rel") || (typ === "rel" && ex.kind !== "rel")) return false;
@@ -66,6 +83,8 @@ export default function Home() {
     if (dur) return false;
     if (q && !norm(`${ex.titre} ${ex.kind === "rel" ? ex.description : ex.contexte}`).includes(norm(q))) return false;
     if (etat && etat !== (essaisDe(ex.id).length ? "termine" : "nouveau")) return false;
+    if (soloFav && !estFav("e:" + ex.id)) return false;
+    if (cadre && !(ex.cadres || []).includes(cadre)) return false;
     return true;
   });
 
@@ -90,9 +109,7 @@ export default function Home() {
       {devoirs.filter((d) => d.statut !== "ok").length > 0 && <DevoirsCard devoirs={devoirs} />}
       {profil?.mdpProvisoire && <div className="card alerte"><strong>Mot de passe provisoire.</strong> Change-le dans <Link to="/profil">Mon profil</Link>.</div>}
       <h1>Choisis un scénario</h1>
-      <p className="muted">
-        Observe la photo, interroge les personnes présentes, puis construis ton SOIEC et ton message.
-      </p>
+      <p className="muted">{charte.accueil}</p>
 
       {!configured && (
         <div className="card warn">Firebase n'est pas configuré. Renseigne le fichier .env (voir README).</div>
@@ -120,8 +137,13 @@ export default function Home() {
           <select value={etat} onChange={(e) => setEtat(e.target.value)} aria-label="État">
             <option value="">Tous les états</option><option value="nouveau">Non commencés</option><option value="encours">En cours</option><option value="termine">Terminés</option>
           </select>
+          <select value={cadre} onChange={(e) => majCadre(e.target.value)} aria-label="Cadre d'emploi">
+            <option value="">Tous les cadres d'emploi</option>
+            {CADRES.map((c) => <option key={c.k} value={c.k}>{c.l}</option>)}
+          </select>
+          <button className={"btn" + (soloFav ? " primary" : "")} aria-pressed={soloFav} onClick={() => setSoloFav(!soloFav)} title="Afficher seulement mes favoris">★ Favoris{carnet.favoris.length ? ` (${carnet.favoris.length})` : ""}</button>
           <button className="btn colbtn" onClick={suivCols} title="Changer le nombre de colonnes">▦ Colonnes : {cols}</button>
-          {filtre && <button className="btn" onClick={() => { setQ(""); setRub(""); setDur(""); setEtat(""); setTyp(""); }}>Réinitialiser</button>}
+          {filtre && <button className="btn" onClick={() => { setQ(""); setRub(""); setDur(""); setEtat(""); setTyp(""); setSoloFav(false); majCadre(""); }}>Réinitialiser</button>}
           {filtre && <span className="muted">{vue.length + calcs.length} sur {list.length + calcEx.length}</span>}
         </div>
       )}
@@ -151,7 +173,9 @@ export default function Home() {
                 const l = essaisDe(ex.id), last = l[l.length - 1];
                 return (
                   <Link key={ex.id} to={ex.kind === "rel" ? `/relation/${ex.id}` : `/calculs/${ex.id}`} className="card scn">
+                    {etoile("e:" + ex.id)}
                                         {ex.kind === "rel" && ex.vignette ? <img src={ex.vignette} alt="" loading="lazy" /> : calcImg(ex) ? <img src={calcImg(ex)} alt="" loading="lazy" /> : <div className="ph" style={{ display: "flex", alignItems: "center", justifyContent: "center", fontSize: "2rem" }}>{ex.kind === "rel" ? "🗣️" : "🧮"}</div>}
+                    <CadresBadges v={ex.cadres} />
                     <div className="scn-body">
                       <div className="stl"><span className={`stc ${last ? "termine" : ""}`}>{last ? "Terminé" : "Nouveau"}</span></div>
                       <h3>{ex.titre}</h3>
@@ -164,7 +188,9 @@ export default function Home() {
               })}
               {g.map((s) => (
                 <Link key={s.id} to={`/scenario/${s.id}`} className="card scn">
+                  {etoile("s:" + s.id)}
                                     {s.vignette ? <img src={s.vignette} alt="" /> : <div className="ph">Pas de photo</div>}
+                  <CadresBadges v={s.cadres} />
                   <div className="scn-body">
                     <div className="stl"><span className={`stc ${etatExercice(profil, s.id)}`}>{{ nouveau: "Nouveau", encours: "En cours", termine: "Terminé" }[etatExercice(profil, s.id)]}</span></div>
                     <h3>{s.titre}</h3>

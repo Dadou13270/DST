@@ -25,9 +25,8 @@ export const CRM = [
 ];
 
 export const MESSAGE_MODELE = `ICI [indicatif], MESSAGE D'AMBIANCE
-Arrivé sur les lieux de :
-Situation :
-Actions en cours :
+Je suis :
+Je vois :
 Je demande :
 `;
 
@@ -52,10 +51,13 @@ export const newScenario = () => ({
   publie: false,
   afficherCorrection: true,
   cubique: false,
+  cadres: [],
+  commandement: false, // prise de commandement (chef de groupe) : passation + actions + compte rendu
   reserveA: null, // uid du gestionnaire à qui le scénario est réservé (null = public)
   vignette: null,
   situation: {
     contexte: "",
+    passation: { ambiance: "", ri: "", cr: "" }, // message d'ambiance, réactions immédiates et compte rendu du premier engin
     consigne:
       "Vous arrivez sur les lieux en tant que chef d'agrès. Observez la photo, interrogez les personnes présentes, puis rédigez votre SOIEC et votre message.",
   },
@@ -69,7 +71,7 @@ export const newScenario = () => ({
   ],
   qa: [],
   variantes: [],
-  correction: { S: "", O: "", I: "", E: "", C: "", ms: "", mm: "", me: "", mt: "", crs: "", crv: "", crf: "", crd: "", message: "", commentaire: "", cubique: "" },
+  correction: { actions: "", S: "", O: "", I: "", E: "", C: "", ms: "", mm: "", me: "", mt: "", crs: "", crv: "", crf: "", crd: "", message: "", commentaire: "", cubique: "" },
 });
 
 export const mergeScenario = (d) => {
@@ -86,7 +88,7 @@ export const mergeScenario = (d) => {
 
 export const profilComplet = (p) => Boolean(p && p.nom && p.grade && p.departement && p.cis);
 export const RI = "Risques industriels";
-export const RUBRIQUES = ["Incendie", "Secours à personne", "Secours routier", "Opérations diverses", "Risques industriels", "Gestion du conflit"];
+export const RUBRIQUES = ["Incendie", "Secours à personne", "Secours routier", "Opérations diverses", "Risques industriels", "Commandement", "Gestion du conflit"];
 export const rubriquesDe = (list) => {
   const x = [...RUBRIQUES];
   (list || []).forEach((s) => s.rubrique && !x.includes(s.rubrique) && x.push(s.rubrique));

@@ -14,6 +14,9 @@ import SalleChat from "../components/SalleChat";
 import AutoBilan, { AUTO_CH } from "../components/AutoBilan";
 import { posterQuestion, watchSalle, watchMessages, chronoReste, signalerEvo, repondreTache } from "../lib/salles";
 import { buildBilan, saveBilan } from "../lib/users";
+import Fiches from "../components/Fiches";
+import NotePerso from "../components/NotePerso";
+import { useCarnet } from "../lib/carnet";
 import { applyVars, tirer, varsDe } from "../lib/variantes";
 
 const emptySession = () => ({
@@ -22,7 +25,7 @@ const emptySession = () => ({
   finished: false,
   evo: {},
   log: [],
-  notes: { ri: "", S: "", O: "", I: "", E: "", C: "", ms: "", mm: "", me: "", mt: "", message: "", crs: "", crv: "", crf: "", crd: "" },
+  notes: { actions: "", ri: "", S: "", O: "", I: "", E: "", C: "", ms: "", mm: "", me: "", mt: "", message: "", crs: "", crv: "", crf: "", crd: "" },
 });
 const load = (k) => {
   try {
@@ -71,6 +74,7 @@ export default function Player() {
   const [err, setErr] = useState("");
   const [saveMsg, setSaveMsg] = useState("");
   const { user, profil, isAdmin, refreshProfil } = useAuth();
+  const cn = useCarnet(user?.uid);
   const [sess, setSess] = useState(() => {
     const loc = load(key);
     const cl = salle ? null : profil?.encours?.[id];
@@ -81,6 +85,7 @@ export default function Player() {
   const sc = useMemo(() => (scRaw ? applyVars(scRaw, sess.vars) : null), [scRaw, sess.vars]);
   const [sugOpen, setSugOpen] = useState(true);
   const [tab, setTab] = useState("ri");
+  const tabE = sc?.commandement && (tab === "ri" || tab === "message") ? "actions" : tab;
   const [autoOpen, setAutoOpen] = useState(false);
   const setAuto = (k, v) => setSess((s) => ({ ...s, auto: { ...(s.auto || {}), [k]: v } }));
   const autoOk = AUTO_CH.every((c) => (sess.auto?.[c.k] || "").trim());
@@ -299,8 +304,8 @@ export default function Player() {
   if (sess.finished) {
     const essentielles = essentielles_(sc, sess);
     const asked = new Set(sess.log.map((l) => l.qaId));
-    const rows = [{ label: "Réactions immédiates", mine: sess.notes.ri, ref: "" }, ...(sc.smes ? SMES.map((r) => ({ label: `SMES – ${r.titre}`, mine: sess.notes[r.k], ref: sc.correction[r.k] })) : []), ...SOIEC.map((r) => ({ label: `${r.k} – ${r.titre}`, mine: sess.notes[r.k], ref: sc.correction[r.k] })),
-      { label: "Message d'ambiance", mine: sess.notes.message, ref: sc.correction.message },
+    const rows = [...(sc.commandement ? [{ label: "Actions engagées", mine: sess.notes.actions, ref: sc.correction.actions }] : [{ label: "Réactions immédiates", mine: sess.notes.ri, ref: "" }]), ...(sc.smes ? SMES.map((r) => ({ label: `SMES – ${r.titre}`, mine: sess.notes[r.k], ref: sc.correction[r.k] })) : []), ...SOIEC.map((r) => ({ label: `${r.k} – ${r.titre}`, mine: sess.notes[r.k], ref: sc.correction[r.k] })),
+      ...(sc.commandement ? [] : [{ label: "Message d'ambiance", mine: sess.notes.message, ref: sc.correction.message }]),
       ...CRM.map((r) => ({ label: `Compte rendu – ${r.titre}`, mine: sess.notes[r.k], ref: sc.correction[r.k] }))];
     return (
       <Layout wide right={<Link to="/">Scénarios</Link>}>
@@ -434,6 +439,15 @@ export default function Player() {
               <p className="pre">{sc.situation.contexte}</p>
             </>
           )}
+          {sc.commandement && (
+            <div className="passation">
+              <h3>Passation de commandement</h3>
+              <p className="muted">Le premier engin est sur place depuis plusieurs minutes. Voici ce qui a déjà été fait et transmis.</p>
+              {[["Message d'ambiance reçu", sc.situation.passation?.ambiance], ["Réactions immédiates déjà engagées", sc.situation.passation?.ri], ["Compte rendu du chef d'agrès", sc.situation.passation?.cr]].filter(([, t]) => t).map(([l, t]) => (
+                <div key={l} className="pas-bloc"><b>{l}</b><p className="pre">{t}</p></div>
+              ))}
+            </div>
+          )}
           {sitPhotos.length > 0 && (
             <>
               <h3>Sur les lieux</h3>
@@ -536,25 +550,34 @@ export default function Player() {
           )}
 
           <div className="ptabs" role="tablist">
-            {[["ri", "Réactions immédiates"], ...(sc.smes ? [["smes", "SMES"]] : []), ["message", "Message d'ambiance"], ["soiec", "SOIEC"], ["cr", "Compte rendu"], ...tachesSalle.map((t) => ["t:" + t.id, t.titre.replace(/^(Rédiger|Indiquer) (le |la |les |l')?/i, "").replace(/^./, (c) => c.toUpperCase())])].map(([k, l]) => (
-              <button key={k} role="tab" className={tab === k ? "on" : ""} onClick={() => setTab(k)}>{l}</button>
+            {[...(sc.commandement ? [["actions", "Actions"]] : [["ri", "Réactions immédiates"]]), ...(sc.smes ? [["smes", "SMES"]] : []), ...(sc.commandement ? [] : [["message", "Message d'ambiance"]]), ["soiec", "SOIEC"], ["cr", "Compte rendu"], ["perso", "Mes notes"], ["fiches", "Fiches"], ...tachesSalle.map((t) => ["t:" + t.id, t.titre.replace(/^(Rédiger|Indiquer) (le |la |les |l')?/i, "").replace(/^./, (c) => c.toUpperCase())])].map(([k, l]) => (
+              <button key={k} role="tab" className={tabE === k ? "on" : ""} onClick={() => setTab(k)}>{l}</button>
             ))}
           </div>
-          {[...(sc.smes && tab === "smes" ? SMES : []), ...(tab === "soiec" ? SOIEC : [])].map((r) => (
+          {[...(sc.smes && tabE === "smes" ? SMES : []), ...(tabE === "soiec" ? SOIEC : [])].map((r) => (
             <div key={r.k} className="note">
               <div className="nk"><span className="kk">{SMES.includes(r) ? r.titre[0] : r.k}</span>{SMES.includes(r) ? "SMES · " : ""}{r.titre}</div>
               <p className="nh">{r.aide}</p>
               <textarea rows={5} value={sess.notes[r.k] || ""} onChange={(e) => setNote(r.k, e.target.value)} />
             </div>
           ))}
-          {tab === "ri" && (
+          {tabE === "perso" && <NotePerso k={"s:" + id} carnet={cn.carnet} noter={cn.noter} basculerFavori={cn.basculerFavori} />}
+          {tabE === "fiches" && <Fiches compact />}
+          {tabE === "actions" && (
+            <div className="note">
+              <div className="nk"><span className="kk">⚙</span>Actions</div>
+              <p className="nh">Tu viens de prendre le commandement. Quelles actions engages-tu, dans quel ordre ? (prise de commandement, PC, missions aux engins, secteurs, renforts, sécurité, liaisons…)</p>
+              <textarea rows={8} value={sess.notes.actions || ""} onChange={(e) => setNote("actions", e.target.value)} />
+            </div>
+          )}
+          {tabE === "ri" && (
             <div className="note">
               <div className="nk"><span className="kk">⚡</span>Réactions immédiates</div>
               <p className="nh">Quelles sont tes premières actions, dès ton arrivée, avant même d'avoir toutes les informations ?</p>
               <textarea rows={5} value={sess.notes.ri || ""} onChange={(e) => setNote("ri", e.target.value)} />
             </div>
           )}
-          {tachesSalle.filter((t) => tab === "t:" + t.id).map((t) => {
+          {tachesSalle.filter((t) => tabE === "t:" + t.id).map((t) => {
             const fait = sess.taches?.[t.id];
             const val = tacheTxt[t.id] ?? fait?.texte ?? "";
             return (
@@ -565,7 +588,7 @@ export default function Player() {
               </div>
             );
           })}
-          {tab === "cr" && (
+          {tabE === "cr" && (
             <div className="note">
               <div className="nk"><span className="kk">✉</span>Message de compte rendu</div>
               <p className="nh">Complète les quatre rubriques : je suis, je vois, je fais, je demande.</p>
@@ -577,7 +600,7 @@ export default function Player() {
               ))}
             </div>
           )}
-          {tab === "message" && (
+          {tabE === "message" && (
             <div className="note">
               <div className="nk"><span className="kk">✉</span>Message d'ambiance</div>
               <textarea rows={9} value={sess.notes.message} onChange={(e) => setNote("message", e.target.value)} />

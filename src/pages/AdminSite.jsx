@@ -27,7 +27,7 @@ function Section({ s, prev, next, msg }) {
   const set = (k, x) => setV({ ...v, [k]: x });
   const item = (i, k, x) => set("items", v.items.map((it, j) => (j === i ? { ...it, [k]: x } : it)));
   const sauver = () => saveSection(v).then(() => msg("Section enregistrée.")).catch((e) => msg("Erreur : " + e.message));
-  const aItems = v.type !== "texte-image";
+  const aItems = v.type !== "texte-image" && v.type !== "nouveautes";
   return (
     <div className="card">
       <div className="row between">
@@ -42,6 +42,7 @@ function Section({ s, prev, next, msg }) {
         <option value="cartes">Cartes (liste de fonctions)</option>
         <option value="etapes">Étapes numérotées</option>
         <option value="texte-image">Texte + image</option>
+        <option value="nouveautes">Nouveautés (liste automatique)</option>
       </select>
       <label className="lbl">Titre</label>
       <input value={v.titre || ""} onChange={(e) => set("titre", e.target.value)} />

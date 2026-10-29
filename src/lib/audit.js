@@ -6,6 +6,8 @@ export const ACTIONS = {
   suspension: "Suspension",
   reactivation: "Réactivation",
   admin_ajout: "Droits admin accordés",
+  admin_dept_ajout: "Admin de département défini",
+  admin_dept_retrait: "Admin de département retiré",
   admin_retrait: "Droits admin retirés",
   gestionnaire_ajout: "Rôle gestionnaire accordé",
   gestionnaire_retrait: "Rôle gestionnaire retiré",

@@ -27,7 +27,7 @@ export async function archiverSalle(code) {
   const essOk = ess.filter((x) => qs.some((q) => q.qaId === x.id)).length;
   const inter = (id) => (sc?.interlocuteurs || []).find((i) => i.id === id)?.nom || "";
   const data = {
-    owner: salle.owner, ownerNom: salle.ownerNom || "", code, scId: salle.scId || "", titre: salle.titre || "",
+    owner: salle.owner, co: salle.co || [], ownerNom: salle.ownerNom || "", code, scId: salle.scId || "", titre: salle.titre || "",
     debut: salle.debut || 0, creeLe: (salle.le?.seconds || 0) * 1000, archiveLe: Date.now(),
     consignes: (salle.taches || []).map((t) => t.titre),
     stagiaires: ps.map((u) => ({
@@ -45,7 +45,10 @@ export async function archiverSalle(code) {
 }
 
 export async function listSeances(owner) {
-  const s = await getDocs(query(collection(db, "seances"), where("owner", "==", owner)));
-  return s.docs.map((d) => ({ id: d.id, ...d.data() })).sort((a, b) => (b.archiveLe || 0) - (a.archiveLe || 0));
+  const [a, b] = await Promise.all([
+    getDocs(query(collection(db, "seances"), where("owner", "==", owner))),
+    getDocs(query(collection(db, "seances"), where("co", "array-contains", owner))).catch(() => ({ docs: [] })),
+  ]);
+  return [...new Map([...a.docs, ...b.docs].map((d) => [d.id, d])).values()].map((d) => ({ id: d.id, ...d.data() })).sort((a, b) => (b.archiveLe || 0) - (a.archiveLe || 0));
 }
 export const supprimerSeance = (id) => deleteDoc(doc(db, "seances", id));

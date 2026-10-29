@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { DOMS } from "../components/Dominantes";
+import { CadresEdit } from "../components/Cadres";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { getScenario, getPhoto, getSituationPhotos, saveScenario } from "../lib/db";
 import { compressImage } from "../lib/image";
@@ -257,6 +258,11 @@ export default function AdminEditor() {
             <input type="checkbox" checked={s.suggestions !== false} onChange={(e) => upd((n) => (n.suggestions = e.target.checked))} />
             Proposer des questions suggérées aux stagiaires (à partir des intitulés des questions)
           </label>
+          <label className="check">
+            <input type="checkbox" checked={!!s.commandement} onChange={(e) => upd((n) => (n.commandement = e.target.checked))} />
+            Prise de commandement (chef de groupe) : le message d'ambiance et les réactions immédiates sont déjà faits, le stagiaire reçoit un compte rendu, engage des actions et transmet un compte rendu
+          </label>
+          <CadresEdit value={s.cadres} onChange={(v) => upd((n) => (n.cadres = v))} />
           <div className="domblk">
           <label>Dominantes du scénario (badges affichés aux stagiaires pour guider leur choix)</label>
           <div className="doml">
@@ -425,6 +431,17 @@ export default function AdminEditor() {
         <div className="card form">
           <label>Situation initiale (départ reçu, heure, engins engagés, informations connues à l'arrivée)</label>
           <textarea rows={6} value={s.situation.contexte} onChange={(e) => upd((n) => (n.situation.contexte = e.target.value))} />
+          {s.commandement && (
+            <div className="card form">
+              <h4 style={{ marginTop: 0 }}>Passation de commandement (ce que le premier engin a déjà fait)</h4>
+              <label>Message d'ambiance transmis par le premier engin</label>
+              <textarea rows={4} value={s.situation.passation?.ambiance || ""} onChange={(e) => upd((n) => { n.situation.passation = { ...(n.situation.passation || {}), ambiance: e.target.value }; })} />
+              <label>Réactions immédiates déjà engagées</label>
+              <textarea rows={4} value={s.situation.passation?.ri || ""} onChange={(e) => upd((n) => { n.situation.passation = { ...(n.situation.passation || {}), ri: e.target.value }; })} />
+              <label>Compte rendu du chef d'agrès à l'arrivée du chef de groupe</label>
+              <textarea rows={5} value={s.situation.passation?.cr || ""} onChange={(e) => upd((n) => { n.situation.passation = { ...(n.situation.passation || {}), cr: e.target.value }; })} />
+            </div>
+          )}
           <label>Consigne donnée au stagiaire</label>
           <textarea rows={4} value={s.situation.consigne} onChange={(e) => upd((n) => (n.situation.consigne = e.target.value))} />
           <label>Photos de la situation à l'arrivée sur les lieux ({sitList.length}/{MAXSIT}), choisies sur ton ordinateur</label>
@@ -725,6 +742,12 @@ export default function AdminEditor() {
 
       {tab === "msgm" && (
         <div className="card form">
+          {s.commandement && (
+            <>
+              <label><b>Actions attendues du chef de groupe</b> – correction des actions à engager</label>
+              <textarea rows={8} value={s.correction.actions || ""} onChange={(e) => upd((n) => (n.correction.actions = e.target.value))} />
+            </>
+          )}
           <label><b>Message d'ambiance</b> – message modèle (ambiance / renseignements)</label>
           <textarea rows={9} value={s.correction.message} onChange={(e) => upd((n) => (n.correction.message = e.target.value))} />
         </div>

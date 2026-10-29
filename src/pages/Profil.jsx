@@ -5,6 +5,7 @@ import { EmailAuthProvider, reauthenticateWithCredential, updatePassword, verify
 import { db, auth } from "../firebase";
 import Layout from "../components/Layout";
 import { StagiaireNav } from "./Home";
+import DemandeGestionnaire from "../components/DemandeGestionnaire";
 import { useAuth } from "../lib/auth";
 import { logAudit } from "../lib/audit";
 import { monGestionnaire } from "../lib/messages";
@@ -114,6 +115,7 @@ export default function Profil() {
           <strong>Rôle :</strong>{" "}
           {isAdmin && <span className="tag ok">Administrateur</span>}{" "}
           {profil?.gestionnaire && <span className="tag ok">Gestionnaire</span>}{" "}
+          {profil?.adminDept && <span className="tag">Admin de département · {profil.adminDept}</span>}{" "}
           <span className="tag">Stagiaire</span>
           {profil?.equipeNom && <span className="muted"> · équipe {profil.equipeNom}</span>}
         </p>
@@ -139,6 +141,7 @@ export default function Profil() {
         <button className="btn primary big">Enregistrer</button>
       </div>
       </form>
+      <DemandeGestionnaire />
       <div className="card form">
         <h3>Connexion</h3>
         <p className="muted">E-mail actuel : <strong>{user?.email}</strong>. Le mot de passe actuel est demandé pour toute modification.</p>

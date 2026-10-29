@@ -35,9 +35,14 @@ export async function getSalle(code) {
   return s.exists() ? { id: s.id, ...s.data() } : null;
 }
 
-export const watchMesSalles = (owner, cb) =>
-  onSnapshot(query(collection(db, "salles"), where("owner", "==", owner)), (q) =>
-    cb(q.docs.map((d) => ({ id: d.id, ...d.data() })).sort((a, b) => (b.le?.seconds || 0) - (a.le?.seconds || 0))), () => cb([]));
+export const watchMesSalles = (owner, cb) => {
+  let a = [], b = [];
+  const emit = () => cb([...new Map([...a, ...b].map((x) => [x.id, x])).values()].sort((x, y) => (y.le?.seconds || 0) - (x.le?.seconds || 0)));
+  const map = (q) => q.docs.map((d) => ({ id: d.id, ...d.data() }));
+  const u1 = onSnapshot(query(collection(db, "salles"), where("owner", "==", owner)), (q) => { a = map(q); emit(); }, () => {});
+  const u2 = onSnapshot(query(collection(db, "salles"), where("co", "array-contains", owner)), (q) => { b = map(q); emit(); }, () => {});
+  return () => { u1(); u2(); };
+};
 
 export const watchSalle = (code, cb) =>
   onSnapshot(doc(db, "salles", code), (s) => cb(s.exists() ? { id: s.id, ...s.data() } : null), () => cb(null));

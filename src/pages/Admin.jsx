@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { listDemandesGest } from "../lib/gestionnaires";
 import { Link, Outlet, useLocation } from "react-router-dom";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import Layout from "../components/Layout";
@@ -11,6 +12,8 @@ export default function AdminGate() {
   const [email, setEmail] = useState("");
   const [pwd, setPwd] = useState("");
   const [err, setErr] = useState("");
+  const [nbDem, setNbDem] = useState(0);
+  useEffect(() => { if (isAdmin) listDemandesGest().then((l) => setNbDem(l.filter((d) => d.statut === "attente").length)).catch(() => {}); }, [isAdmin, pathname]);
 
   if (!configured)
     return (
@@ -80,6 +83,8 @@ export default function AdminGate() {
         <Link to="/admin/utilisateurs" className="tablink"><button className={pathname.startsWith("/admin/utilisateurs") ? "on" : ""}>Utilisateurs</button></Link>
         <Link to="/admin/stats" className="tablink"><button className={pathname.startsWith("/admin/stats") ? "on" : ""}>Statistiques</button></Link>
         <Link to="/admin/attribution" className="tablink"><button className={pathname.startsWith("/admin/attribution") ? "on" : ""}>Attribution</button></Link>
+        <Link to="/admin/gestionnaires" className="tablink"><button className={pathname.startsWith("/admin/gestionnaires") ? "on" : ""}>Gestionnaires{nbDem > 0 ? ` (${nbDem})` : ""}</button></Link>
+        <Link to="/admin/annonces" className="tablink"><button className={pathname.startsWith("/admin/annonces") ? "on" : ""}>Annonces</button></Link>
         <Link to="/admin/parametres" className="tablink"><button className={pathname.startsWith("/admin/parametres") ? "on" : ""}>Paramètres</button></Link>
         <Link to="/admin/tickets" className="tablink"><button className={pathname.startsWith("/admin/tickets") ? "on" : ""}>Tickets</button></Link>
         <Link to="/admin/site" className="tablink"><button className={pathname.startsWith("/admin/site") ? "on" : ""}>Site</button></Link>

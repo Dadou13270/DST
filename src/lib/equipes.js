@@ -10,8 +10,11 @@ export const normCode = (c) => (c || "").toUpperCase().replace(/[^A-Z0-9]/g, "")
 export const setGestionnaire = (uid, on) => updateDoc(doc(db, "users", uid), { gestionnaire: on });
 
 export async function listMesEquipes(uid) {
-  const s = await getDocs(query(collection(db, "teams"), where("owner", "==", uid)));
-  return s.docs.map((d) => ({ id: d.id, ...d.data() })).sort((a, b) => (a.nom || "").localeCompare(b.nom || "", "fr"));
+  const [a, b] = await Promise.all([
+    getDocs(query(collection(db, "teams"), where("owner", "==", uid))),
+    getDocs(query(collection(db, "teams"), where("co", "array-contains", uid))).catch(() => ({ docs: [] })),
+  ]);
+  return [...a.docs, ...b.docs].map((d) => ({ id: d.id, ...d.data() })).sort((a, b) => (a.nom || "").localeCompare(b.nom || "", "fr"));
 }
 
 async function reserveCode(teamId, owner, nom, ownerNom) {
@@ -25,13 +28,26 @@ async function reserveCode(teamId, owner, nom, ownerNom) {
   throw new Error("Impossible de générer un code, réessaie.");
 }
 
-export async function createEquipe(owner, ownerNom, nom) {
+export async function createEquipe(owner, ownerNom, nom, departement = "") {
   const ref = doc(collection(db, "teams"));
-  await setDoc(ref, { nom, owner, ownerNom, code: "", creeLe: serverTimestamp() });
+  await setDoc(ref, { nom, owner, ownerNom, code: "", departement, creeLe: serverTimestamp() });
   const code = await reserveCode(ref.id, owner, nom, ownerNom);
   await updateDoc(ref, { code });
   return { id: ref.id, nom, owner, ownerNom, code };
 }
+
+// Co-formateurs : gestionnaires du même CIS qui pilotent aussi l'équipe (ou la salle).
+export async function listGestionnairesCis(profil, exclureUid) {
+  if (!profil?.cis) return [];
+  const l = await listUtilisateursCis(profil.departement, profil.cis);
+  return l.filter((u) => u.gestionnaire && u.id !== exclureUid);
+}
+export const coAjouter = (col, id, obj, g) =>
+  updateDoc(doc(db, col, id), { co: arrayUnion(g.id), coNoms: { ...(obj.coNoms || {}), [g.id]: g.nom || "Gestionnaire" } });
+export const coRetirer = (col, id, obj, uid) => {
+  const noms = { ...(obj.coNoms || {}) }; delete noms[uid];
+  return updateDoc(doc(db, col, id), { co: (obj.co || []).filter((x) => x !== uid), coNoms: noms });
+};
 
 export async function regenCode(team) {
   const code = await reserveCode(team.id, team.owner, team.nom, team.ownerNom);
@@ -60,7 +76,7 @@ export async function restaurerEquipe(team) {
 // Duplication : nouvelle équipe (nouveau code), mêmes exercices à rendre, sans les membres.
 // decalage (jours) : décale les échéances copiées.
 export async function dupliquerEquipe(team, nom, decalage = 0) {
-  const n = await createEquipe(team.owner, team.ownerNom, nom);
+  const n = await createEquipe(team.owner, team.ownerNom, nom, team.departement || "");
   const dev = (team.devoirs || []).map((d) => ({ ...d, limite: d.limite ? d.limite + decalage * 86400000 : d.limite }));
   if (dev.length) await updateDoc(doc(db, "teams", n.id), { devoirs: dev });
   return n;

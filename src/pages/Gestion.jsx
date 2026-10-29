@@ -3,21 +3,25 @@ import AutoBilan from "../components/AutoBilan";
 import { listExercices, typeExercice, listCatalogue } from "../lib/relation";
 import { useEffect, useState } from "react";
 import { Link, Navigate } from "react-router-dom";
+import { doc, updateDoc } from "firebase/firestore";
+import { db } from "../firebase";
 import Layout from "../components/Layout";
 import { useAuth } from "../lib/auth";
+import CoFormateurs from "../components/CoFormateurs";
 import HistoriqueSeances from "../components/HistoriqueSeances";
+import CalendrierSeances from "../components/CalendrierSeances";
 import { archiverEquipe, restaurerEquipe, dupliquerEquipe, listUtilisateursCis, affecterMembre, createEquipe, listMesEquipes, listMembres, regenCode, retirerMembre, supprimerEquipe, deplacerMembre, envoyerMessageFormateur, marquerFilLu, effacerFil } from "../lib/equipes";
 import { fmtDate, fmtDuree, statsOf } from "../lib/users";
 import { inscrireStagiaire, parseLignes } from "../lib/inscription";
 import { listScenarios } from "../lib/db";
-import { ajouterDevoir, retirerDevoir, statutDevoir, fmtLimite, limiteDepuisInput, assignerParcours, retirerParcours, modifierLimite, modifierLimiteParcours, inputDepuisLimite } from "../lib/devoirs";
+import { ajouterDevoir, retirerDevoir, statutDevoir, fmtLimite, limiteDepuisInput, assignerParcours, retirerParcours, relancer, MODELE_RELANCE, modifierLimite, modifierLimiteParcours, inputDepuisLimite } from "../lib/devoirs";
 import { listParcours } from "../lib/parcours";
 import Parcours from "../components/Parcours";
 import Frise from "../components/Frise";
 import FilMessages, { nonLus, nonLusMembre } from "../components/FilMessages";
 import TableauBord from "../components/TableauBord";
 import SalleCard from "../components/SalleCard";
-import { pdfEquipe } from "../lib/pdf";
+import { pdfEquipe, pdfRapports } from "../lib/pdf";
 import DemandeScenario from "../components/DemandeScenario";
 
 const d = (t) => (t?.toDate ? t.toDate().toLocaleString("fr-FR", { dateStyle: "short", timeStyle: "short" }) : "—");
@@ -51,6 +55,10 @@ function Commentaire({ u, scId, auteur, onSaved }) {
 }
 
 function Devoirs({ team, membres, scs, pcs, onChange }) {
+  const { user, profil } = useAuth();
+  const [modele, setModele] = useState(MODELE_RELANCE);
+  const [rmsg, setRmsg] = useState("");
+  const [rouvert, setRouvert] = useState(false);
   const [pcId, setPcId] = useState("");
   const [pcLim, setPcLim] = useState("");
   const [scId, setScId] = useState("");
@@ -65,6 +73,10 @@ function Devoirs({ team, membres, scs, pcs, onChange }) {
   };
   const now = Date.now();
   const retards = dev.flatMap((d) => membres.filter((u) => statutDevoir(d, u.bilans, now, u.calculs) === "retard").map((u) => ({ u, d })));
+  const relancerLignes = async (l) => {
+    setRmsg("…");
+    try { const n = await relancer(team, { uid: user.uid, nom: profil?.nom }, l, modele); setRmsg(`${n} stagiaire(s) relancé(s) par message privé.`); onChange(); } catch (x) { setRmsg("Erreur : " + x.message); }
+  };
   const add = async (e) => {
     e.preventDefault(); setErr("");
     const sc = scs.find((x) => x.id === scId);
@@ -91,7 +103,16 @@ function Devoirs({ team, membres, scs, pcs, onChange }) {
       {retards.length > 0 && (
         <div className="card alerte">
           <strong>Retards ({retards.length})</strong>
-          {retards.map(({ u, d }) => <div key={u.id + d.scId}>{u.nom} — « {d.titre} » (échéance {fmtLimite(d.limite)})</div>)}
+          {retards.map(({ u, d }) => {
+            const r = (team.relances || {})[u.id + "_" + d.scId];
+            return <div key={u.id + d.scId} className="row between item"><span>{u.nom} — « {d.titre} » (échéance {fmtLimite(d.limite)}){r && <span className="muted"> · relancé le {fmtLimite(r)}</span>}</span><button className="btn" onClick={() => relancerLignes([{ u, d }])}>Relancer</button></div>;
+          })}
+          <div className="row item">
+            <button className="btn primary" onClick={() => relancerLignes(retards)}>Relancer tous les retardataires</button>
+            <button className="btn" onClick={() => setRouvert(!rouvert)}>{rouvert ? "Masquer le texte" : "Modifier le texte"}</button>
+            {rmsg && <span className="muted">{rmsg}</span>}
+          </div>
+          {rouvert && <><textarea rows={3} value={modele} onChange={(e) => setModele(e.target.value)} /><div className="muted">Variables : {"{nom}"} (prénom), {"{exercice}"}, {"{date}"} (échéance).</div></>}
         </div>
       )}
       {dev.length === 0 && <p className="muted">Aucun exercice imposé. La liste est obligatoire pour les membres de l'équipe, avec une date limite.</p>}
@@ -159,7 +180,8 @@ function FriseBilan({ b, sc }) {
 }
 
 function Equipe({ team, autres, scs, pcs, onChange }) {
-  const { profil } = useAuth();
+  const { profil, user, isAdmin } = useAuth();
+  const proprio = team.owner === user.uid || isAdmin;
   const [m, setM] = useState(null);
   const [open, setOpen] = useState(null);
   const [conf, setConf] = useState("");
@@ -189,16 +211,18 @@ function Equipe({ team, autres, scs, pcs, onChange }) {
           <code style={{ fontSize: "1.3rem", letterSpacing: ".15em", fontWeight: 600 }}>{team.code}</code>
           <button className="btn" onClick={() => { navigator.clipboard?.writeText(team.code); setCopie(true); setTimeout(() => setCopie(false), 1500); }}>{copie ? "Copié" : "Copier"}</button></>}
           <button className="btn" disabled={!m} onClick={() => pdfEquipe(team, m)}>Export PDF</button>
-          {!team.archivee && two("rg", "Nouveau code", async () => { await regenCode(team); onChange(); })}
-          {team.archivee
+          <button className="btn" disabled={!m || !m.length} title="Un rapport de fin de formation par stagiaire (PDF unique)" onClick={() => pdfRapports(team, m)}>Rapports de fin de formation</button>
+          {proprio && !team.archivee && two("rg", "Nouveau code", async () => { await regenCode(team); onChange(); })}
+          {proprio && (team.archivee
             ? two("rs", "Restaurer", async () => { await restaurerEquipe(team); onChange(); }, "primary")
             : <>
                 <button className="btn" onClick={() => setDup(team.nom + " (copie)")}>Dupliquer</button>
                 {two("ar", "Archiver", async () => { await archiverEquipe(team); onChange(); })}
-              </>}
-          {two("del", "Supprimer l'équipe", async () => { await supprimerEquipe(team); onChange(); }, "danger")}
+              </>)}
+          {proprio && two("del", "Supprimer l'équipe", async () => { await supprimerEquipe(team); onChange(); }, "danger")}
         </div>
       </div>
+      {!team.archivee && <CoFormateurs col="teams" id={team.id} obj={team} onChange={onChange} />}
       {dup !== null && (
         <div className="row item">
           <input className="grow" value={dup} onChange={(e) => setDup(e.target.value)} placeholder="Nom de la nouvelle équipe" />
@@ -225,6 +249,7 @@ function Equipe({ team, autres, scs, pcs, onChange }) {
                     <div className="row">
                       <button className="btn" onClick={() => setOpen(open === u.id ? null : u.id)}>{open === u.id ? "Masquer" : "Suivi"}</button>
                       <Link className="btn" to={`/messages?avec=${u.id}`} title="Envoyer un message privé">✉</Link>
+                      <button className="btn" title="Rapport de fin de formation (PDF)" onClick={() => pdfRapports(team, [u])}>Rapport PDF</button>
                       {autres.length > 0 && (
                         <select value="" onChange={(e) => { const t = autres.find((x) => x.id === e.target.value); if (t) run(async () => { await deplacerMembre(u.id, t); await load(); onChange(); }); }}>
                           <option value="">Déplacer vers…</option>
@@ -375,15 +400,20 @@ export default function Gestion() {
   const ok = Boolean(profil?.gestionnaire || isAdmin);
   const load = () => listMesEquipes(user.uid).then(setTeams).catch((e) => setErr(e.message));
   useEffect(() => { if (user && ok) load(); }, [user, ok]); // eslint-disable-line
+  // anciennes équipes : renseigne le département du créateur (utile à l'admin de département)
+  useEffect(() => {
+    if (!teams || !profil?.departement) return;
+    teams.filter((t) => t.owner === user.uid && !t.departement).forEach((t) => updateDoc(doc(db, "teams", t.id), { departement: profil.departement }).catch(() => {}));
+  }, [teams?.length, profil?.departement]); // eslint-disable-line
   if (loading || !profil) return <Layout><p>Chargement…</p></Layout>;
   if (!ok) return <Navigate to="/" replace />;
   const creer = async (e) => {
     e.preventDefault();
     setErr("");
-    try { await createEquipe(user.uid, profil.nom, nom.trim()); setNom(""); await load(); } catch (x) { setErr(x.message); }
+    try { await createEquipe(user.uid, profil.nom, nom.trim(), profil.departement || ""); setNom(""); await load(); } catch (x) { setErr(x.message); }
   };
   const actives = (teams || []).filter((t) => !t.archivee), archivees = (teams || []).filter((t) => t.archivee);
-  const onglets = [["eq", "Équipes"], ["tb", "Tableau de bord"], ["pc", "Parcours pédagogiques"], ["sa", "Séance en salle"], ["hs", "Historique des séances"], ["dm", "Demande de scénario"]];
+  const onglets = [["eq", "Équipes"], ["tb", "Tableau de bord"], ["pc", "Parcours pédagogiques"], ["sa", "Séance en salle"], ["ca", "Calendrier"], ["hs", "Historique des séances"], ["dm", "Demande de scénario"]];
   return (
     <Layout>
       <div className="row between item"><h1>Espace gestionnaire</h1><Link className="btn" to="/messages">✉ Messagerie</Link></div>
@@ -416,6 +446,7 @@ export default function Gestion() {
       )}
         </>
       )}
+      {onglet === "ca" && <CalendrierSeances user={user} onHistorique={() => setOnglet("hs")} />}
       {onglet === "hs" && <HistoriqueSeances user={user} />}
       {onglet === "tb" && <TableauBord teams={actives} scs={scs} />}
       {onglet === "pc" && <Parcours user={user} profil={profil} isAdmin={isAdmin} scs={scs} pcs={pcs} onChange={loadPcs} />}

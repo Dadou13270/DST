@@ -1,3 +1,4 @@
+import { CadresEdit } from "../components/Cadres";
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { listCalculs, saveCalcul, attendu, CALC_Q } from "../lib/calculs";
@@ -56,6 +57,7 @@ export default function AdminCalcul() {
           <div><label>Rubrique</label><select value={e.rubrique || ""} onChange={(ev) => set("rubrique", ev.target.value)}><option value="">— Aucune —</option>{rubs.map((r) => <option key={r}>{r}</option>)}</select></div>
           <label className="ck"><input type="checkbox" checked={!!e.publie} onChange={(ev) => set("publie", ev.target.checked)} /> Publié (visible des stagiaires)</label>
         </div>
+        <CadresEdit value={e.cadres} onChange={(v) => set("cadres", v)} />
         <h3>Illustration</h3>
         <div className="row" style={{ alignItems: "flex-start" }}>
           {im ? <img src={im} alt="" style={{ width: 220, maxWidth: "100%", borderRadius: 8 }} /> : <div className="ph" style={{ width: 220, height: 120, fontSize: "2rem", borderRadius: 8 }}>🧮</div>}

@@ -9,7 +9,8 @@ import { listScenarios } from "../lib/db";
 import { useAuth } from "../lib/auth";
 import { fmtDate, fmtDuree, statsOf, buildBilan } from "../lib/users";
 import { mergeScenario } from "../lib/model";
-import { pdfSuivi } from "../lib/pdf";
+import { pdfSuivi, pdfDossier } from "../lib/pdf";
+import { useCarnet } from "../lib/carnet";
 import { StagiaireNav } from "./Home";
 import FilMessages from "../components/FilMessages";
 import { repondreFormateur } from "../lib/equipes";
@@ -51,6 +52,7 @@ export default function Suivi() {
   }, [user?.uid, profil?.equipeId]); // eslint-disable-line
   const [exs, setExs] = useState([]);
   useEffect(() => { listExercices(isAdmin, { uid: user?.uid, equipeId: profil?.equipeId }).then(setExs); }, [isAdmin, user?.uid, profil?.equipeId]);
+  const { carnet } = useCarnet(user?.uid);
   const [recup, setRecup] = useState("");
   const [filtre, setFiltre] = useState("");
   // Récupère les exercices terminés sur cet appareil mais absents du suivi (faits avant la mise à jour ou échec d'enregistrement).
@@ -79,6 +81,16 @@ export default function Suivi() {
       .catch((e) => setRecup("Récupération impossible (" + (e.code || e.message) + ")."));
   }, [list, user, profil]); // eslint-disable-line react-hooks/exhaustive-deps
   const bs = profil?.bilans || {};
+  const dossier = () => {
+    const titres = {};
+    (list || []).forEach((s) => { titres["s:" + s.id] = s.titre; });
+    exs.forEach((e) => { titres["e:" + e.id] = e.titre; });
+    pdfDossier(profil, bs, profil?.equipeNom, {
+      titres,
+      notes: Object.entries(carnet.notes).map(([k, n]) => ({ titre: titres[k] || k, texte: n.texte })),
+      favoris: carnet.favoris.map((k) => titres[k]).filter(Boolean),
+    });
+  };
   const st = statsOf(bs);
   const enCours = (id) => {
     try {
@@ -99,7 +111,7 @@ export default function Suivi() {
       }
     >
       <StagiaireNav />
-      <div className="row between item"><h1>Mon suivi</h1><button className="btn" onClick={() => pdfSuivi(profil, bs, profil?.equipeNom)}>Exporter en PDF</button></div>
+      <div className="row between item"><h1>Mon suivi</h1><span className="row"><button className="btn" onClick={() => pdfSuivi(profil, bs, profil?.equipeNom)}>Exporter en PDF</button> <button className="btn primary" title="Bilans, auto-évaluations, commentaires et notes personnelles" onClick={() => dossier()}>Mon dossier PDF</button></span></div>
       {recup && recup !== "sync" && <p className={recup.startsWith("Récup") ? "err" : "ok-txt"}>{recup}</p>}
       {!list && <p>Chargement…</p>}
       {list && (() => {
@@ -153,6 +165,7 @@ export default function Suivi() {
                       <span className={"sv-st " + i.etat}>{ET[i.etat]}</span>
                       <div className="sv-info">{i.info}</div>
                       <Link className={i.etat === "termine" ? "btn" : "btn primary"} to={i.to}>{i.btn}</Link>
+                      {carnet.notes[i.id[0] + ":" + i.id.slice(1)] && <div className="carnet-note"><b>✎ Ma note :</b> {carnet.notes[i.id[0] + ":" + i.id.slice(1)].texte}</div>}
                       {i.scId && bs[i.scId]?.auto && <div className="sv-fil"><AutoBilan auto={bs[i.scId].auto} /></div>}
                       {i.scId && bs[i.scId]?.taches && <div className="sv-fil"><TachesBilan taches={bs[i.scId].taches} /></div>}
                       {i.scId && profil?.commentaires?.[i.scId] && <div className="sv-fil"><Fil profil={profil} scId={i.scId} uid={user?.uid} onSent={refreshProfil} /></div>}

@@ -1,5 +1,6 @@
 import { db } from "../firebase";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
+import { envoyer as envoyerMessage } from "./messages";
 
 // Exercices à rendre par une équipe : teams/{id}.devoirs = [{ scId, titre, limite(ms) }]
 export const getEquipe = async (id) => {
@@ -39,3 +40,23 @@ export const modifierLimiteParcours = (team, pcId, limite) =>
   updateDoc(doc(db, "teams", team.id), { devoirs: (team.devoirs || []).map((x) => (x.pc === pcId ? { ...x, limite } : x)) });
 // Date -> valeur d'un <input type="date">
 export const inputDepuisLimite = (ms) => (ms ? new Date(ms - new Date(ms).getTimezoneOffset() * 60000).toISOString().slice(0, 10) : "");
+
+// Relances : message privé aux stagiaires en retard (un message par stagiaire, quel que soit le nombre d'exercices en retard).
+export const MODELE_RELANCE = "Bonjour {nom}, l'exercice {exercice} devait être rendu au plus tard le {date}. Peux-tu le faire dès que possible ? Merci.";
+export const texteRelance = (modele, u, ds) =>
+  modele
+    .replaceAll("{nom}", (u.nom || "").split(" ")[0] || "")
+    .replaceAll("{exercice}", ds.map((d) => `« ${d.titre} »`).join(", "))
+    .replaceAll("{date}", fmtLimite(Math.min(...ds.map((d) => d.limite || Infinity))));
+// lignes : [{ u, d }] ; retourne le nombre de stagiaires relancés
+export async function relancer(team, gest, lignes, modele) {
+  const par = new Map();
+  lignes.forEach(({ u, d }) => par.set(u.id, { u, ds: [...(par.get(u.id)?.ds || []), d] }));
+  const maj = {};
+  for (const { u, ds } of par.values()) {
+    await envoyerMessage({ stagId: u.id, stagNom: u.nom || "Stagiaire", gestId: gest.uid, gestNom: gest.nom || "Formateur", de: gest.uid, texte: texteRelance(modele, u, ds) });
+    ds.forEach((d) => { maj[`relances.${u.id}_${d.scId}`] = Date.now(); });
+  }
+  if (Object.keys(maj).length) await updateDoc(doc(db, "teams", team.id), maj);
+  return par.size;
+}

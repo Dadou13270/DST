@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { listUsers, setStatut, setAdmin, deleteUserProfile, fmtDate, fmtDuree } from "../lib/users";
+import { DEPARTEMENTS } from "../lib/referentiels";
+import { listUsers, setStatut, setAdmin, setAdminDept, deleteUserProfile, fmtDate, fmtDuree } from "../lib/users";
 import { setGestionnaire } from "../lib/equipes";
 import { useAuth } from "../lib/auth";
 import { creerUtilisateur, parseLignes } from "../lib/inscription";
@@ -180,6 +181,11 @@ export default function AdminUsers() {
                   u.admin ? "Droits admin retirés." : "Compte promu administrateur.")}
                 {two(`ge:${u.id}`, u.gestionnaire ? "Retirer gestionnaire" : "Passer gestionnaire", async () => { await setGestionnaire(u.id, !u.gestionnaire); L(u.gestionnaire ? "gestionnaire_retrait" : "gestionnaire_ajout", u); },
                   u.gestionnaire ? "Rôle gestionnaire retiré." : "Compte promu gestionnaire.")}
+                <select value={u.adminDept || ""} title="Admin de département : gère les gestionnaires et voit les statistiques de ce seul département"
+                  onChange={(e) => run(async () => { await setAdminDept(u.id, e.target.value); L(e.target.value ? "admin_dept_ajout" : "admin_dept_retrait", u, e.target.value); }, e.target.value ? "Admin de département défini." : "Rôle admin de département retiré.")}>
+                  <option value="">Admin de département : non</option>
+                  {DEPARTEMENTS.map((x) => <option key={x} value={x}>Admin de dép. : {x}</option>)}
+                </select>
                 {two(`pw:${u.id}`, "Réinit. mot de passe", async () => { await resetPassword(u.email); L("reinit_mdp", u); }, "E-mail de réinitialisation envoyé.")}
                 {two(`del:${u.id}`, "Supprimer", async () => { await deleteUserProfile(u.id); L("suppression_profil", u, u.email || ""); }, "Profil supprimé.", "danger")}
               </div>
