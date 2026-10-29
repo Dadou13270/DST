@@ -397,15 +397,13 @@ export default function Player() {
   /* ---------- Exercice ---------- */
   return (
     <Layout
-      extra={
-        <>
+    >
+      <div className="exfloat">
           {chrono && <span className={"timer" + (chronoReste(chrono, now) < 0 ? " late" : chronoReste(chrono, now) <= Math.max(30, chrono.duree * 0.1) ? " danger" : chronoReste(chrono, now) <= Math.max(60, chrono.duree * 0.25) ? " warn" : "")}>{chrono.fin ? "■ " : chrono.pausedAt ? "⏸ " : ""}{fmt(chronoReste(chrono, now))}</span>}
           {!chrono && remaining !== null && <span className={"timer" + (remaining < 0 ? " late" : remaining <= Math.max(30, sc.duree * 6) ? " danger" : remaining <= Math.max(60, sc.duree * 15) ? " warn" : "")}>{fmt(remaining)}</span>}
           {!chrono && remaining === null && <span className="timer">{fmt(elapsed)}</span>}
-          <Link to="/" className="navbtn">Quitter</Link>
-        </>
-      }
-    >
+          <Link to="/">Quitter</Link>
+              </div>
       {salle && <SalleBanner code={salle} />}
       {alerte && (
         <div className="evoband" role="alert">
