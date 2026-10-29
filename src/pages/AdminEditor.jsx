@@ -263,6 +263,8 @@ export default function AdminEditor() {
             Prise de commandement (chef de groupe) : le message d'ambiance et les réactions immédiates sont déjà faits, le stagiaire reçoit un compte rendu, engage des actions et transmet un compte rendu
           </label>
           <CadresEdit value={s.cadres} onChange={(v) => upd((n) => (n.cadres = v))} />
+          <label>Référence doctrinale (une par ligne : guide, chapitre, fiche…)</label>
+          <textarea rows={3} value={s.references || ""} onChange={(e) => upd((n) => (n.references = e.target.value))} />
           <div className="domblk">
           <label>Dominantes du scénario (badges affichés aux stagiaires pour guider leur choix)</label>
           <div className="doml">

@@ -52,6 +52,7 @@ export const newScenario = () => ({
   afficherCorrection: true,
   cubique: false,
   cadres: [],
+  references: "", // référence doctrinale (une par ligne)
   commandement: false, // prise de commandement (chef de groupe) : passation + actions + compte rendu
   reserveA: null, // uid du gestionnaire à qui le scénario est réservé (null = public)
   vignette: null,

@@ -292,6 +292,7 @@ export default function Player() {
           {varsDe(scRaw).length > 0 && <p className="muted">Conditions variables : heure, météo, vent… sont tirées au sort à chaque tentative.</p>}
           {sc.evolutif && <p className="muted">Scénario évolutif : la situation changera pendant l'exercice, des informations te seront transmises.</p>}
           <p className="consigne">{sc.situation.consigne}</p>
+          {(sc.references || "").trim() && <div className="refdoc"><b>Référence doctrinale</b><div style={{ whiteSpace: "pre-line" }}>{sc.references}</div></div>}
           {sc.duree > 0 && <p className="muted">Durée conseillée : {sc.duree} min</p>}
           <button className="btn primary big" onClick={() => { const v = tirer(scRaw); setSess({ ...emptySession(), start: Date.now(), ...(Object.keys(v).length ? { vars: v } : {}) }); }}>
             Arriver sur les lieux

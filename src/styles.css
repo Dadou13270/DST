@@ -455,3 +455,5 @@ html[data-cartes="h"] .scn .cdr{background:rgba(255,255,255,.92);color:#333}
 
 .passation{border-left:4px solid var(--red);background:var(--soft);padding:8px 12px;border-radius:0 10px 10px 0;margin:12px 0}
 .passation h3{margin-top:0}.pas-bloc{margin:8px 0}.pas-bloc p{margin:2px 0 0}
+
+.refdoc{border-left:4px solid var(--red,#c42a1c);background:var(--soft,#f5f6f7);padding:6px 12px;border-radius:0 8px 8px 0;font-size:.85rem;margin:8px 0}

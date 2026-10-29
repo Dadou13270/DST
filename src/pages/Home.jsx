@@ -53,7 +53,7 @@ export default function Home() {
   const { carnet, basculerFavori } = useCarnet(user?.uid);
   const estFav = (k) => carnet.favoris.includes(k);
   const etoile = (k) => (
-    <span role="button" tabIndex={0} className={"fav" + (estFav(k) ? " on" : "")} title={estFav(k) ? "Retirer des favoris" : "Mettre en favori"} aria-label="Favori" aria-pressed={estFav(k)}
+    <span role="button" tabIndex={0} className={"fav" + (estFav(k) ? " on" : "")} style={{ position: "absolute", top: 8, right: 8, zIndex: 2, width: 34, height: 34, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "50%", background: "rgba(255,255,255,.92)", color: estFav(k) ? "#e0a100" : "#777", fontSize: "1.25rem", cursor: "pointer", boxShadow: "0 1px 4px rgba(0,0,0,.25)", userSelect: "none" }} title={estFav(k) ? "Retirer des favoris" : "Mettre en favori"} aria-label="Favori" aria-pressed={estFav(k)}
       onClick={(e) => { e.preventDefault(); e.stopPropagation(); basculerFavori(k); }}
       onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); e.stopPropagation(); basculerFavori(k); } }}>{estFav(k) ? "★" : "☆"}</span>
   );
@@ -172,7 +172,7 @@ export default function Home() {
               {calcs.filter((c) => (c.rubrique || "") === r).map((ex) => {
                 const l = essaisDe(ex.id), last = l[l.length - 1];
                 return (
-                  <Link key={ex.id} to={ex.kind === "rel" ? `/relation/${ex.id}` : `/calculs/${ex.id}`} className="card scn">
+                  <Link key={ex.id} to={ex.kind === "rel" ? `/relation/${ex.id}` : `/calculs/${ex.id}`} className="card scn" style={{ position: "relative" }}>
                     {etoile("e:" + ex.id)}
                                         {ex.kind === "rel" && ex.vignette ? <img src={ex.vignette} alt="" loading="lazy" /> : calcImg(ex) ? <img src={calcImg(ex)} alt="" loading="lazy" /> : <div className="ph" style={{ display: "flex", alignItems: "center", justifyContent: "center", fontSize: "2rem" }}>{ex.kind === "rel" ? "🗣️" : "🧮"}</div>}
                     <CadresBadges v={ex.cadres} />
@@ -187,7 +187,7 @@ export default function Home() {
                 );
               })}
               {g.map((s) => (
-                <Link key={s.id} to={`/scenario/${s.id}`} className="card scn">
+                <Link key={s.id} to={`/scenario/${s.id}`} className="card scn" style={{ position: "relative" }}>
                   {etoile("s:" + s.id)}
                                     {s.vignette ? <img src={s.vignette} alt="" /> : <div className="ph">Pas de photo</div>}
                   <CadresBadges v={s.cadres} />

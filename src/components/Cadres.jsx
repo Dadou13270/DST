@@ -23,5 +23,5 @@ export function CadresEdit({ value, onChange }) {
 export function CadresBadges({ v }) {
   const l = CADRES.filter((c) => (v || []).includes(c.k));
   if (!l.length) return null;
-  return <div className="cadres-bd" title="Cadre d'emploi">{l.map((c) => <span key={c.k} className="cdr">{c.c}</span>)}</div>;
+  return <div className="cadres-bd" title="Cadre d'emploi" style={{ display: "flex", flexWrap: "wrap", gap: 4, padding: "6px 10px 0", margin: 0 }}>{l.map((c) => <span key={c.k} className="cdr" style={{ fontSize: ".68rem", lineHeight: 1, padding: "3px 7px", borderRadius: 99, background: "#f1f3f5", border: "1px solid #d8dde1", color: "#555", fontWeight: 600 }}>{c.c}</span>)}</div>;
 }
