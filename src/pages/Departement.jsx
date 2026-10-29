@@ -9,6 +9,7 @@ import { statsOf, fmtDate, fmtDuree } from "../lib/users";
 import { statutDevoir } from "../lib/devoirs";
 import { traiterDemandeGest } from "../lib/gestionnaires";
 import { CIBLES, creerAnnonce, listAnnonces, majAnnonce, supprimerAnnonce } from "../lib/annonces";
+import { DEPARTEMENTS } from "../lib/referentiels";
 
 const lire = async (col, dept) => (await getDocs(query(collection(db, col), where("departement", "==", dept)))).docs.map((d) => ({ id: d.id, ...d.data() }));
 const ms = (t) => (t?.toMillis ? t.toMillis() : t?.seconds ? t.seconds * 1000 : 0);
@@ -134,8 +135,11 @@ function Annonces({ dept, profil }) {
 
 // Espace de l'admin de département : statistiques agrégées, demandes et droits gestionnaire, annonces — pour son seul département
 export default function Departement() {
-  const { user, profil, loading } = useAuth();
-  const dept = profil?.adminDept || "";
+  const { user, profil, loading, isAdmin } = useAuth();
+  // L'administrateur général accède à tous les départements ; l'admin de département, au sien seul.
+  const [choix, setChoix] = useState(() => { try { return localStorage.getItem("op-dept-admin") || ""; } catch { return ""; } });
+  const dept = isAdmin ? (choix || profil?.adminDept || DEPARTEMENTS[12]) : (profil?.adminDept || "");
+  const changerDept = (v) => { setChoix(v); setUsers(null); setTeams(null); try { localStorage.setItem("op-dept-admin", v); } catch { /* */ } };
   const [onglet, setOnglet] = useState("st");
   const [users, setUsers] = useState(null);
   const [teams, setTeams] = useState(null);
@@ -148,7 +152,9 @@ export default function Departement() {
   return (
     <Layout>
       <h1>Espace département</h1>
-      <p className="muted">Département : <strong>{dept}</strong></p>
+      {isAdmin
+        ? <p className="muted">Administrateur général : département <select value={dept} onChange={(e) => changerDept(e.target.value)} style={{ width: "auto", display: "inline-block" }}>{DEPARTEMENTS.map((d) => <option key={d}>{d}</option>)}</select></p>
+        : <p className="muted">Département : <strong>{dept}</strong></p>}
       <div className="tabs" style={{ marginBottom: 14 }}>{onglets.map(([k, l]) => <button key={k} className={onglet === k ? "on" : ""} onClick={() => setOnglet(k)}>{l}</button>)}</div>
       {err && <div className="card warn">Erreur : {err} (les règles Firestore sont-elles publiées ?)</div>}
       {onglet !== "dm" && onglet !== "an" && !users && !err && <p>Chargement…</p>}
