@@ -265,17 +265,28 @@ function Equipe({ team, autres, scs, pcs, onChange }) {
                 open === u.id && (
                   <tr key={u.id + "d"}><td colSpan={6}>
                     {Object.keys(u.bilans || {}).length === 0 ? (Object.keys(u.calculs || {}).length === 0 ? <span className="muted">Aucun exercice terminé.</span> : null) : (
-                      <table className="cmp">
-                        <thead><tr><th>Exercice</th><th>Fin</th><th>Temps</th><th>Questions</th><th>Essentielles</th><th>Tent.</th></tr></thead>
-                        <tbody>{Object.entries(u.bilans).map(([scId, b]) => [
-                          <tr key={scId}><td>{b.titre}</td><td>{fmtDate(b.fin)}</td><td>{fmtDuree(b.duree || 0)}</td><td>{b.nbQ}</td><td>{b.essTot ? `${b.essOk}/${b.essTot}` : "—"}</td><td>{b.nb || 1}</td></tr>,
-                          <tr key={scId + "f"}><td colSpan={6}><FriseBilan b={b} sc={scs.find((x) => x.id === scId)} /></td></tr>,
-                          b.auto && <tr key={scId + "a"}><td colSpan={6}><AutoBilan auto={b.auto} /></td></tr>,
-                          b.taches && <tr key={scId + "t"}><td colSpan={6}><TachesBilan taches={b.taches} /></td></tr>,
-                          <tr key={scId + "c"}><td colSpan={6}><Commentaire u={u} scId={scId} auteur={profil?.nom || "Formateur"} onSaved={load} /></td></tr>,
-                          <tr key={scId + "e"}><td colSpan={6}><FicheZone u={u} scId={scId} titre={b.titre} smes={!!scs.find((x) => x.id === scId)?.smes} user={user} profil={profil} /></td></tr>,
-                        ])}</tbody>
-                      </table>
+                      <div className="ex-liste">
+                        {Object.entries(u.bilans).map(([scId, b]) => (
+                          <div key={scId} className="ex-bloc">
+                            <h3 className="ex-t">{b.titre}</h3>
+                            <div className="card">
+                              <h4>Résultats</h4>
+                              <div className="ex-kpis">
+                                <div><span className="muted">Fin</span><strong>{fmtDate(b.fin)}</strong></div>
+                                <div><span className="muted">Temps</span><strong>{fmtDuree(b.duree || 0)}</strong></div>
+                                <div><span className="muted">Questions</span><strong>{b.nbQ}</strong></div>
+                                <div><span className="muted">Essentielles</span><strong>{b.essTot ? `${b.essOk}/${b.essTot}` : "—"}</strong></div>
+                                <div><span className="muted">Tentatives</span><strong>{b.nb || 1}</strong></div>
+                              </div>
+                            </div>
+                            <div className="card"><h4>Chronologie</h4><FriseBilan b={b} sc={scs.find((x) => x.id === scId)} /></div>
+                            {b.auto && <div className="card"><h4>Auto-évaluation</h4><AutoBilan auto={b.auto} /></div>}
+                            {b.taches && <div className="card"><h4>Consignes du formateur</h4><TachesBilan taches={b.taches} /></div>}
+                            <div className="card"><h4>Commentaire du formateur</h4><Commentaire u={u} scId={scId} auteur={profil?.nom || "Formateur"} onSaved={load} /></div>
+                            <FicheZone u={u} scId={scId} titre={b.titre} smes={!!scs.find((x) => x.id === scId)?.smes} user={user} profil={profil} />
+                          </div>
+                        ))}
+                      </div>
                     )}
                     {Object.keys(u.calculs || {}).length > 0 && (
                       <table className="cmp" style={{ marginTop: 8 }}>
@@ -300,10 +311,15 @@ function FicheZone({ u, scId, titre, smes, user, profil }) {
   const [ex, setEx] = useState(undefined);
   useEffect(() => { evaluationExistante(u.id, scId, user.uid).then(setEx).catch(() => setEx(null)); }, [u.id, scId, ouvert]); // eslint-disable-line
   return (
-    <div>
-      <button className="btn" onClick={() => setOuvert(!ouvert)}>{ouvert ? "Masquer la fiche d'évaluation" : ex ? `Fiche d'évaluation : ${ex.decision} (${ex.pct} %)` : "Remplir la fiche d'évaluation"}</button>
+    <>
+      <div className="card">
+        <div className="row between">
+          <h4 style={{ margin: 0 }}>Fiche d'évaluation</h4>
+          <button className="btn" onClick={() => setOuvert(!ouvert)}>{ouvert ? "Masquer la fiche" : ex ? `Ouvrir la fiche : ${ex.decision} (${ex.pct} %)` : "Remplir la fiche d'évaluation"}</button>
+        </div>
+      </div>
       {ouvert && <FicheEval stag={{ id: u.id, nom: u.nom }} sc={{ id: scId, titre, smes }} gest={{ uid: user.uid, nom: profil?.nom || "Formateur" }} />}
-    </div>
+    </>
   );
 }
 

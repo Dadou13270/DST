@@ -481,3 +481,6 @@ html[data-cartes="h"] .scn .cdr{background:rgba(255,255,255,.92);color:#333}
 .fiche .card{margin:12px 0}.fiche-crit.col{border-top:1px solid var(--line,#d8dde1);padding:10px 0;gap:4px}
 .fiche-res{margin:8px 0}
 .fiche .card h2+.fiche-crit{border-top:0}
+.ex-liste{display:grid;gap:18px;margin-top:8px}.ex-bloc{background:var(--bg,#eef0f2);border-radius:12px;padding:10px}
+.ex-t{margin:0 0 6px;font-size:1.1rem}.ex-bloc .card{margin:10px 0}.ex-bloc h4{margin:0 0 8px}
+.ex-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px}.ex-kpis div{display:flex;flex-direction:column}
