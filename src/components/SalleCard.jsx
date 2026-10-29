@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import CoFormateurs from "./CoFormateurs";
 import QrCode from "./QrCode";
 import { useAuth } from "../lib/auth";
 import { creerSalle, watchMesSalles, etatSalle, libEtat, fmtDebut, debutDepuisInput, inputDepuisDebut, modifierSalle, supprimerSalle } from "../lib/salles";
@@ -113,6 +114,7 @@ export default function SalleCard({ scs }) {
               <Link className="btn" to={`/gestion/salle/${r.code}`}>Ouvrir</Link>
             </span>
           </div>
+          <CoFormateurs col="salles" id={r.id} obj={r} />
           {edit?.code === r.code && (
             <div className="row" style={{ marginTop: 6 }}>
               <select className="grow" value={edit.scId} onChange={(e) => setEdit({ ...edit, scId: e.target.value })}>

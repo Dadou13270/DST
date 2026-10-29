@@ -2,8 +2,10 @@ import { Link, useLocation } from "react-router-dom";
 import { basculerTheme, changerTaille } from "../lib/prefs";
 import Visite, { rouvrirVisite } from "./Visite";
 import Logo from "./Logo";
+import { useCharte } from "../lib/charte";
 import AvisModal from "./AvisModal";
 import HorsLigne from "./HorsLigne";
+import Annonces from "./Annonces";
 import { useAuth } from "../lib/auth";
 import { profilComplet } from "../lib/model";
 import { useEffect, useState } from "react";
@@ -12,6 +14,7 @@ import { pingStats, compteurs } from "../lib/inscrits";
 // Bandeau commun : Espace stagiaire / Espace admin (si admin) / nom / déconnexion.
 export default function Layout({ children, extra }) {
   const { user, profil, isAdmin, logout } = useAuth() || {};
+  const charte = useCharte();
   const { pathname } = useLocation();
   const adm = pathname.startsWith("/admin");
   const [cnt, setCnt] = useState(null);
@@ -38,7 +41,7 @@ export default function Layout({ children, extra }) {
   return (
     <>
       <header className={"top" + (menu ? " open" : "") + (extra ? " nc" : "")}>
-        <Link to="/" className="brand"><Logo size={36} />OPS Training</Link>
+        <Link to="/" className="brand"><Logo size={36} />{charte.nom}</Link>
         <button className="burger" aria-label="Menu" aria-expanded={menu} onClick={() => setMenu((v) => !v)}>☰</button>
         <nav>
           {extra}
@@ -58,6 +61,7 @@ export default function Layout({ children, extra }) {
             <>
               <Link to="/" title="Exercices, suivi, équipe et profil" className={adm || pathname.startsWith("/gestion") ? "navbtn" : "navbtn on"}>Espace stagiaire</Link>
               {(profil?.gestionnaire || isAdmin) && <Link to="/gestion" className={pathname.startsWith("/gestion") ? "navbtn on" : "navbtn"}>Espace gestionnaire</Link>}
+              {profil?.adminDept && <Link to="/departement" className={pathname.startsWith("/departement") ? "navbtn on" : "navbtn"}>Espace département</Link>}
               {isAdmin && <Link to="/admin" className={adm ? "navbtn on" : "navbtn"}>Espace admin</Link>}
               {profil?.nom && <span className="who">{profil.nom}</span>}
               <button className="navbtn" onClick={logout}>Déconnexion</button>
@@ -70,6 +74,7 @@ export default function Layout({ children, extra }) {
           <strong>Complète ton profil</strong> (grade, département, CIS) pour que ton gestionnaire te retrouve facilement. <Link to="/profil" className="btn primary">Compléter mon profil</Link>
         </div>
       )}
+      <Annonces />
       <main className="wrap">{children}</main>
       <Visite />
       {user && <HorsLigne />}
@@ -77,8 +82,8 @@ export default function Layout({ children, extra }) {
         <div className="fin">
           <div className="fbrand">
             <Logo size={52} />
-            <b>OPS Training</b>
-            <span>Simulateur opérationnel collaboratif</span>
+            <b>{charte.nom}</b>
+            <span>{charte.slogan}</span>
           </div>
           {user && <div>
             <h4>Application</h4>
@@ -115,7 +120,7 @@ export default function Layout({ children, extra }) {
             </ul>
           </div>
         </div>
-        <div className="fcopy">© {new Date().getFullYear()} OPS Training — Tous droits réservés{user && <> · <Link to="/cgu">CGU</Link></>}</div>
+        <div className="fcopy">© {new Date().getFullYear()} {charte.nom} — Tous droits réservés{user && <> · <Link to="/cgu">CGU</Link></>}</div>
       </footer>
       {avisOpen && <AvisModal onClose={() => setAvisOpen(false)} />}
     </>
