@@ -10,6 +10,9 @@ import AdminEditor from "./pages/AdminEditor";
 import Carte from "./pages/Carte";
 import Parametres from "./pages/Parametres";
 import Attribution from "./pages/Attribution";
+import Departement from "./pages/Departement";
+import AdminGestionnaires from "./pages/AdminGestionnaires";
+import AdminAnnonces from "./pages/AdminAnnonces";
 import DemanderScenario from "./pages/DemanderScenario";
 import AdminStats from "./pages/AdminStats";
 import AdminUsers from "./pages/AdminUsers";
@@ -36,6 +39,7 @@ import AdminAudit from "./pages/AdminAudit";
 import AdminSite from "./pages/AdminSite";
 import Salle from "./pages/Salle";
 import SalleProjection from "./pages/SalleProjection";
+import FichesMemo from "./pages/FichesMemo";
 import Suivi from "./pages/Suivi";
 import RequireUser from "./components/RequireUser";
 
@@ -64,12 +68,14 @@ export default function App() {
         <Route path="/calculs" element={<Navigate to="/" replace />} />
         <Route path="/calculs/:id" element={<RequireUser><CalculExercice /></RequireUser>} />
         <Route path="/relation/:id" element={<RequireUser><Relation /></RequireUser>} />
+        <Route path="/departement" element={<RequireUser><Departement /></RequireUser>} />
         <Route path="/gestion" element={<RequireUser><Gestion /></RequireUser>} />
         <Route path="/gestion/salle/:code" element={<RequireUser><Salle /></RequireUser>} />
         <Route path="/gestion/salle/:code/projection" element={<RequireUser><SalleProjection /></RequireUser>} />
         <Route path="/carte" element={<RequireUser><Carte /></RequireUser>} />
         <Route path="/profil" element={<RequireUser><Profil /></RequireUser>} />
         <Route path="/messages" element={<RequireUser><Messagerie /></RequireUser>} />
+        <Route path="/fiches" element={<RequireUser><FichesMemo /></RequireUser>} />
         <Route path="/suivi" element={<RequireUser><Suivi /></RequireUser>} />
         <Route path="/scenario/:id" element={<RequireUser><Player /></RequireUser>} />
         <Route path="/admin" element={<AdminGate />}>
@@ -81,6 +87,8 @@ export default function App() {
           <Route path="stats" element={<AdminStats />} />
           <Route path="parametres" element={<Parametres />} />
           <Route path="attribution" element={<Attribution />} />
+          <Route path="gestionnaires" element={<AdminGestionnaires />} />
+          <Route path="annonces" element={<AdminAnnonces />} />
           <Route path="tickets" element={<AdminTickets />} />
           <Route path="site" element={<AdminSite />} />
           <Route path="journal" element={<AdminAudit />} />
