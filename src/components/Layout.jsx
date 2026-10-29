@@ -97,7 +97,7 @@ export default function Layout({ children, extra }) {
               </>}
               <li><Link to="/site">Site de présentation</Link></li>
               {user && <>
-                <li><Link to="/nouveautes">Nouveautés</Link></li>
+                <li><Link to="/nouveautes">Mises à jour</Link></li>
                 <li><Link to="/demande-scenario">Demander un scénario</Link></li>
                 <li><a href="#" onClick={(e) => { e.preventDefault(); rouvrirVisite(); }}>Visite guidée</a></li>
               </>}

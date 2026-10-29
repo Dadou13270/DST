@@ -6,8 +6,17 @@ import { db, auth } from "../firebase";
 // Les nouveautés sont stockées dans Firestore (collection "nouveautes"), modifiables par l'admin.
 export function watchNouveautes(cb) {
   return onSnapshot(collection(db, "nouveautes"), (s) => {
-    const l = s.docs.filter((d) => d.id !== "_reglages").map((d) => ({ id: d.id, ...d.data() }));
+    const l = s.docs.filter((d) => d.id !== "_reglages" && !d.data().enCours).map((d) => ({ id: d.id, ...d.data() }));
     l.sort((a, b) => (b.d || "").localeCompare(a.d || ""));
+    cb(l);
+  }, () => cb([]));
+}
+// Chantiers « en construction » : même collection, marqués enCours (états : en cours, prévu, bientôt).
+export const ETATS_CHANTIER = { cours: "En cours", bientot: "Bientôt disponible", prevu: "Prévu" };
+export function watchEnCours(cb) {
+  return onSnapshot(collection(db, "nouveautes"), (s) => {
+    const l = s.docs.filter((d) => d.id !== "_reglages" && d.data().enCours).map((d) => ({ id: d.id, ...d.data() }));
+    l.sort((a, b) => (a.cree || 0) - (b.cree || 0));
     cb(l);
   }, () => cb([]));
 }

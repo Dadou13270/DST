@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import Layout from "../components/Layout";
 import { useAuth } from "../lib/auth";
-import { watchNouveautes, addNouveaute, updateNouveaute, deleteNouveaute, NOUVEAUTES_INIT } from "../lib/nouveautes";
+import { watchNouveautes, watchEnCours, ETATS_CHANTIER, addNouveaute, updateNouveaute, deleteNouveaute, NOUVEAUTES_INIT } from "../lib/nouveautes";
 
 const fmt = (d) => (d || "").split("-").reverse().join("/");
 const vide = () => ({ id: null, d: new Date().toISOString().slice(0, 10), t: "", l: "" });
@@ -13,7 +13,21 @@ export default function Nouveautes() {
   const [conf, setConf] = useState(null);
   const [err, setErr] = useState("");
 
+  const [onglet, setOnglet] = useState("nv");
+  const [chantiers, setChantiers] = useState(null);
+  const [ce, setCe] = useState(null);
+  const [cconf, setCconf] = useState(null);
   useEffect(() => watchNouveautes(setList), []);
+  useEffect(() => watchEnCours(setChantiers), []);
+  const saveCe = async () => {
+    if (!ce.t.trim()) return setErr("Titre obligatoire.");
+    const n = { enCours: true, t: ce.t.trim(), etat: ce.etat, l: ce.l.split("\n").map((x) => x.trim()).filter(Boolean) };
+    try {
+      if (ce.id) await updateNouveaute(ce.id, n); else await addNouveaute(n);
+      setCe(null); setErr("");
+    } catch (e) { setErr(e.message); }
+  };
+  const delCe = async (id) => { try { await deleteNouveaute(id); setCconf(null); } catch (e) { setErr(e.message); } };
 
   const save = async () => {
     if (!ed.d || !ed.t.trim()) return setErr("Date et titre obligatoires.");
@@ -51,12 +65,61 @@ export default function Nouveautes() {
   return (
     <Layout>
       <div className="pgrid">
-      <div className="row between">
-        <h1>Nouveautés</h1>
-        {isAdmin && !ed && <button className="btn pri" onClick={() => setEd(vide())}>+ Ajouter</button>}
+      <div className="tabs">
+        <button className={onglet === "nv" ? "on" : ""} onClick={() => setOnglet("nv")}>Nouveautés</button>
+        <button className={onglet === "co" ? "on" : ""} onClick={() => setOnglet("co")}>En construction</button>
       </div>
-      <p className="muted">Les évolutions de l'application, de la plus récente à la plus ancienne.</p>
+      <div className="row between">
+        <h1>Mises à jour</h1>
+        {isAdmin && onglet === "nv" && !ed && <button className="btn pri" onClick={() => setEd(vide())}>+ Ajouter</button>}
+        {isAdmin && onglet === "co" && !ce && <button className="btn pri" onClick={() => setCe({ id: null, t: "", etat: "cours", l: "" })}>+ Ajouter</button>}
+      </div>
       {err && <div className="card warn">{err}</div>}
+      {onglet === "co" && (
+        <>
+          <p className="muted">Ce qui est en préparation. Les dates ne sont pas garanties.</p>
+          {ce && (
+            <div className="card form span">
+              <h3 style={{ marginTop: 0 }}>{ce.id ? "Modifier le chantier" : "Nouveau chantier"}</h3>
+              <label>Titre</label>
+              <input maxLength={120} value={ce.t} onChange={(e) => setCe({ ...ce, t: e.target.value })} />
+              <label>État</label>
+              <select value={ce.etat} onChange={(e) => setCe({ ...ce, etat: e.target.value })}>
+                {Object.entries(ETATS_CHANTIER).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+              </select>
+              <label>Détail (une ligne = une puce)</label>
+              <textarea rows={5} maxLength={2000} value={ce.l} onChange={(e) => setCe({ ...ce, l: e.target.value })} />
+              <div className="row" style={{ marginTop: 10 }}>
+                <button className="btn pri" onClick={saveCe}>Enregistrer</button>
+                <button className="btn" onClick={() => setCe(null)}>Annuler</button>
+              </div>
+            </div>
+          )}
+          {chantiers && chantiers.length === 0 && !ce && <div className="card">Rien en construction pour le moment.</div>}
+          {(chantiers || []).filter((c) => !ce || ce.id !== c.id).map((c) => (
+            <div className="card" key={c.id}>
+              <div className="row between">
+                <span className="tag">{ETATS_CHANTIER[c.etat] || "En cours"}</span>
+                {isAdmin && (cconf === c.id ? (
+                  <span className="row">
+                    <button className="btn dng" onClick={() => delCe(c.id)}>Confirmer la suppression</button>
+                    <button className="btn" onClick={() => setCconf(null)}>Annuler</button>
+                  </span>
+                ) : (
+                  <span className="row">
+                    <button className="btn" onClick={() => setCe({ id: c.id, t: c.t || "", etat: c.etat || "cours", l: (c.l || []).join("\n") })}>Modifier</button>
+                    <button className="btn danger" onClick={() => setCconf(c.id)}>Supprimer</button>
+                  </span>
+                ))}
+              </div>
+              <h2 style={{ margin: "2px 0 6px" }}>{c.t}</h2>
+              <ul>{(c.l || []).map((x, j) => <li key={j}>{x}</li>)}</ul>
+            </div>
+          ))}
+        </>
+      )}
+      {onglet === "nv" && <>
+      <p className="muted">Les évolutions de l'application, de la plus récente à la plus ancienne.</p>
       {ed && !ed.id && form}
       {list && list.length === 0 && (
         <div className="card">
@@ -86,6 +149,7 @@ export default function Nouveautes() {
           </div>
         )
       )}
+      </>}
       </div>
     </Layout>
   );

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import Layout from "../components/Layout";
 import { StagiaireNav } from "./Home";
 import { useAuth } from "../lib/auth";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { useDevoirs } from "../lib/useDevoirs";
 import { fmtLimite } from "../lib/devoirs";
 import { rejoindre, quitterEquipe } from "../lib/equipes";
@@ -12,7 +12,8 @@ import { monGestionnaire } from "../lib/messages";
 export default function Equipe() {
   const { user, profil, refreshProfil } = useAuth();
   const devoirs = useDevoirs(profil);
-  const [code, setCode] = useState("");
+  const [params] = useSearchParams();
+  const [code, setCode] = useState((params.get("code") || "").toUpperCase().slice(0, 10));
   const [err, setErr] = useState("");
   const [msg, setMsg] = useState("");
   const [conf, setConf] = useState(false);

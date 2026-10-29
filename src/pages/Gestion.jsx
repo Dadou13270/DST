@@ -1,3 +1,4 @@
+import InvitationEquipe from "../components/InvitationEquipe";
 import TachesBilan from "../components/TachesBilan";
 import AutoBilan from "../components/AutoBilan";
 import { listExercices, typeExercice, listCatalogue } from "../lib/relation";
@@ -195,6 +196,7 @@ function Equipe({ team, autres, scs, pcs, onChange, cible }) {
   const [conf, setConf] = useState("");
   const [err, setErr] = useState("");
   const [copie, setCopie] = useState(false);
+  const [inv, setInv] = useState(false);
   const [dup, setDup] = useState(null); // nom de la copie en cours de saisie
   const [decal, setDecal] = useState(0);
   const load = () => listMembres(team.id).then(setM).catch((e) => setErr(e.message));
@@ -221,6 +223,7 @@ function Equipe({ team, autres, scs, pcs, onChange, cible }) {
           <button className="btn" onClick={() => { navigator.clipboard?.writeText(team.code); setCopie(true); setTimeout(() => setCopie(false), 1500); }}>{copie ? "Copié" : "Copier"}</button></>}
           <button className="btn" disabled={!m} onClick={() => pdfEquipe(team, m)}>Export PDF</button>
           <button className="btn" disabled={!m || !m.length} title="Un rapport de fin de formation par stagiaire (PDF unique)" onClick={() => pdfRapports(team, m)}>Rapports de fin de formation</button>
+          {!team.archivee && <button className="btn" onClick={() => setInv((v) => !v)}>{inv ? "Masquer l'invitation" : "Inviter des agents"}</button>}
           {proprio && !team.archivee && two("rg", "Nouveau code", async () => { await regenCode(team); onChange(); })}
           {proprio && (team.archivee
             ? two("rs", "Restaurer", async () => { await restaurerEquipe(team); onChange(); }, "primary")
@@ -231,6 +234,7 @@ function Equipe({ team, autres, scs, pcs, onChange, cible }) {
           {proprio && two("del", "Supprimer l'équipe", async () => { await supprimerEquipe(team); onChange(); }, "danger")}
         </div>
       </div>
+      {inv && !team.archivee && <InvitationEquipe team={team} gestNom={profil?.nom} />}
       {!team.archivee && <CoFormateurs col="teams" id={team.id} obj={team} onChange={onChange} />}
       {dup !== null && (
         <div className="row item">
