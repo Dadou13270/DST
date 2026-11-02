@@ -100,7 +100,7 @@ let ADM = { tab: "q", custom: null, parties: null, form: null, msg: "", filtre: 
 let piles = {};
 
 const CSS = `
-.tj{max-width:980px;margin:0 auto}.tj h1{margin:6px 0 4px}.tj .m{color:var(--mut,#667079)}
+.tj{max-width:none;margin:0}.tj h1{margin:6px 0 4px}.tj .m{color:var(--mut,#667079)}
 .tj .box{background:var(--card,#fff);border:1px solid var(--line,#d8dde1);border-radius:12px;padding:14px;margin:12px 0}
 .tj .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}.tj .grow{flex:1}
 .tj button.b{padding:10px 16px;border-radius:10px;border:1px solid var(--line,#d8dde1);background:var(--card,#fff);color:var(--ink,#1b2127);font:inherit;font-weight:600;cursor:pointer}

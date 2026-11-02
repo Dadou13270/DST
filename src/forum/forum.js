@@ -15,7 +15,7 @@ const CATS0 = [
 ];
 
 const CSS = `
-.fo{max-width:980px;margin:0 auto;color:var(--ink,#1b2127)}
+.fo{max-width:none;margin:0;color:var(--ink,#1b2127)}
 .fo h1{margin:0 0 4px}.fo .m{color:var(--mut,#667079);font-size:.88rem}
 .fo .box{background:var(--card,#fff);border:1px solid var(--line,#d8dde1);border-radius:12px;padding:14px;margin:0 0 12px;box-shadow:0 1px 4px rgba(0,0,0,.05)}
 .fo .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.fo .grow{flex:1;min-width:0}.fo .bw{justify-content:space-between}
