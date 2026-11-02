@@ -1,12 +1,15 @@
 import { Link, useLocation } from "react-router-dom";
-import { basculerTheme, changerTaille } from "../lib/prefs";
+import { basculerTheme, changerTaille, definirTheme } from "../lib/prefs";
+import { useMessages, nbNonLus } from "../lib/messages";
 import Visite, { rouvrirVisite } from "./Visite";
 import Logo from "./Logo";
 import { useCharte } from "../lib/charte";
 import AvisModal from "./AvisModal";
 import HorsLigne from "./HorsLigne";
 import Annonces from "./Annonces";
+import SideMenu from "./SideMenu";
 import { useAuth } from "../lib/auth";
+import { useAccesJeu } from "../lib/jeuAcces";
 import { profilComplet } from "../lib/model";
 import { useEffect, useState } from "react";
 import { pingStats, compteurs } from "../lib/inscrits";
@@ -14,6 +17,7 @@ import { pingStats, compteurs } from "../lib/inscrits";
 // Bandeau commun : Espace stagiaire / Espace admin (si admin) / nom / déconnexion.
 export default function Layout({ children, extra }) {
   const { user, profil, isAdmin, logout } = useAuth() || {};
+  const accesJeu = useAccesJeu();
   const charte = useCharte();
   const { pathname } = useLocation();
   const adm = pathname.startsWith("/admin");
@@ -22,6 +26,18 @@ export default function Layout({ children, extra }) {
   const [menu, setMenu] = useState(false);
   useEffect(() => setMenu(false), [pathname]);
   const uid = user?.uid;
+  const nonLus = nbNonLus(useMessages(uid), uid);
+  const [acc, setAcc] = useState(false);
+  useEffect(() => setAcc(false), [pathname]);
+  useEffect(() => {
+    if (!acc) return;
+    const f = (e) => { if (!e.target.closest?.(".nb-acc")) setAcc(false); };
+    const k = (e) => { if (e.key === "Escape") setAcc(false); };
+    document.addEventListener("click", f); document.addEventListener("keydown", k);
+    return () => { document.removeEventListener("click", f); document.removeEventListener("keydown", k); };
+  }, [acc]);
+  const nomAff = profil?.nom || user?.email || "Mon compte";
+  const initiales = nomAff.split(/[\s@.]+/).filter(Boolean).slice(0, 2).map((x) => x[0].toUpperCase()).join("");
   const dept = profil?.departement;
   // Présence : on signale le passage toutes les 2 min, et on relit les compteurs chaque minute.
   useEffect(() => {
@@ -59,12 +75,29 @@ export default function Layout({ children, extra }) {
           </span>
           {user && (
             <>
-              <Link to="/" title="Exercices, suivi, équipe et profil" className={adm || pathname.startsWith("/gestion") || pathname.startsWith("/departement") ? "navbtn" : "navbtn on"}>Espace stagiaire</Link>
+              <Link to="/" title="Exercices, suivi, équipe et profil" className={adm || pathname.startsWith("/gestion") || pathname.startsWith("/departement") || pathname === "/jeu" || pathname === "/forum" ? "navbtn" : "navbtn on"}>Espace stagiaire</Link>
               {(profil?.gestionnaire || isAdmin) && <Link to="/gestion" className={pathname.startsWith("/gestion") ? "navbtn on" : "navbtn"}>Espace gestionnaire</Link>}
               {(profil?.adminDept || isAdmin) && <Link to="/departement" className={pathname.startsWith("/departement") ? "navbtn on" : "navbtn"}>Espace département</Link>}
               {isAdmin && <Link to="/admin" className={adm ? "navbtn on" : "navbtn"}>Espace admin</Link>}
+              <Link to="/forum" className={pathname === "/forum" ? "navbtn on" : "navbtn"} title="Forum d'entraide">💬 Forum</Link>
+              {accesJeu && <Link to="/jeu" className={pathname === "/jeu" ? "navbtn on" : "navbtn"} title="Jeu Trivial pompiers">🎲 Jeu</Link>}
               {profil?.nom && <span className="who">{profil.nom}</span>}
-              <button className="navbtn" onClick={logout}>Déconnexion</button>
+              <button className="navbtn nb-old" onClick={logout}>Déconnexion</button>
+              <Link to="/messages" className="nb-msg" title="Messages" aria-label={"Messages" + (nonLus ? " (" + nonLus + " non lu" + (nonLus > 1 ? "s" : "") + ")" : "")}>✉{nonLus > 0 && <span className="nb-badge">{nonLus}</span>}</Link>
+              <div className="nb-acc">
+                <button className="nb-pill" aria-haspopup="menu" aria-expanded={acc} onClick={() => setAcc((v) => !v)}>
+                  <span className="nb-av">{initiales || "?"}</span><span className="nb-nom">{nomAff}</span><span aria-hidden="true">▾</span>
+                </button>
+                {acc && (
+                  <div className="nb-menu" role="menu">
+                    <Link to="/profil" role="menuitem">Mon profil</Link>
+                    <div className="nb-row"><span>Taille du texte</span><span><button onClick={() => changerTaille(-1)} aria-label="Réduire le texte">A−</button><button onClick={() => changerTaille(1)} aria-label="Agrandir le texte">A+</button></span></div>
+                    <div className="nb-row"><span>Thème</span><span><button onClick={() => definirTheme("light")}>Clair</button><button onClick={() => definirTheme("dark")}>Sombre</button></span></div>
+                    <button role="menuitem" onClick={() => { setAcc(false); rouvrirVisite(); }}>Visite guidée</button>
+                    <button role="menuitem" className="nb-out" onClick={logout}>Déconnexion</button>
+                  </div>
+                )}
+              </div>
             </>
           )}
         </nav>
@@ -75,9 +108,14 @@ export default function Layout({ children, extra }) {
         </div>
       )}
       <Annonces />
+      <div className="lay">
+      {user && <aside className="side" aria-label="Menu"><SideMenu isAdmin={isAdmin} profil={profil} accesJeu={accesJeu} nonLus={nonLus} /></aside>}
+      <div className="lay-c">
       <main className="wrap">{children}</main>
       <Visite />
       {user && <HorsLigne />}
+      </div>
+      </div>
       <footer className="foot">
         <div className="fin">
           <div className="fbrand">
@@ -103,6 +141,13 @@ export default function Layout({ children, extra }) {
               </>}
             </ul>
           </div>
+          {user && accesJeu && <div>
+            <h4>Jeu</h4>
+            <ul>
+              <li><Link to="/jeu">🎲 Trivial pompiers</Link></li>
+              <li><Link to="/jeu">Jouer à plusieurs (code de salle)</Link></li>
+            </ul>
+          </div>}
           {user && <div>
             <h4>Gestionnaires</h4>
             <ul>

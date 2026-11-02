@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import Layout from "../components/Layout";
+import VideoSituation from "../components/VideoSituation";
 import { getScenario, getPhoto, getSituationPhotos } from "../lib/db";
 import { findAnswer } from "../lib/matching";
 import { evoList, qaActives, essentielles as essentielles_, nbQuestions } from "../lib/evolutif";
@@ -286,6 +287,7 @@ export default function Player() {
     return (
       <Layout right={<Link to="/">Retour</Link>}>
         <div className="card intro">
+          <div style={{ textAlign: "left", marginBottom: 8 }}><Link className="btn" to="/">← Retour aux exercices</Link></div>
           <h1>{sc.titre}</h1>
           <p>{sc.description}</p>
           <Dominantes s={sc} />
@@ -447,6 +449,7 @@ export default function Player() {
               ))}
             </div>
           )}
+          {sc.situation?.video?.url && <><h3>Vidéo de la situation</h3><VideoSituation video={sc.situation.video} /></>}
           {sitPhotos.length > 0 && (
             <>
               <h3>Sur les lieux</h3>

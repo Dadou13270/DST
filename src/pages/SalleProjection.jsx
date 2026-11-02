@@ -1,3 +1,4 @@
+import VideoSituation from "../components/VideoSituation";
 import { useEffect, useState } from "react";
 import { Link, Navigate, useParams } from "react-router-dom";
 import { useAuth } from "../lib/auth";
@@ -46,6 +47,7 @@ export default function SalleProjection() {
       {photo && <img src={photo} alt="" style={{ width: "100%", maxHeight: "62vh", objectFit: "contain", borderRadius: 10 }} />}
       {sc.situation?.consigne && <p className="consigne" style={{ fontSize: "1.35rem" }}>{sc.situation.consigne}</p>}
       {sc.situation?.contexte && <p className="pre" style={{ fontSize: "1.25rem" }}>{sc.situation.contexte}</p>}
+      {sc.situation?.video?.url && <VideoSituation video={sc.situation.video} grande />}
       {sp.length > 0 && (
         <div className="grid" style={{ gridTemplateColumns: "repeat(auto-fit,minmax(320px,1fr))" }}>
           {sp.map((p) => (

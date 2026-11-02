@@ -1,0 +1,263 @@
+{
+ "titre": "Flashcards — Feux de structure (chef d'agrès)",
+ "description": "28 cartes. GDO Incendies de structures (DGSCGC, 2018) : physique du feu, phénomènes thermiques, structure du bâtiment, tactique et sécurité.",
+ "rubrique": "Quiz et QCM",
+ "niveau": "Avancé",
+ "format": "cartes",
+ "publie": true,
+ "seuil": 70,
+ "melange": true,
+ "consigne": "Lis la question, réponds dans ta tête, retourne la carte, puis dis si tu savais. Les cartes à revoir reviennent en fin de paquet.",
+ "questions": [
+  {
+   "id": "c1",
+   "type": "carte",
+   "pts": 1,
+   "q": "Selon le GDO, quelle définition correspond à un incendie ?",
+   "r": "Un feu dont le développement n'est pas maîtrisé dans l'espace et dans le temps",
+   "expl": "GDO Incendies de structures, ch. 1 §1.1 : le feu est un processus de combustion auto-entretenu dont le développement est maîtrisé ; l'incendie est un feu dont le développement n'est pas maîtrisé dans l'espace et dans le temps.",
+   "theme": "Physique du feu"
+  },
+  {
+   "id": "c2",
+   "type": "carte",
+   "pts": 1,
+   "q": "Remets dans l'ordre les trois étapes de la combustion d'un solide.",
+   "r": "Production des gaz de pyrolyse → Inflammation des gaz → Établissement et maintien de la flamme",
+   "expl": "GDO ch. 1 §1.2 : la matière se décompose sous l'effet de la chaleur (gaz de pyrolyse), ces gaz s'enflamment (quantité suffisante, mélange à l'air, énergie), puis la flamme s'établit et se maintient (gaz, air et conditions thermiques suffisants).",
+   "theme": "Physique du feu"
+  },
+  {
+   "id": "c3",
+   "type": "carte",
+   "pts": 1,
+   "q": "Dans la pièce de référence, la chaleur se répartit en moyenne ainsi : … % par convection, … % par rayonnement et … % par conduction.",
+   "r": "70 · 25 · 5",
+   "expl": "GDO ch. 1 §3 (modèle de Thomas) : 70 % convection (fumées et gaz chauds), 25 % rayonnement, 5 % conduction dans les parois.",
+   "theme": "Physique du feu"
+  },
+  {
+   "id": "c4",
+   "type": "carte",
+   "pts": 1,
+   "q": "Un feu développé dans des pièces meublées est, en plein développement, systématiquement limité par :",
+   "r": "La ventilation",
+   "expl": "GDO ch. 1 §1.6 : les feux développés en structure abritant des pièces meublées sont systématiquement limités par la ventilation (FLV). Maîtriser les ouvrants conditionne donc l'évolution du feu.",
+   "theme": "Physique du feu"
+  },
+  {
+   "id": "c5",
+   "type": "carte",
+   "pts": 1,
+   "q": "Ordre de grandeur de puissance — Bougie",
+   "r": "80 W",
+   "expl": "GDO ch. 1 §1.4 : bougie 80 W, corbeille de papiers 150 kW, fauteuil 2 MW, feu de salon ou de chambre développé 3 à 10 MW.",
+   "theme": "Physique du feu"
+  },
+  {
+   "id": "c6",
+   "type": "carte",
+   "pts": 1,
+   "q": "Ordre de grandeur de puissance — Corbeille de papiers",
+   "r": "150 kW",
+   "expl": "GDO ch. 1 §1.4 : bougie 80 W, corbeille de papiers 150 kW, fauteuil 2 MW, feu de salon ou de chambre développé 3 à 10 MW.",
+   "theme": "Physique du feu"
+  },
+  {
+   "id": "c7",
+   "type": "carte",
+   "pts": 1,
+   "q": "Ordre de grandeur de puissance — Fauteuil",
+   "r": "2 MW",
+   "expl": "GDO ch. 1 §1.4 : bougie 80 W, corbeille de papiers 150 kW, fauteuil 2 MW, feu de salon ou de chambre développé 3 à 10 MW.",
+   "theme": "Physique du feu"
+  },
+  {
+   "id": "c8",
+   "type": "carte",
+   "pts": 1,
+   "q": "Ordre de grandeur de puissance — Feu de salon ou de chambre développé",
+   "r": "3 à 10 MW",
+   "expl": "GDO ch. 1 §1.4 : bougie 80 W, corbeille de papiers 150 kW, fauteuil 2 MW, feu de salon ou de chambre développé 3 à 10 MW.",
+   "theme": "Physique du feu"
+  },
+  {
+   "id": "c9",
+   "type": "carte",
+   "pts": 1,
+   "q": "Élément déclencheur — Embrasement généralisé éclair (flashover)",
+   "r": "Apport suffisant de gaz combustibles et d'énergie, avec une veine d'air maintenue",
+   "expl": "GDO ch. 1 §1.7 : le backdraft est déclenché par l'apport de comburant (l'énergie est déjà présente) ; la FGI par l'apport d'énergie d'activation, sans rupture du confinement ; le flashover par l'accumulation de gaz et d'énergie avec une veine d'air maintenue.",
+   "theme": "Phénomènes thermiques"
+  },
+  {
+   "id": "c10",
+   "type": "carte",
+   "pts": 1,
+   "q": "Élément déclencheur — Explosion de fumées (backdraft)",
+   "r": "Apport soudain d'air dans un local sous-ventilé",
+   "expl": "GDO ch. 1 §1.7 : le backdraft est déclenché par l'apport de comburant (l'énergie est déjà présente) ; la FGI par l'apport d'énergie d'activation, sans rupture du confinement ; le flashover par l'accumulation de gaz et d'énergie avec une veine d'air maintenue.",
+   "theme": "Phénomènes thermiques"
+  },
+  {
+   "id": "c11",
+   "type": "carte",
+   "pts": 1,
+   "q": "Élément déclencheur — Inflammation de gaz de combustion (FGI)",
+   "r": "Apport d'énergie d'activation sur des gaz accumulés",
+   "expl": "GDO ch. 1 §1.7 : le backdraft est déclenché par l'apport de comburant (l'énergie est déjà présente) ; la FGI par l'apport d'énergie d'activation, sans rupture du confinement ; le flashover par l'accumulation de gaz et d'énergie avec une veine d'air maintenue.",
+   "theme": "Phénomènes thermiques"
+  },
+  {
+   "id": "c12",
+   "type": "carte",
+   "pts": 1,
+   "q": "Quel est le facteur déclencheur d'un backdraft ?",
+   "r": "L'apport de comburant (air) dans un local confiné",
+   "expl": "GDO ch. 1 §1.7.2 : le facteur déclencheur est l'apport de comburant, l'énergie suffisante étant déjà présente dans la pièce (fenêtre brisée, ouverture de porte, dégradation de toiture).",
+   "theme": "Phénomènes thermiques"
+  },
+  {
+   "id": "c13",
+   "type": "carte",
+   "pts": 1,
+   "q": "Quels signes peuvent annoncer un backdraft ? (plusieurs réponses)",
+   "r": "Fumées épaisses accumulées jusqu'au sol, de couleur brun-jaune · Dépôts noirs huileux sur les vitrages · Sorties et entrées de fumées en alternance (pulsations)",
+   "expl": "GDO ch. 1 §1.7.4 : fumées épaisses brun/jaune (gaz de pyrolyse), dépôts noirs huileux, alternance de sorties et d'entrées de fumées (pulsations parfois audibles). Le backdraft peut être peu visible sur les indicateurs de chaleur dans les bâtiments basse consommation.",
+   "theme": "Phénomènes thermiques"
+  },
+  {
+   "id": "c14",
+   "type": "carte",
+   "pts": 1,
+   "q": "Vrai ou faux ? Une inflammation de gaz de combustion (FGI) peut se produire même avec des fumées refroidies.",
+   "r": "Vrai — GDO ch. 1 §1.7.3 : la FGI peut se produire avec des fumées dites froides ; les fumées peuvent être transportées par les vides, gaines, cages et faux plafonds, et s'enflammer loin du foyer.",
+   "theme": "Phénomènes thermiques"
+  },
+  {
+   "id": "c15",
+   "type": "carte",
+   "pts": 1,
+   "q": "Quel indicateur de fumées est un signe avant-coureur d'embrasement généralisé éclair (flashover) ?",
+   "r": "Épaississement du plafond de fumées qui envahit plus de la moitié de la hauteur et s'assombrit vers le noir",
+   "expl": "GDO ch. 1 §1.7.4 : suies noires, envahissement de plus de la moitié de la hauteur du volume, épaississement du plafond de fumées et assombrissement vers le noir ; écoulements vers l'intérieur en partie basse de l'ouvrant (« respiration du feu »).",
+   "theme": "Phénomènes thermiques"
+  },
+  {
+   "id": "c16",
+   "type": "carte",
+   "pts": 1,
+   "q": "Quelle stabilité au feu minimale la réglementation (ERP et Code du travail) impose-t-elle aux bâtiments, structure et plancher, en conditions normales d'exploitation ?",
+   "r": "30 minutes",
+   "expl": "GDO ch. 1 §2 : stabilité au feu minimale de 30 minutes. Travaux, vétusté, malfaçon ou installations précaires peuvent l'altérer.",
+   "theme": "Structure du bâtiment"
+  },
+  {
+   "id": "c17",
+   "type": "carte",
+   "pts": 1,
+   "q": "Comportement au feu — Béton, briques, pierres",
+   "r": "Bonne résistance, faible réaction au feu",
+   "expl": "GDO ch. 1 §2 : les bâtiments métalliques s'affaissent rapidement ; les panneaux sandwiches et le lamellé-collé tiennent mais alimentent le feu ; le bois non traité cumule mauvaise résistance et forte réaction.",
+   "theme": "Structure du bâtiment"
+  },
+  {
+   "id": "c18",
+   "type": "carte",
+   "pts": 1,
+   "q": "Comportement au feu — Bâtiment métallique (hangar, magasin)",
+   "r": "Mauvaise résistance, faible réaction au feu",
+   "expl": "GDO ch. 1 §2 : les bâtiments métalliques s'affaissent rapidement ; les panneaux sandwiches et le lamellé-collé tiennent mais alimentent le feu ; le bois non traité cumule mauvaise résistance et forte réaction.",
+   "theme": "Structure du bâtiment"
+  },
+  {
+   "id": "c19",
+   "type": "carte",
+   "pts": 1,
+   "q": "Comportement au feu — Lamellé-collé, panneaux sandwiches",
+   "r": "Bonne stabilité, forte réaction au feu",
+   "expl": "GDO ch. 1 §2 : les bâtiments métalliques s'affaissent rapidement ; les panneaux sandwiches et le lamellé-collé tiennent mais alimentent le feu ; le bois non traité cumule mauvaise résistance et forte réaction.",
+   "theme": "Structure du bâtiment"
+  },
+  {
+   "id": "c20",
+   "type": "carte",
+   "pts": 1,
+   "q": "Comportement au feu — Bois non traité, bâtiment précaire",
+   "r": "Mauvaise résistance, forte réaction au feu",
+   "expl": "GDO ch. 1 §2 : les bâtiments métalliques s'affaissent rapidement ; les panneaux sandwiches et le lamellé-collé tiennent mais alimentent le feu ; le bois non traité cumule mauvaise résistance et forte réaction.",
+   "theme": "Structure du bâtiment"
+  },
+  {
+   "id": "c21",
+   "type": "carte",
+   "pts": 1,
+   "q": "Vrai ou faux ? Un bâtiment basse consommation, très étanche et isolé, accélère l'apparition des phénomènes thermiques.",
+   "r": "Vrai — GDO ch. 1 §1.7 et §3 : les enceintes isolées deviennent rapidement limitées par la ventilation ; le risque de backdraft est accru dans les bâtiments basse consommation, et la chaleur y est moins visible sur les indicateurs.",
+   "theme": "Structure du bâtiment"
+  },
+  {
+   "id": "c22",
+   "type": "carte",
+   "pts": 1,
+   "q": "Sur un feu confiné, peu flamboyant car sous-ventilé, quel critère doit caractériser l'opération ?",
+   "r": "La maîtrise du risque de backdraft et de FGI, plus que la rapidité",
+   "expl": "GDO ch. 1 §3.3 (feu naissant) : un feu peu flamboyant parce que sous-ventilé n'est pas un feu naissant ; la rapidité n'est plus un critère d'efficacité et de sécurité, la maîtrise du risque d'explosion (backdraft ou FGI) doit caractériser l'opération.",
+   "theme": "Analyse de la situation"
+  },
+  {
+   "id": "c23",
+   "type": "carte",
+   "pts": 1,
+   "q": "Dans un immeuble de plusieurs étages, que dit le GDO de l'accès par l'extérieur ?",
+   "r": "Passé une certaine hauteur, l'accès par l'extérieur n'est plus possible",
+   "expl": "GDO ch. 1 §3.3 (superstructure) : propagation verticale, personnes piégées, vent plus fort en hauteur, souvent un seul escalier ; passé une certaine hauteur, l'accès par l'extérieur n'est plus possible, et l'accès aux étages au-dessus d'un feu développé présente un risque significatif.",
+   "theme": "Analyse de la situation"
+  },
+  {
+   "id": "c24",
+   "type": "carte",
+   "pts": 1,
+   "q": "Quels sont les trois critères indissociables du choix tactique du COS ? (plusieurs réponses)",
+   "r": "L'évolution de la situation · La sécurité · Les moyens disponibles",
+   "expl": "GDO ch. 2 §II.1 : évolution de la situation, sécurité et moyens disponibles, appréciés in situ par le COS qui s'appuie sur les chefs d'agrès ou chefs d'équipe. Le chef d'agrès est donc un acteur de cette analyse.",
+   "theme": "Tactique et sécurité"
+  },
+  {
+   "id": "c25",
+   "type": "carte",
+   "pts": 1,
+   "q": "Remets dans l'ordre la démarche de maîtrise d'un incendie.",
+   "r": "Stabiliser la situation → Contrôler puis éteindre l'incendie → Réduire et supprimer le risque",
+   "expl": "GDO ch. 2 §I : stabiliser la situation ; contrôler puis éteindre l'incendie ; réduire et supprimer le risque.",
+   "theme": "Tactique et sécurité"
+  },
+  {
+   "id": "c26",
+   "type": "carte",
+   "pts": 1,
+   "q": "Il s'agit de protéger les …, de préserver les … et de protéger l'… des effets de l'incendie.",
+   "r": "personnes · biens · environnement",
+   "expl": "GDO ch. 2 §I : protéger les personnes (y compris les intervenants), préserver les biens, protéger l'environnement. La sécurité est l'affaire de l'ensemble des intervenants.",
+   "theme": "Tactique et sécurité"
+  },
+  {
+   "id": "c27",
+   "type": "carte",
+   "pts": 1,
+   "q": "Comment se font les actions offensives à l'intérieur d'un volume en feu ?",
+   "r": "Systématiquement en binôme, avec si possible un binôme de sécurité",
+   "expl": "GDO ch. 2 §II.2 : les actions offensives à l'intérieur d'un volume se font systématiquement en binôme ; dès que possible, le COS met en place les conditions de sécurité adaptées, notamment un binôme de sécurité.",
+   "theme": "Tactique et sécurité"
+  },
+  {
+   "id": "c28",
+   "type": "carte",
+   "pts": 1,
+   "q": "Qu'est-ce qu'une « attaque d'atténuation » ?",
+   "r": "Une attaque extérieure préalable à l'attaque intérieure, pour réduire significativement l'intensité du feu",
+   "expl": "GDO ch. 2 §II.2 (transition) : l'attaque d'atténuation est une attaque extérieure préalable à une attaque intérieure ; le « repli défensif » est un repli avec la lance dans la circulation commune après détérioration de la situation.",
+   "theme": "Tactique et sécurité"
+  }
+ ]
+}

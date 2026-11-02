@@ -56,13 +56,37 @@ export async function regenCode(team) {
   return code;
 }
 
+// Un stagiaire peut appartenir à 4 équipes au plus : equipeId (principale), equipeId2, equipeId3, equipeId4.
+// Les noms, codes et gestionnaires sont dans users/{uid}.equipes[teamId] ; equipeNom/equipeCode/equipeGest décrivent l'équipe principale.
+export const SLOTS_EQ = ["equipeId", "equipeId2", "equipeId3", "equipeId4"];
+export const MAX_EQUIPES = SLOTS_EQ.length;
+export const idsEquipes = (p) => SLOTS_EQ.map((k) => p?.[k]).filter(Boolean);
+export const estMembre = (p, tid) => !!tid && idsEquipes(p).includes(tid);
+export const equipesDe = (p) => idsEquipes(p).map((id) => {
+  const i = (p.equipes || {})[id] || (id === p.equipeId ? { nom: p.equipeNom, code: p.equipeCode, gest: p.equipeGest } : {});
+  return { id, nom: i.nom || "Équipe", code: i.code || "", gest: i.gest || "", le: i.le || 0 };
+});
+// Champs à écrire pour que le profil contienne exactement cette liste d'équipes (la première devient la principale).
+const champsEquipes = (l) => {
+  const o = {};
+  SLOTS_EQ.forEach((k, i) => { o[k] = l[i] ? l[i].id : deleteField(); });
+  o.equipeNom = l[0] ? l[0].nom : deleteField();
+  o.equipeCode = l[0] ? l[0].code || "" : deleteField();
+  o.equipeGest = l[0] ? l[0].gest || "" : deleteField();
+  o.equipes = l.length ? Object.fromEntries(l.map((t) => [t.id, { nom: t.nom, code: t.code || "", gest: t.gest || "", le: t.le || 0 }])) : deleteField();
+  return o;
+};
+const infoEquipe = (t) => ({ id: t.id, nom: t.nom, code: t.code || "", gest: t.ownerNom || "", le: Date.now() });
+
 export async function listMembres(teamId) {
-  const s = await getDocs(query(collection(db, "users"), where("equipeId", "==", teamId)));
-  return s.docs.map((d) => ({ id: d.id, ...d.data() })).sort((a, b) => (a.nom || "").localeCompare(b.nom || "", "fr"));
+  const snaps = await Promise.all(SLOTS_EQ.map((k) => getDocs(query(collection(db, "users"), where(k, "==", teamId))).catch(() => ({ docs: [] }))));
+  const m = new Map();
+  snaps.forEach((s) => s.docs.forEach((d) => m.set(d.id, { id: d.id, ...d.data() })));
+  return [...m.values()].sort((a, b) => (a.nom || "").localeCompare(b.nom || "", "fr"));
 }
 
-const quitter = { equipeId: deleteField(), equipeNom: deleteField(), equipeCode: deleteField(), equipeGest: deleteField() };
-export const retirerMembre = (uid) => updateDoc(doc(db, "users", uid), quitter);
+// Le gestionnaire retire un membre de CETTE équipe (ses autres équipes sont conservées). u = profil du membre.
+export const retirerMembre = (u, teamId) => updateDoc(doc(db, "users", u.id), champsEquipes(equipesDe(u).filter((t) => t.id !== teamId)));
 
 // Archivage en fin de formation : le code d'accès est libéré (plus d'inscription), membres et suivi conservés.
 export async function archiverEquipe(team) {
@@ -85,27 +109,39 @@ export async function dupliquerEquipe(team, nom, decalage = 0) {
 export async function supprimerEquipe(team) {
   const m = await listMembres(team.id);
   const b = writeBatch(db);
-  m.forEach((u) => b.update(doc(db, "users", u.id), quitter));
+  m.forEach((u) => b.update(doc(db, "users", u.id), champsEquipes(equipesDe(u).filter((t) => t.id !== team.id))));
   await b.commit();
   if (team.code) await deleteDoc(doc(db, "codes", team.code)).catch(() => {});
   await deleteDoc(doc(db, "teams", team.id));
 }
 
 // --- stagiaire ---
-export async function rejoindre(uid, codeSaisi) {
+export async function rejoindre(uid, codeSaisi, profil) {
   const code = normCode(codeSaisi);
   if (code.length < 4) throw new Error("Code invalide.");
   const c = await getDoc(doc(db, "codes", code)).catch(() => null);
   if (!c || !c.exists()) throw new Error("Code inconnu.");
-  const nom = c.data().nom || "Équipe";
-  await updateDoc(doc(db, "users", uid), { equipeId: c.data().teamId, equipeNom: nom, equipeCode: code, equipeGest: c.data().ownerNom || "" });
+  const nom = c.data().nom || "Équipe", l = equipesDe(profil || {});
+  if (l.some((t) => t.id === c.data().teamId)) throw new Error("Tu es déjà membre de cette équipe.");
+  if (l.length >= MAX_EQUIPES) throw new Error(`Tu peux appartenir à ${MAX_EQUIPES} équipes au maximum : quitte-en une d'abord.`);
+  const n = [...l, { id: c.data().teamId, nom, code, gest: c.data().ownerNom || "", le: Date.now() }];
+  await updateDoc(doc(db, "users", uid), { ...champsEquipes(n), equipeCodeAjout: code });
   return { equipeId: c.data().teamId, equipeNom: nom };
 }
-export const quitterEquipe = (uid) => updateDoc(doc(db, "users", uid), quitter);
+export const quitterEquipe = (uid, profil, teamId) => updateDoc(doc(db, "users", uid), champsEquipes(equipesDe(profil).filter((t) => t.id !== teamId)));
 
-// Le gestionnaire déplace un membre vers une autre de ses équipes.
-export const deplacerMembre = (uid, team) =>
-  updateDoc(doc(db, "users", uid), { equipeId: team.id, equipeNom: team.nom, equipeCode: team.code, equipeGest: team.ownerNom || "" });
+// Le gestionnaire ajoute un membre à l'une de ses équipes (les autres équipes du stagiaire sont conservées)
+export const affecterMembre = (u, team) => {
+  const l = equipesDe(u);
+  if (l.some((t) => t.id === team.id)) return Promise.resolve();
+  if (l.length >= MAX_EQUIPES) return Promise.reject(new Error(`déjà dans ${MAX_EQUIPES} équipes`));
+  return updateDoc(doc(db, "users", u.id), champsEquipes([...l, infoEquipe(team)]));
+};
+// Le gestionnaire déplace un membre de l'équipe « de » vers une autre de ses équipes.
+export const deplacerMembre = (u, de, team) => {
+  const l = equipesDe(u).filter((t) => t.id !== de);
+  return updateDoc(doc(db, "users", u.id), champsEquipes(l.some((t) => t.id === team.id) ? l : [...l, infoEquipe(team)]));
+};
 
 // Commentaire du formateur sur un exercice d'un stagiaire : users/{uid}.commentaires[scId]
 // Fil de discussion formateur ↔ stagiaire sur un exercice.
@@ -136,4 +172,3 @@ export async function listUtilisateursCis(departement, cis) {
   const s = await getDocs(query(collection(db, "users"), where("departement", "==", departement || ""), where("cis", "==", cis)));
   return s.docs.map((d) => ({ id: d.id, ...d.data() })).filter((u) => u.statut !== "suspendu").sort((a, b) => (a.nom || "").localeCompare(b.nom || "", "fr"));
 }
-export const affecterMembre = deplacerMembre;

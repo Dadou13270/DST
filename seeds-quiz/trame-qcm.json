@@ -1,0 +1,19 @@
+{
+  "titre": "Titre du QCM",
+  "description": "En une phrase : thème et public visé.",
+  "rubrique": "Quiz et QCM",
+  "niveau": "Débutant",
+  "format": "qcm",
+  "publie": false,
+  "seuil": 70,
+  "melange": false,
+  "consigne": "Une seule bonne réponse sauf mention contraire.",
+  "questions": [
+    {"id": "q1", "type": "unique", "pts": 1, "q": "Énoncé de la question à choix unique ?",
+     "choix": [{"t": "Bonne réponse", "ok": true}, {"t": "Mauvaise réponse A", "ok": false}, {"t": "Mauvaise réponse B", "ok": false}, {"t": "Mauvaise réponse C", "ok": false}],
+     "expl": "Explication affichée après la validation (rappel de la règle, référence doctrinale)."},
+    {"id": "q2", "type": "multiple", "pts": 1, "q": "Énoncé de la question à choix multiples ? (plusieurs réponses)",
+     "choix": [{"t": "Bonne réponse 1", "ok": true}, {"t": "Bonne réponse 2", "ok": true}, {"t": "Mauvaise réponse", "ok": false}, {"t": "Mauvaise réponse", "ok": false}],
+     "expl": "Toutes les bonnes réponses, et seulement elles, doivent être cochées."}
+  ]
+}

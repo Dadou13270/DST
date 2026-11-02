@@ -1,3 +1,4 @@
+import BanqueSelect from "./BanqueSelect";
 import { useEffect, useRef, useState } from "react";
 import { FICHE_SMES, NIVEAUX, calculer, chargerModele, enregistrerModele, evaluationExistante, modeleDefaut, pdfFiche, sansSmes, sauverEvaluation, supprimerEvaluation } from "../lib/fiche";
 
@@ -148,8 +149,8 @@ export default function FicheEval({ stag, sc, gest, src = "suivi", onSaved, onSu
         <h2 style={{ margin: 0 }}>Résultat</h2>
         <Resultat sections={e.sections} />
         <div className="fiche-2">
-          <div><label>Points forts</label><textarea rows={3} value={e.forts || ""} onChange={(x) => setE({ ...e, forts: x.target.value })} placeholder="Ce qui a été bien fait…" /></div>
-          <div><label>Axes de progrès</label><textarea rows={3} value={e.progres || ""} onChange={(x) => setE({ ...e, progres: x.target.value })} placeholder="Ce qu'il faut retravailler avant la prochaine séance…" /></div>
+          <div><label>Points forts</label><BanqueSelect cat="forts" onPick={(t) => setE({ ...e, forts: (e.forts ? e.forts.trimEnd() + "\n" : "") + t })} /><textarea rows={3} value={e.forts || ""} onChange={(x) => setE({ ...e, forts: x.target.value })} placeholder="Ce qui a été bien fait…" /></div>
+          <div><label>Axes de progrès</label><BanqueSelect cat="progres" onPick={(t) => setE({ ...e, progres: (e.progres ? e.progres.trimEnd() + "\n" : "") + t })} /><textarea rows={3} value={e.progres || ""} onChange={(x) => setE({ ...e, progres: x.target.value })} placeholder="Ce qu'il faut retravailler avant la prochaine séance…" /></div>
         </div>
         <div className="row item">
           <button className="btn primary" onClick={save}>{r.decision === "À compléter" ? "Enregistrer le brouillon" : `Enregistrer la fiche (${r.decision})`}</button>

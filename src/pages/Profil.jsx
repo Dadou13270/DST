@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { equipesDe } from "../lib/equipes";
 import { Link } from "react-router-dom";
 import { doc, getDoc, updateDoc, deleteDoc, deleteField } from "firebase/firestore";
 import { EmailAuthProvider, reauthenticateWithCredential, updatePassword, verifyBeforeUpdateEmail, deleteUser } from "firebase/auth";
@@ -188,7 +189,7 @@ export default function Profil() {
           <h3 style={{ margin: 0 }}>Affectation</h3>
           {profil?.equipeId ? (
             <>
-              <p style={{ margin: "6px 0 0" }}>Équipe : <strong>{profil.equipeNom}</strong><br />Gestionnaire : <strong>{profil.equipeGest || "—"}</strong></p>
+              {equipesDe(profil).map((t) => <p key={t.id} style={{ margin: "6px 0 0" }}>Équipe : <strong>{t.nom}</strong><br />Gestionnaire : <strong>{t.gest || "—"}</strong></p>)}
               <p style={{ margin: "8px 0 0" }}>
                 {gestId ? <Link className="btn" to={`/messages?avec=${gestId}`}>✉ Envoyer un message au gestionnaire</Link> : <span className="muted">Messagerie indisponible.</span>}
               </p>
@@ -197,7 +198,7 @@ export default function Profil() {
             <p className="muted" style={{ margin: "6px 0 0" }}>Aucune équipe.</p>
           )}
         </div>
-        <Link className="btn" to="/equipe">{profil?.equipeId ? "Gérer" : "Rejoindre une équipe"}</Link>
+        <Link className="btn" to="/equipe">{profil?.equipeId ? "Gérer mes équipes" : "Rejoindre une équipe"}</Link>
       </div>
       </div>
     </Layout>

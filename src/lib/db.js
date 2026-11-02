@@ -29,11 +29,13 @@ export async function listScenarios(onlyPublished, ctx) {
   const base = [where("publie", "==", true)];
   const qs = [query(col(), ...base, where("reserveA", "==", null))];
   if (ctx?.uid) qs.push(query(col(), ...base, where("reserveA", "==", ctx.uid)));
-  if (ctx?.equipeId) {
-    const t = await getDoc(doc(db, "teams", ctx.equipeId)).catch(() => null);
+  const owners = new Set();
+  for (const id of ctx?.equipeIds || (ctx?.equipeId ? [ctx.equipeId] : [])) {
+    const t = await getDoc(doc(db, "teams", id)).catch(() => null);
     const owner = t?.exists() ? t.data().owner : null;
-    if (owner && owner !== ctx.uid) qs.push(query(col(), ...base, where("reserveA", "==", owner)));
+    if (owner && owner !== ctx.uid) owners.add(owner);
   }
+  owners.forEach((owner) => qs.push(query(col(), ...base, where("reserveA", "==", owner))));
   const res = await Promise.all(qs.map((q) => getDocs(q)));
   const m = new Map();
   res.forEach((s) => s.docs.forEach((d) => m.set(d.id, { id: d.id, ...d.data() })));
@@ -104,4 +106,10 @@ export async function duplicateScenario(id) {
   const p = await getPhoto(id);
   const sp = await getSituationPhotos(id);
   return saveScenario(null, { ...s, titre: `${s.titre} (copie)`, publie: false }, p, sp);
+}
+
+// Scénarios créés par un gestionnaire (éditeur ouvert aux formateurs).
+export async function listMesScenarios(uid) {
+  const s = await getDocs(query(col(), where("auteur", "==", uid)));
+  return s.docs.map((d) => ({ id: d.id, ...d.data() })).sort(byTitre);
 }

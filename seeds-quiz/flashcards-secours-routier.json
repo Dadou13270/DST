@@ -1,0 +1,148 @@
+{
+ "titre": "Flashcards — Secours routier (chef d'équipe)",
+ "description": "15 cartes. GDOD Organisation de la réponse Secours Routier : sécurisation, protection, victimes, désincarcération.",
+ "rubrique": "Quiz et QCM",
+ "niveau": "Intermédiaire",
+ "format": "cartes",
+ "publie": true,
+ "seuil": 70,
+ "melange": true,
+ "consigne": "Lis la question, réponds dans ta tête, retourne la carte, puis dis si tu savais. Les cartes à revoir reviennent en fin de paquet.",
+ "questions": [
+  {
+   "id": "c1",
+   "type": "carte",
+   "pts": 1,
+   "q": "Sur autoroute, quelle mission n'incombe PAS aux sapeurs-pompiers ?",
+   "r": "La régulation de la circulation, le changement de voie et la fermeture de l'autoroute",
+   "expl": "GDOD Secours routier (v1, 14/05/2025), p. 22 : la régulation, le changement de voie de circulation, la circulation ou la fermeture de l'autoroute n'incombent pas aux sapeurs-pompiers (forces de l'ordre et gestionnaire de réseau). Les sapeurs-pompiers coordonnent les secours (COS), assurent le balisage d'urgence en attendant l'exploitant, la sécurité du personnel, le secours et la désincarcération.",
+   "theme": "Rôles et transmissions"
+  },
+  {
+   "id": "c2",
+   "type": "carte",
+   "pts": 1,
+   "q": "Que recouvre la règle des « 3P » ?",
+   "r": "Protection sur-accident ; protection incendie, explosion et chimique ; protection des intervenants",
+   "expl": "GDOD Secours routier (v1, 14/05/2025), annexe B, p. 30 : les 3P sont la protection sur-accident, la protection contre l'incendie, l'explosion et le risque chimique, et la protection des intervenants.",
+   "theme": "Méthode : 3P, 5i, S3D"
+  },
+  {
+   "id": "c3",
+   "type": "carte",
+   "pts": 1,
+   "q": "Quelles actions font partie de la règle des « 5i » appliquée à un véhicule accidenté ? (plusieurs réponses)",
+   "r": "Identifier le véhicule et son énergie · Interdire de toucher, sectionner ou déplacer · Immobiliser le véhicule (moteur arrêté, frein de parc, position P) · Isoler l'énergie de traction",
+   "expl": "GDOD Secours routier (v1, 14/05/2025), annexe B, p. 30 : identification, inspection, interdiction (toucher, sectionner, déplacer), immobilisation (moteur arrêté, frein de parc, position P) et isolement de l'énergie de traction.",
+   "theme": "Méthode : 3P, 5i, S3D"
+  },
+  {
+   "id": "c4",
+   "type": "carte",
+   "pts": 1,
+   "q": "Dans l'ordre des opérations de secours routier, que signifie « S3D » ?",
+   "r": "Stabiliser, Dégarnir, Dessiner, Distance",
+   "expl": "GDOD Secours routier (v1, 14/05/2025), annexe B, p. 30-31 : après la reconnaissance, les 3P, les 5i et les 2P (prise en charge et protection de la victime et du secouriste), vient le S3D (Stabiliser, Dégarnir, Dessiner, Distance), puis les 2D (Découper, Dégager).",
+   "theme": "Méthode : 3P, 5i, S3D"
+  },
+  {
+   "id": "c5",
+   "type": "carte",
+   "pts": 1,
+   "q": "Quelles distances de sécurité respecter vis-à-vis d'un airbag non déployé ?",
+   "r": "30 cm du latéral, 60 cm du conducteur, 90 cm du passager",
+   "expl": "GDOD Secours routier (v1, 14/05/2025), annexe B, p. 31 : 30 cm de l'airbag latéral, 60 cm de l'airbag du conducteur, 90 cm de celui du passager. Un airbag non déployé peut se déclencher lors de la découpe ou de la manipulation (cartouches de gaz, système pyrotechnique).",
+   "theme": "Risques et équipements"
+  },
+  {
+   "id": "c6",
+   "type": "carte",
+   "pts": 1,
+   "q": "Que désigne la zone d'exclusion (rouge) ?",
+   "r": "Une zone de danger absolu : la circulation doit être coupée si un accès est nécessaire",
+   "expl": "GDOD Secours routier (v1, 14/05/2025), p. 17 : zone d'exclusion (rouge) = zone de danger absolu ; zone contrôlée (orange) = risque élevé, à ne fréquenter que si strictement nécessaire ; zone de soutien (verte) = risque acceptable, mise en sécurité des impliqués et des personnels en attente.",
+   "theme": "Sécurisation du site"
+  },
+  {
+   "id": "c7",
+   "type": "carte",
+   "pts": 1,
+   "q": "Quelle règle s'applique au balisage d'approche ?",
+   "r": "Ne jamais poser un panneau ou un cône de balisage isolément sur une voie",
+   "expl": "GDOD Secours routier (v1, 14/05/2025), p. 18 : le balisage d'approche utilise un panneau lumineux sur la BAU ou le bas-côté ; ne jamais poser un panneau ou un cône de balisage isolément sur une voie.",
+   "theme": "Sécurisation du site"
+  },
+  {
+   "id": "c8",
+   "type": "carte",
+   "pts": 1,
+   "q": "Sur autoroute en cas de congestion, par où les engins doivent-ils progresser ?",
+   "r": "Par la bande d'arrêt d'urgence (BAU)",
+   "expl": "GDOD Secours routier (v1, 14/05/2025), p. 21 : progresser par les voies normales si l'une des deux est libre ; en cas de congestion, progresser par la BAU. Ne jamais faire demi-tour sur l'autoroute, ne jamais l'emprunter à contresens. Attention : la BAU peut être encombrée.",
+   "theme": "Sécurisation du site"
+  },
+  {
+   "id": "c9",
+   "type": "carte",
+   "pts": 1,
+   "q": "Sur autoroute, que ne faut-il jamais faire ? (plusieurs réponses)",
+   "r": "Faire demi-tour sur l'autoroute · Emprunter l'autoroute à contresens",
+   "expl": "GDOD Secours routier (v1, 14/05/2025), p. 19 et 21 : ne jamais faire demi-tour sur l'autoroute, ne jamais l'emprunter à contresens. Progresser par la BAU en cas de congestion est la règle, et les feux de détresse sont utilisés à l'entrée par un portail de service.",
+   "theme": "Sécurisation du site"
+  },
+  {
+   "id": "c10",
+   "type": "carte",
+   "pts": 1,
+   "q": "Que matérialise un double cône de Lübeck dans le balisage de position ?",
+   "r": "La fin de la zone tampon et le début de la zone de travail",
+   "expl": "GDOD Secours routier (v1, 14/05/2025), p. 17-18 : la zone tampon se situe après la zone d'approche et avant la zone de travail ; un double cône de Lübeck matérialise la fin de la zone tampon et le début de la zone de travail.",
+   "theme": "Sécurisation du site"
+  },
+  {
+   "id": "c11",
+   "type": "carte",
+   "pts": 1,
+   "q": "Quels équipements sont prévus pour l'intervention de secours routier ? (plusieurs réponses)",
+   "r": "Tenue de feu complète, sans cagoule de feu · Casque avec lunettes · Masque FFP2 pour la découpe d'un pare-brise",
+   "expl": "GDOD Secours routier (v1, 14/05/2025), p. 11 : tenue de feu complète sans cagoule de feu, casque avec lunettes, protection faciale baissée si possible, masque FFP2 pour la découpe de pare-brise. Le port des EPI est obligatoire quelle que soit l'action à mener. Gants 1000 V en dotation collective pour débrancher les service plugs.",
+   "theme": "Risques et équipements"
+  },
+  {
+   "id": "c12",
+   "type": "carte",
+   "pts": 1,
+   "q": "Qu'est-ce qui distingue une victime « incarcérée » d'une victime « piégée » ?",
+   "r": "L'incarcérée est bloquée avec compression et lésions sous-jacentes ; la piégée est retenue par la déformation sans lésion de compression",
+   "expl": "GDOD Secours routier (v1, 14/05/2025), p. 12 et 28 : la victime piégée est retenue par la déformation de l'habitacle, sans lésion liée à la compression, et n'a souvent pas besoin d'être médicalisée ; la victime incarcérée est bloquée avec compression et lésions sous-jacentes, ce qui impose le SMUR et la désincarcération.",
+   "theme": "Victimes et techniques"
+  },
+  {
+   "id": "c13",
+   "type": "carte",
+   "pts": 1,
+   "q": "Dans le message d'ambiance du premier engin, quelle formulation est à proscrire pour décrire la violence du choc ?",
+   "r": "« Énergie cinétique faible ou forte »",
+   "expl": "GDOD Secours routier (v1, 14/05/2025), p. 16 : le message d'ambiance du premier engin est prépondérant ; la notion d'« énergie cinétique faible ou forte » est à proscrire au profit de la vitesse estimée ou de la violence du choc.",
+   "theme": "Rôles et transmissions"
+  },
+  {
+   "id": "c14",
+   "type": "carte",
+   "pts": 1,
+   "q": "Pour une survie optimale du blessé grave, dans quel délai idéal doit se faire sa prise en charge ?",
+   "r": "Dans l'heure qui suit l'accident",
+   "expl": "GDOD Secours routier (v1, 14/05/2025), annexe A, p. 26 : la « golden période » suppose une prise en charge dans l'heure qui suit l'accident, d'où l'importance d'un engagement rapide et d'un message de renseignement précis.",
+   "theme": "Victimes et techniques"
+  },
+  {
+   "id": "c15",
+   "type": "carte",
+   "pts": 1,
+   "q": "Que signifie « stabiliser » un véhicule accidenté avant la désincarcération ?",
+   "r": "Figer le véhicule pour sécuriser la désincarcération",
+   "expl": "GDOD Secours routier (v1, 14/05/2025), annexe A, p. 27 : la stabilisation consiste à figer le véhicule pour sécuriser la désincarcération ; elle précède le dégarnissage (repérage des zones de découpe et de danger) dans le S3D.",
+   "theme": "Victimes et techniques"
+  }
+ ]
+}

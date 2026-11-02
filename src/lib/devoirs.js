@@ -23,9 +23,10 @@ export const limiteDepuisInput = (v) => (v ? new Date(v + "T23:59:59").getTime()
 export const assignerParcours = (team, pc, scs, limite) => {
   const have = new Set((team.devoirs || []).map((d) => d.scId));
   const add = [];
-  (pc.scIds || []).forEach((scId, i) => {
+  const seq = pc.diag && pc.diagId ? [pc.diagId, ...(pc.scIds || []).filter((x) => x !== pc.diagId)] : pc.scIds || [];
+  seq.forEach((scId, i) => {
     const x = scs.find((y) => y.id === scId);
-    if (x && !have.has(scId)) add.push({ scId, titre: x.titre, limite, ajout: Date.now(), pc: pc.id, pcT: pc.titre, rg: i, pcO: pc.ordre ? 1 : 0, ...(pc.objectif ? { pcJ: pc.objectif } : {}), ...(x.kind && x.kind !== "sc" ? { k: x.kind } : {}) });
+    if (x && !have.has(scId)) add.push({ scId, titre: x.titre, limite, ajout: Date.now(), pc: pc.id, pcT: pc.titre, rg: i, pcO: pc.ordre ? 1 : 0, ...(pc.diag && pc.diagId && i === 0 ? { dg: 1 } : {}), ...(pc.objectif ? { pcJ: pc.objectif } : {}), ...(pc.prerequis ? { pcP: pc.prerequis } : {}), ...(pc.objectifs && pc.objectifs.length ? { pcI: pc.objectifs } : {}), ...(pc.objLiens && pc.objLiens[scId] !== undefined ? { oi: pc.objLiens[scId] } : {}), ...(x.kind && x.kind !== "sc" ? { k: x.kind } : {}) });
   });
   if (!add.length) return Promise.resolve(0);
   return updateDoc(doc(db, "teams", team.id), { devoirs: [...(team.devoirs || []), ...add] }).then(() => add.length);

@@ -1,0 +1,100 @@
+{
+  "titre": "Titre du quiz",
+  "description": "En une phrase : thème et public visé.",
+  "rubrique": "Quiz et QCM",
+  "niveau": "Débutant",
+  "format": "quiz",
+  "publie": false,
+  "seuil": 70,
+  "melange": false,
+  "consigne": "Réponds aux questions : vrai ou faux, choix, ou réponse courte.",
+  "questions": [
+    {
+      "id": "q1",
+      "type": "vf",
+      "pts": 1,
+      "q": "Affirmation à juger vraie ou fausse.",
+      "vf": true,
+      "expl": "Pourquoi l'affirmation est vraie (ou fausse).",
+      "theme": "Thème 1"
+    },
+    {
+      "id": "q2",
+      "type": "unique",
+      "pts": 1,
+      "q": "Question à choix unique ?",
+      "choix": [
+        {
+          "t": "Bonne réponse",
+          "ok": true
+        },
+        {
+          "t": "Mauvaise réponse",
+          "ok": false
+        },
+        {
+          "t": "Mauvaise réponse",
+          "ok": false
+        }
+      ],
+      "expl": "Explication.",
+      "theme": "Thème 1"
+    },
+    {
+      "id": "q3",
+      "type": "libre",
+      "pts": 1,
+      "q": "Question appelant une réponse courte (un mot ou un nombre) ?",
+      "reponses": [
+        "réponse attendue",
+        "variante acceptée"
+      ],
+      "expl": "Les réponses acceptées sont comparées sans tenir compte des majuscules ni des accents.",
+      "theme": "Thème 1"
+    },
+    {
+      "id": "q4",
+      "type": "ordre",
+      "pts": 1,
+      "q": "Remets ces étapes dans le bon ordre.",
+      "items": [
+        "Première étape",
+        "Deuxième étape",
+        "Troisième étape"
+      ],
+      "expl": "Rappelle l'enchaînement correct.",
+      "theme": "Thème 1"
+    },
+    {
+      "id": "q5",
+      "type": "trous",
+      "pts": 1,
+      "q": "Complète la phrase.",
+      "texte": "Un poteau d'incendie fournit au moins {{60}} m³/h sous {{1}} bar.",
+      "expl": "Entoure avec {{ }} chaque mot à trouver ; sépare les variantes acceptées par |.",
+      "theme": "Thème 1"
+    },
+    {
+      "id": "q6",
+      "type": "assoc",
+      "pts": 1,
+      "q": "Associe chaque élément à sa correspondance.",
+      "paires": [
+        {
+          "g": "Classe A",
+          "d": "Solides"
+        },
+        {
+          "g": "Classe B",
+          "d": "Liquides"
+        },
+        {
+          "g": "Classe C",
+          "d": "Gaz"
+        }
+      ],
+      "expl": "Rappel de la correspondance attendue.",
+      "theme": "Thème 1"
+    }
+  ]
+}

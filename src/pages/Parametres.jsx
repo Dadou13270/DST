@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { initialiserVisibilite } from "../lib/db";
-import { setStyle, setCartes } from "../lib/nouveautes";
+import { setStyle, setCartes, setBarre, setMenu, setLook, apercuLook, appliquerLook } from "../lib/nouveautes";
 import { useCharte, setCharte, lireLogo, CHARTE_DEF } from "../lib/charte";
 
 function Charte({ onMsg }) {
@@ -42,6 +42,35 @@ export default function Parametres() {
 
       <Charte onMsg={setMsg} />
 
+      <div className="card">
+        <h3>Barre de menu du haut</h3>
+        <p className="muted">Apparence de la barre du haut, pour tous les utilisateurs. La nouvelle barre affiche les messages et regroupe le profil, la taille du texte, la visite guidée, le thème et la déconnexion dans le menu du compte.</p>
+        <select defaultValue={document.documentElement.dataset.barre === "n" ? "n" : ""}
+          onChange={(e) => setBarre(e.target.value).then(() => setMsg("Barre enregistrée.")).catch((er) => setMsg("Erreur : " + er.message))}>
+          <option value="">Actuelle (fond rouge)</option>
+          <option value="n">Nouvelle (fond blanc, messages et menu du compte)</option>
+        </select>
+      </div>
+      <div className="card">
+        <h3>Palette de couleurs</h3>
+        <p className="muted">Choisis la palette de l'application. « Aperçu » change l'affichage pour toi seulement ; « Enregistrer pour tous » l'applique à tous les utilisateurs.</p>
+        <select defaultValue={document.documentElement.dataset.look === "sp" ? "sp" : ""} onChange={(e) => apercuLook(e.target.value)} id="look-sel">
+          <option value="">Actuelle (rouge et gris)</option>
+          <option value="sp">Académie SP (bleu marine, rouge, gris clair)</option>
+        </select>
+        <div className="row" style={{ marginTop: 8 }}>
+          <button className="btn primary" onClick={() => { const v = document.getElementById("look-sel").value; setLook(v).then(() => { appliquerLook(v); setMsg("Charte enregistrée pour tous."); }).catch((er) => setMsg("Erreur : " + er.message)); }}>Enregistrer pour tous</button>
+        </div>
+      </div>
+      <div className="card">
+        <h3>Disposition du menu</h3>
+        <p className="muted">Position du menu de navigation, pour tous les utilisateurs. La barre du haut reste (logo, nom, connectés, messages, compte) ; les menus passent en colonne à gauche avec leurs sous-menus. Sur téléphone et tablette, le menu reste en haut.</p>
+        <select defaultValue={document.documentElement.dataset.menu === "g" ? "g" : ""}
+          onChange={(e) => setMenu(e.target.value).then(() => setMsg("Disposition enregistrée.")).catch((er) => setMsg("Erreur : " + er.message))}>
+          <option value="">Actuelle (menu en haut)</option>
+          <option value="g">Menu en colonne à gauche, avec sous-menus</option>
+        </select>
+      </div>
       <div className="card">
         <h3>Graphisme de l'application</h3>
         <p className="muted">Choisis l'apparence pour tous les utilisateurs.</p>

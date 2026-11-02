@@ -1,6 +1,7 @@
 import { initializeApp } from "firebase/app";
 import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
+import { getStorage } from "firebase/storage";
 import { initializeAppCheck, ReCaptchaV3Provider } from "firebase/app-check";
 
 export const cfg = {
@@ -20,6 +21,7 @@ export const db = app
   ? initializeFirestore(app, { localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }) })
   : null;
 export const auth = app ? getAuth(app) : null;
+export const storage = app && cfg.storageBucket ? getStorage(app) : null;
 
 // Protection serveur optionnelle (Firebase App Check + reCAPTCHA v3) : active seulement si la clé est renseignée dans .env.
 if (app && import.meta.env.VITE_RECAPTCHA_SITE_KEY) {

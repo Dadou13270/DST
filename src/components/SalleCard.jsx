@@ -12,7 +12,7 @@ export const texteInvitation = (r, nomFormateur) => {
   const quand = new Date(r.debut).toLocaleString("fr-FR", { dateStyle: "full", timeStyle: "short" }).replace(" à ", " à ");
   return `Bonjour,
 
-Séance en salle OPS Training
+Séance en salle La Caserne Virtuelle
 Date et heure : ${quand}
 Scénario : ${r.titre || "—"}
 Formateur : ${r.ownerNom || nomFormateur || "—"}

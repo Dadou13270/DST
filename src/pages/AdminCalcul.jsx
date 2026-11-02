@@ -7,8 +7,8 @@ import { compressImage } from "../lib/image";
 import { calcImg } from "../lib/calculImages";
 import { listIllustrations } from "../lib/illustrations";
 
-const VIDE = { titre: "", contexte: "", niveau: "Initiation", rubrique: "Risques industriels", publie: false, S: 100, miscible: false, C: 3, Qref: 1000, reseau: 3000, F: 7, h: 0.15 };
-const NIV = ["Initiation", "Intermédiaire", "Avancé"];
+const VIDE = { titre: "", contexte: "", niveau: "Débutant", rubrique: "Risques industriels", publie: false, S: 100, miscible: false, C: 3, Qref: 1000, reseau: 3000, F: 7, h: 0.15 };
+import { NIVEAUX as NIV, nivNorm } from "../lib/model";
 const fnum = (n) => Number(n).toLocaleString("fr-FR");
 
 export default function AdminCalcul() {
@@ -53,7 +53,7 @@ export default function AdminCalcul() {
         <label>Titre</label><input maxLength={100} value={e.titre} onChange={(ev) => set("titre", ev.target.value)} />
         <label>Énoncé (contexte)</label><textarea rows={3} maxLength={600} value={e.contexte} onChange={(ev) => set("contexte", ev.target.value)} />
         <div className="row">
-          <div><label>Niveau</label><select value={e.niveau} onChange={(ev) => set("niveau", ev.target.value)}>{NIV.map((n) => <option key={n}>{n}</option>)}</select></div>
+          <div><label>Niveau</label><select value={nivNorm(e.niveau) || "Débutant"} onChange={(ev) => set("niveau", ev.target.value)}>{NIV.map((n) => <option key={n}>{n}</option>)}</select></div>
           <div><label>Rubrique</label><select value={e.rubrique || ""} onChange={(ev) => set("rubrique", ev.target.value)}><option value="">— Aucune —</option>{rubs.map((r) => <option key={r}>{r}</option>)}</select></div>
           <label className="ck"><input type="checkbox" checked={!!e.publie} onChange={(ev) => set("publie", ev.target.checked)} /> Publié (visible des stagiaires)</label>
         </div>

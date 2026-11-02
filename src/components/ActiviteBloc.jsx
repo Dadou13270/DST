@@ -1,4 +1,5 @@
 import { fmtDate } from "../lib/users";
+import { idsEquipes } from "../lib/equipes";
 import { etatSalle, libEtat } from "../lib/salles";
 
 const Tuile = ({ n, l }) => (
@@ -12,7 +13,7 @@ const Tuile = ({ n, l }) => (
 export default function ActiviteBloc({ act, users, part }) {
   if (!act) return <p className="muted">Chargement du suivi de l'activité…</p>;
   const { equipes, salles } = act;
-  const enEquipe = users.filter((u) => u.equipeId).length;
+  const enEquipe = users.filter((u) => idsEquipes(u).length > 0).length;
   const gest = users.filter((u) => u.gestionnaire).length;
   const ouvertes = salles.filter((s) => s.ouverte !== false).length;
   const j30 = Date.now() - 30 * 86400000;

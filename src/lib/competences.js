@@ -41,11 +41,12 @@ export function useLu(uid) {
   const marquer = useCallback(() => { const n = Date.now(); setT(n); return setDoc(refLu(uid), { t: n }).catch(() => {}); }, [uid]);
   return { lu: t, marquer };
 }
-export function nouveautes({ devoirs, profil, evals, lu }) {
+export function nouveautes({ devoirs, profil, evals, lu, equipes }) {
   const base = Math.max(lu || 0, Date.now() - 14 * 864e5);
   const l = [];
   (devoirs || []).forEach((d) => { if (d.ajout > base && d.statut !== "ok") l.push({ t: d.ajout, ic: "📌", txt: `Nouvel exercice à rendre : ${d.titre} (avant le ${fmtLimite(d.limite)})` }); });
   Object.entries(profil?.commentaires || {}).forEach(([id, c]) => { if ((c.le || 0) > base) l.push({ t: c.le, ic: "💬", txt: `Commentaire de ${c.auteur || "ton formateur"} sur « ${profil?.bilans?.[id]?.titre || "un exercice"} »`, to: "/suivi" }); });
   (evals || []).forEach((e) => { if ((e.maj || 0) > base && e.decision && e.decision !== "À compléter") l.push({ t: e.maj, ic: "📋", txt: `Fiche d'évaluation : ${e.scTitre} — ${e.decision} (${e.pct} %)`, to: "/suivi" }); });
+  (equipes || []).forEach((t) => { if (t.le > base) l.push({ t: t.le, ic: "👥", txt: `Tu as rejoint l'équipe « ${t.nom} »`, to: "/equipe" }); });
   return l.sort((a, b) => b.t - a.t);
 }

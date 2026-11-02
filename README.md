@@ -1,4 +1,4 @@
-# OPS Training — pompiers (SOIEC)
+# La Caserne Virtuelle — pompiers (SOIEC)
 
 React + Vite + Firebase (Firestore + Auth). Déploiement Netlify.
 

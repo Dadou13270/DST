@@ -26,6 +26,7 @@ export const deleteNouveaute = (id) => deleteDoc(doc(db, "nouveautes", id));
 
 // Entrées de départ (collection vide) : l'admin peut les charger depuis la page Nouveautés.
 export const NOUVEAUTES_INIT = [
+  {"d": "2026-10-31", "t": "Nouveau nom : La Caserne Virtuelle", "l": ["L'application devient La Caserne Virtuelle, avec un nouveau slogan : « Plateforme de préparation et de révision »."]},
   {"d": "2026-10-28", "t": "Annonces, demande gestionnaire et admin de département", "l": ["Annonces de l'administrateur : un bandeau pour tous, les gestionnaires, un département ou un CIS (maintenance, nouveauté).", "Devenir gestionnaire : la demande se fait depuis le profil et l'administrateur l'accepte ou la refuse en un clic, avec le statut affiché.", "Nouveau rôle « admin de département » : statistiques de son département, validation des demandes et droit gestionnaire, annonces de son département."]},
   {"d": "2026-10-28", "t": "Relances, rapports de fin de formation et co-formateur", "l": ["Retards : bouton « Relancer » (ou « Relancer tous ») qui envoie un message privé au stagiaire, avec un texte modifiable.", "Rapport de fin de formation en PDF par stagiaire (progression, temps, essentielles, auto-évaluations, consignes, commentaires), ou pour toute l'équipe.", "Co-formateur : un second gestionnaire du même CIS peut piloter une équipe ou une séance en salle."]},
   {"d": "2026-10-27", "t": "Historique des séances, échéances modifiables, QR code et équipes archivées", "l": ["Le bilan d'une séance en salle est conservé à la suppression de la salle : historique consultable et exportable en PDF pour le débriefing.", "Les dates limites des exercices à rendre se modifient, et un parcours entier peut être décalé en une fois.", "Le message d'invitation à une séance contient un QR code : le stagiaire rejoint la salle en un scan.", "Fin de formation : une équipe peut être archivée puis restaurée, ou dupliquée avec ses exercices."]},
@@ -77,6 +78,19 @@ export function appliquerCartes(v) {
   if (v === "h") document.documentElement.dataset.cartes = "h"; else delete document.documentElement.dataset.cartes;
   try { localStorage.setItem("op-cartes", v === "h" ? "h" : ""); } catch { /* ignore */ }
 }
+export function appliquerBarre(v) {
+  if (v === "n") document.documentElement.dataset.barre = "n"; else delete document.documentElement.dataset.barre;
+  try { localStorage.setItem("op-barre", v === "n" ? "n" : ""); } catch { /* ignore */ }
+}
+export function appliquerMenu(v) {
+  if (v === "g") document.documentElement.dataset.menu = "g"; else delete document.documentElement.dataset.menu;
+  try { localStorage.setItem("op-menu", v === "g" ? "g" : ""); } catch { /* ignore */ }
+}
+export function apercuLook(v) { if (v === "sp") document.documentElement.dataset.look = "sp"; else delete document.documentElement.dataset.look; initCharte(); }
+export function appliquerLook(v) {
+  apercuLook(v);
+  try { localStorage.setItem("op-look", v === "sp" ? "sp" : ""); } catch { /* ignore */ }
+}
 export function appliquerStyle(v) {
   document.documentElement.dataset.style = v === "b" ? "b" : "";
   try { localStorage.setItem("op-style", v === "b" ? "b" : ""); } catch { /* ignore */ }
@@ -84,15 +98,23 @@ export function appliquerStyle(v) {
 export function initStyle() {
   try { if (localStorage.getItem("op-style") === "b") document.documentElement.dataset.style = "b"; } catch { /* ignore */ }
   try { if (localStorage.getItem("op-cartes") === "h") document.documentElement.dataset.cartes = "h"; } catch { /* ignore */ }
+  try { if (localStorage.getItem("op-barre") === "n") document.documentElement.dataset.barre = "n"; } catch { /* ignore */ }
+  try { if (localStorage.getItem("op-menu") === "g") document.documentElement.dataset.menu = "g"; } catch { /* ignore */ }
+  try { if (localStorage.getItem("op-look") === "sp") document.documentElement.dataset.look = "sp"; } catch { /* ignore */ }
   initCharte();
   if (!auth) return () => {};
   let off = () => {};
   const offAuth = onAuthStateChanged(auth, (u) => {
     off();
-    off = u ? onSnapshot(doc(db, "nouveautes", "_reglages"), (d) => { appliquerStyle(d.exists() ? d.data().style : ""); appliquerCartes(d.exists() ? d.data().cartes : ""); appliquerCharte(d.exists() ? d.data().charte : null); }, () => {}) : () => {};
+    off = u ? onSnapshot(doc(db, "nouveautes", "_reglages"), (d) => { appliquerStyle(d.exists() ? d.data().style : ""); appliquerCartes(d.exists() ? d.data().cartes : ""); appliquerBarre(d.exists() ? d.data().barre : ""); appliquerMenu(d.exists() ? d.data().menu : ""); appliquerLook(d.exists() ? d.data().look : ""); appliquerCharte(d.exists() ? d.data().charte : null); }, () => {}) : () => {};
   });
   return () => { off(); offAuth(); };
 }
 export const setStyle = (v) => setDoc(doc(db, "nouveautes", "_reglages"), { style: v === "b" ? "b" : "" }, { merge: true });
 // Présentation des blocs d'exercices : "" = vertical (image en haut), "h" = image à gauche, texte à droite.
 export const setCartes = (v) => setDoc(doc(db, "nouveautes", "_reglages"), { cartes: v === "h" ? "h" : "" }, { merge: true });
+// Barre de menu du haut : "" = actuelle, "n" = nouvelle (fond blanc, messages, menu du compte).
+export const setMenu = (v) => setDoc(doc(db, "nouveautes", "_reglages"), { menu: v === "g" ? "g" : "" }, { merge: true });
+export const setBarre = (v) => setDoc(doc(db, "nouveautes", "_reglages"), { barre: v === "n" ? "n" : "" }, { merge: true });
+
+export const setLook = (v) => setDoc(doc(db, "nouveautes", "_reglages"), { look: v === "sp" ? "sp" : "" }, { merge: true });

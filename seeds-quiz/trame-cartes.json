@@ -1,0 +1,14 @@
+{
+  "titre": "Titre du paquet de flashcards",
+  "description": "En une phrase : thème et public visé.",
+  "rubrique": "Quiz et QCM",
+  "niveau": "Débutant",
+  "format": "cartes",
+  "publie": false,
+  "seuil": 70,
+  "melange": true,
+  "consigne": "Lis la question, réponds dans ta tête, retourne la carte, puis dis si tu savais.",
+  "questions": [
+    {"id": "c1", "type": "carte", "pts": 1, "q": "Recto : la question ou la notion.", "r": "Verso : la réponse courte à retenir.", "expl": "Complément facultatif affiché sous la réponse.", "theme": "Thème 1"}
+  ]
+}

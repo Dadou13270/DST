@@ -1,0 +1,103 @@
+{
+ "titre": "Flashcards — Bases du chef d'équipe",
+ "description": "10 cartes. Notions essentielles du chef d'équipe, issues du QCM chef d'équipe.",
+ "rubrique": "Quiz et QCM",
+ "niveau": "Débutant",
+ "format": "cartes",
+ "publie": true,
+ "seuil": 70,
+ "melange": true,
+ "consigne": "Lis la question, réponds dans ta tête, retourne la carte, puis dis si tu savais. Les cartes à revoir reviennent en fin de paquet.",
+ "questions": [
+  {
+   "id": "c1",
+   "type": "carte",
+   "pts": 1,
+   "q": "Que signifie le sigle SOIEC dans la méthode de raisonnement tactique ?",
+   "r": "Situation, Objectifs, Idées de manœuvre, Exécution, Commandement",
+   "expl": "SOIEC : Situation, Objectifs, Idées de manœuvre, Exécution, Commandement. C'est l'ossature de l'ordre initial donné par le chef.",
+   "theme": "Méthode et transmissions"
+  },
+  {
+   "id": "c2",
+   "type": "carte",
+   "pts": 1,
+   "q": "Quels sont les trois éléments du triangle du feu ? (plusieurs réponses)",
+   "r": "Un combustible · Un comburant · Une énergie d'activation",
+   "expl": "Il n'y a combustion que si un combustible, un comburant (le plus souvent l'oxygène de l'air) et une énergie d'activation sont réunis. Supprimer l'un des trois éteint le feu.",
+   "theme": "Feu et produits dangereux"
+  },
+  {
+   "id": "c3",
+   "type": "carte",
+   "pts": 1,
+   "q": "Un feu de liquides ou de solides liquéfiables (essence, alcool, huile minérale) est un feu de classe :",
+   "r": "B",
+   "expl": "A : solides, B : liquides, C : gaz, D : métaux, F : huiles et graisses de cuisson.",
+   "theme": "Feu et produits dangereux"
+  },
+  {
+   "id": "c4",
+   "type": "carte",
+   "pts": 1,
+   "q": "Quel agent extincteur faut-il proscrire sur un feu de friteuse (huile de cuisson en feu, classe F) ?",
+   "r": "Le jet d'eau",
+   "expl": "L'eau projetée sur de l'huile en feu se vaporise brutalement et projette l'huile enflammée : risque de brûlures graves et d'extension du feu.",
+   "theme": "Feu et produits dangereux"
+  },
+  {
+   "id": "c5",
+   "type": "carte",
+   "pts": 1,
+   "q": "Quel est le débit minimal normalisé d'un poteau d'incendie en défense extérieure contre l'incendie ?",
+   "r": "60 m³/h sous 1 bar",
+   "expl": "Un point d'eau incendie doit fournir au moins 60 m³/h sous une pression dynamique d'au moins 1 bar (référence de la DECI).",
+   "theme": "Hydraulique"
+  },
+  {
+   "id": "c6",
+   "type": "carte",
+   "pts": 1,
+   "q": "Face à une victime adulte en arrêt cardiaque, quelles actions correspondent à la chaîne de survie ? (plusieurs réponses)",
+   "r": "Alerter les secours · Pratiquer des compressions thoraciques · Utiliser un défibrillateur dès que possible",
+   "expl": "Alerter, masser sans attendre (environ 100 à 120 compressions par minute, thorax enfoncé de 5 à 6 cm chez l'adulte) et défibriller le plus tôt possible.",
+   "theme": "Secours à personne"
+  },
+  {
+   "id": "c7",
+   "type": "carte",
+   "pts": 1,
+   "q": "Une victime est inconsciente mais respire normalement. Quelle conduite à tenir ?",
+   "r": "La placer en position latérale de sécurité (PLS) et surveiller sa respiration",
+   "expl": "La PLS maintient les voies aériennes libres et évite l'étouffement par les vomissements ou la chute de la langue. On surveille la respiration en attendant les renforts.",
+   "theme": "Secours à personne"
+  },
+  {
+   "id": "c8",
+   "type": "carte",
+   "pts": 1,
+   "q": "Avant tout engagement, quelle est la première préoccupation d'un chef d'équipe ?",
+   "r": "La sécurité de son équipe et la sienne",
+   "expl": "On ne s'engage que si les risques sont identifiés et maîtrisés : la sécurité des personnels prime sur toute autre considération, y compris la sauvegarde des biens.",
+   "theme": "Sécurité"
+  },
+  {
+   "id": "c9",
+   "type": "carte",
+   "pts": 1,
+   "q": "Sur une étiquette de produit dangereux, que signifie le pictogramme « flamme au-dessus d'un cercle » ?",
+   "r": "Produit comburant",
+   "expl": "La flamme au-dessus d'un cercle désigne un produit comburant : il peut provoquer ou aggraver un incendie en libérant de l'oxygène. La flamme seule désigne un produit inflammable.",
+   "theme": "Feu et produits dangereux"
+  },
+  {
+   "id": "c10",
+   "type": "carte",
+   "pts": 1,
+   "q": "À quoi sert le message d'ambiance transmis à l'arrivée sur les lieux ?",
+   "r": "Rendre compte au CODIS de la situation observée et des premières actions engagées",
+   "expl": "Le message d'ambiance donne dès l'arrivée une image claire de la situation (ce que l'on voit) et des premières décisions, pour que la chaîne de commandement et le CODIS anticipent les moyens.",
+   "theme": "Méthode et transmissions"
+  }
+ ]
+}

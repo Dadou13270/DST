@@ -1,3 +1,4 @@
+import { nivNorm } from "../lib/model";
 import { CadresEdit } from "../components/Cadres";
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
@@ -49,7 +50,7 @@ export default function AdminRelation() {
           <label>Description (carte de l'exercice)</label><textarea rows={2} value={e.description} onChange={(ev) => set("description", ev.target.value)} />
           <div className="row">
             <div><label>Rubrique</label><select value={e.rubrique} onChange={(ev) => set("rubrique", ev.target.value)}>{[...new Set([...rubs, e.rubrique])].map((r) => <option key={r}>{r}</option>)}</select></div>
-            <div><label>Niveau</label><select value={e.niveau} onChange={(ev) => set("niveau", ev.target.value)}><option>Initiation</option><option>Intermédiaire</option><option>Avancé</option></select></div>
+            <div><label>Niveau</label><select value={nivNorm(e.niveau) || "Intermédiaire"} onChange={(ev) => set("niveau", ev.target.value)}><option>Débutant</option><option>Intermédiaire</option><option>Avancé</option></select></div>
             <div><label>Publié</label><select value={e.publie ? "1" : "0"} onChange={(ev) => set("publie", ev.target.value === "1")}><option value="0">Brouillon</option><option value="1">Publié</option></select></div>
             <div><label>Jauges</label><select value={e.jaugesMasquees ? "1" : "0"} onChange={(ev) => set("jaugesMasquees", ev.target.value === "1")}><option value="0">Visibles (guidé)</option><option value="1">Masquées (expert)</option></select></div>
           </div>

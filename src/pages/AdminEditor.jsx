@@ -4,12 +4,15 @@ import { CadresEdit } from "../components/Cadres";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { getScenario, getPhoto, getSituationPhotos, saveScenario } from "../lib/db";
 import { compressImage } from "../lib/image";
+import { envoyerVideo, supprimerVideo, lireLien, VIDEO_MAX_MO, VIDEO_MAX_S } from "../lib/video";
+import VideoSituation from "../components/VideoSituation";
 import { findAnswer } from "../lib/matching";
-import { newScenario, uid, SOIEC, SMES, CRM, TOUS, CUB, rubriquesDe } from "../lib/model";
+import { NIVEAUX, nivNorm, newScenario, uid, SOIEC, SMES, CRM, TOUS, CUB, rubriquesDe } from "../lib/model";
 import { listScenarios } from "../lib/db";
 import { toutesRubriques } from "../lib/relation";
 import { varAutoOn, tirer } from "../lib/variantes";
 import BanqueQuestions from "../components/BanqueQuestions";
+import { useAuth } from "../lib/auth";
 import { listGestionnaires } from "../lib/demandesScenario";
 import { listIllustrations, addIllustration, deleteIllustration } from "../lib/illustrations";
 
@@ -27,7 +30,9 @@ const TABS = [
   ["comm", "Commentaire du formateur"],
 ];
 
-export default function AdminEditor() {
+export default function AdminEditor({ perso = false }) {
+  const { user, profil } = useAuth();
+  const base = perso ? "/editeur" : "/admin";
   const { id } = useParams();
   const nav = useNavigate();
   const isNew = id === "nouveau";
@@ -50,7 +55,7 @@ export default function AdminEditor() {
   const [libOpen, setLibOpen] = useState(false);
   const [bqOpen, setBqOpen] = useState(false);
   const [gests, setGests] = useState([]);
-  useEffect(() => { listGestionnaires().then(setGests).catch(() => {}); }, []);
+  useEffect(() => { if (!perso) listGestionnaires().then(setGests).catch(() => {}); }, [perso]);
   const [lib, setLib] = useState(null);
   const [libTitre, setLibTitre] = useState("");
   const [libDel, setLibDel] = useState(null);
@@ -144,6 +149,28 @@ export default function AdminEditor() {
     setDirty(true);
     setMsg("");
   };
+  const [vMode, setVMode] = useState("lien");
+  const [vBusy, setVBusy] = useState(null);
+  const [vMsg, setVMsg] = useState("");
+  const onVideoFile = async (e) => {
+    const f = e.target.files?.[0];
+    e.target.value = "";
+    if (!f) return;
+    setVMsg(""); setVBusy(0);
+    try {
+      const r = await envoyerVideo(f, setVBusy);
+      const ancien = s.situation.video?.chemin;
+      upd((n) => { n.situation.video = { mode: "fichier", url: r.url, chemin: r.chemin, titre: n.situation.video?.titre || "" }; });
+      if (ancien) supprimerVideo(ancien);
+      setVMsg("Vidéo envoyée. Pense à enregistrer le scénario.");
+    } catch (er) { setVMsg("Erreur : " + (er.message || er.code)); }
+    setVBusy(null);
+  };
+  const retirerVideo = () => {
+    const c = s.situation.video?.chemin;
+    upd((n) => { n.situation.video = null; });
+    if (c) supprimerVideo(c);
+  };
   const onSitPhotos = async (e) => {
     const files = [...(e.target.files || [])];
     e.target.value = "";
@@ -178,7 +205,7 @@ export default function AdminEditor() {
     if (!s.titre.trim()) return setMsg("Le titre est obligatoire.");
     setBusy(true);
     try {
-      const nid = await saveScenario(isNew ? null : id, s, photo, sit);
+      const nid = await saveScenario(isNew ? null : id, perso ? { ...s, auteur: user.uid, auteurNom: profil?.nom || "", departement: profil?.departement || "", cis: profil?.cis || "", reserveA: user.uid } : s, photo, sit);
       if (sit !== undefined) {
         setLoadedSit(sit);
         setSit(undefined);
@@ -189,7 +216,7 @@ export default function AdminEditor() {
       }
       setDirty(false);
       setMsg("Enregistré.");
-      if (isNew) nav(`/admin/scenario/${nid}`, { replace: true });
+      if (isNew) nav(`${base}/scenario/${nid}`, { replace: true });
     } catch (e) {
       setMsg("Erreur : " + e.message);
     }
@@ -203,7 +230,7 @@ export default function AdminEditor() {
     <>
       <div className="row between sticky">
         <div className="row">
-          <Link to="/admin" className="btn">← Liste</Link>
+          <Link to={perso ? "/gestion?onglet=ms" : "/admin"} className="btn">← {perso ? "Mes scénarios" : "Liste"}</Link>
           <h1>{s.titre || "Nouveau scénario"}</h1>
         </div>
         <div className="row">
@@ -253,6 +280,9 @@ export default function AdminEditor() {
             {nouvelle && (
               <input className="grow" placeholder="Nom de la nouvelle rubrique" maxLength={40} value={s.rubrique || ""} onChange={(e) => upd((n) => (n.rubrique = e.target.value))} />
             )}
+            <select aria-label="Niveau" title="Niveau de l'exercice" value={nivNorm(s.niveau) || "Débutant"} onChange={(e) => upd((n) => (n.niveau = e.target.value))}>
+              {NIVEAUX.map((n) => <option key={n}>{n}</option>)}
+            </select>
           </div>
           <label className="check">
             <input type="checkbox" checked={s.suggestions !== false} onChange={(e) => upd((n) => (n.suggestions = e.target.checked))} />
@@ -310,11 +340,17 @@ export default function AdminEditor() {
             <input type="checkbox" checked={!!s.evolutif} onChange={(e) => upd((n) => (n.evolutif = e.target.checked))} />
             Scénario évolutif (la situation change à des moments programmés : onglet Évolutions)
           </label>
-          <label>Visible par</label>
-          <select value={s.reserveA || ""} onChange={(e) => upd((n) => (n.reserveA = e.target.value || null))}>
-            <option value="">Tous les stagiaires (public)</option>
-            {gests.map((g) => <option key={g.id} value={g.id}>Réservé au gestionnaire : {g.nom} (et ses équipes)</option>)}
-          </select>
+          {perso
+            ? <p className="muted">Ce scénario est réservé à toi et aux membres de tes équipes{profil?.departement ? ` (département ${profil.departement})` : ""}. L'administrateur peut le consulter.</p>
+            : <>
+              {s.auteur && <p className="muted">Créé par {s.auteurNom || "un gestionnaire"}{s.departement ? ` · département ${s.departement}` : ""}.</p>}
+              <label>Visible par</label>
+              <select value={s.reserveA || ""} onChange={(e) => upd((n) => (n.reserveA = e.target.value || null))}>
+                <option value="">Tous les stagiaires (public)</option>
+                {gests.map((g) => <option key={g.id} value={g.id}>Réservé au gestionnaire : {g.nom} (et ses équipes)</option>)}
+                {s.reserveA && !gests.some((g) => g.id === s.reserveA) && <option value={s.reserveA}>{s.auteurNom || "Gestionnaire"} (et ses équipes)</option>}
+              </select>
+            </>}
           <label>Photo du scénario (vignette de la liste et haut de l'exercice)</label>
           {shown && <img className="photo prev" src={shown} alt="" />}
           <div className="row">
@@ -467,6 +503,34 @@ export default function AdminEditor() {
           </div>
           {sitList.length < MAXSIT ? <input type="file" accept="image/*" multiple onChange={onSitPhotos} /> : <p className="muted">Maximum atteint.</p>}
           <p className="muted">Indépendantes de la photo du scénario (onglet Général) : elles peuvent être identiques ou différentes. Redimensionnées et compressées automatiquement.</p>
+          <label>Vidéo de la situation (facultatif, en complément des photos)</label>
+          <div className="card" style={{ margin: 0 }}>
+            <div className="row">
+              <button className={"btn" + (vMode === "lien" ? " primary" : "")} onClick={() => setVMode("lien")}>Lien YouTube / externe</button>
+              <button className={"btn" + (vMode === "fichier" ? " primary" : "")} onClick={() => setVMode("fichier")}>Vidéo de mon ordinateur</button>
+            </div>
+            {vMode === "lien" ? (
+              <>
+                <input placeholder="https://www.youtube.com/watch?v=… (YouTube, Vimeo, Dailymotion, .mp4 ou autre lien)" value={s.situation.video?.mode === "lien" ? s.situation.video.url : ""}
+                  onChange={(e) => { const url = e.target.value.trim(); upd((n) => { n.situation.video = url ? { mode: "lien", url, titre: n.situation.video?.titre || "" } : null; }); }} />
+                {s.situation.video?.mode === "lien" && s.situation.video.url && !lireLien(s.situation.video.url) && <p className="alerte">Le lien doit commencer par http:// ou https://.</p>}
+              </>
+            ) : (
+              <>
+                <input type="file" accept="video/*" disabled={vBusy !== null} onChange={onVideoFile} />
+                <p className="muted">Maximum {VIDEO_MAX_MO} Mo et {VIDEO_MAX_S} secondes. Formats lus par le navigateur (MP4 recommandé).</p>
+                {vBusy !== null && <p className="muted">Envoi en cours… {vBusy} %</p>}
+              </>
+            )}
+            {vMsg && <p className="muted" role="status">{vMsg}</p>}
+            {s.situation.video?.url && (
+              <>
+                <input placeholder="Légende (facultatif)" maxLength={80} value={s.situation.video.titre || ""} onChange={(e) => upd((n) => { n.situation.video.titre = e.target.value; })} />
+                <VideoSituation video={s.situation.video} />
+                <button className="btn danger" onClick={retirerVideo}>Retirer la vidéo</button>
+              </>
+            )}
+          </div>
         </div>
       )}
 

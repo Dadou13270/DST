@@ -1,5 +1,6 @@
 {
   "titre": "Feu de chaufferie au fioul",
+  "niveau": "Débutant",
   "description": "Feu dans la chaufferie collective au fioul, en bas d'un immeuble d'habitation : fumée dans une cage d'escalier, cuve de fioul à proximité.",
   "rubrique": "Incendie",
   "duree": 20,

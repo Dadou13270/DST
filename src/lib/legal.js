@@ -14,7 +14,7 @@ export const LEGAL_DEFAUT = {
   "sections": [
    {
     "t": "1. Responsable du traitement",
-    "p": "Le responsable du traitement des données personnelles collectées par « OPS Training » est : [À compléter : nom de la structure ou de la personne responsable, adresse, adresse e-mail de contact]. Si l'application est utilisée dans le cadre d'une formation d'un service d'incendie et de secours, le service concerné est responsable de traitement pour les données de ses agents ; son délégué à la protection des données (DPO) peut être contacté à : [À compléter : adresse du DPO]."
+    "p": "Le responsable du traitement des données personnelles collectées par « La Caserne Virtuelle » est : [À compléter : nom de la structure ou de la personne responsable, adresse, adresse e-mail de contact]. Si l'application est utilisée dans le cadre d'une formation d'un service d'incendie et de secours, le service concerné est responsable de traitement pour les données de ses agents ; son délégué à la protection des données (DPO) peut être contacté à : [À compléter : adresse du DPO]."
    },
    {
     "t": "2. Données collectées",
@@ -60,7 +60,7 @@ export const LEGAL_DEFAUT = {
   "sections": [
    {
     "t": "1. Éditeur de l'application",
-    "p": "« OPS Training » est éditée par : [À compléter : nom ou raison sociale, forme juridique, adresse postale, numéro SIRET le cas échéant]. Contact : [À compléter : adresse e-mail]."
+    "p": "« La Caserne Virtuelle » est éditée par : [À compléter : nom ou raison sociale, forme juridique, adresse postale, numéro SIRET le cas échéant]. Contact : [À compléter : adresse e-mail]."
    },
    {
     "t": "2. Directeur de la publication",

@@ -1,4 +1,5 @@
 import { calcImg } from "../lib/calculImages";
+import { idsEquipes, equipesDe } from "../lib/equipes";
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { CadresBadges, CADRES } from "../components/Cadres";
@@ -8,36 +9,48 @@ import { configured } from "../firebase";
 import { listScenarios } from "../lib/db";
 import { useAuth } from "../lib/auth";
 import { useDevoirs } from "../lib/useDevoirs";
-import DevoirsCard from "../components/DevoirsCard";
+import { Tuiles, EquipesCartes, AccesRapide, Echeances } from "../components/AccueilTableau";
 import { etatExercice } from "../lib/etat";
-import { rubriquesDe, RI } from "../lib/model";
+import { rubriquesDe, RI, NIVEAUX, nivNorm } from "../lib/model";
 import { listCalculs } from "../lib/calculs";
-import { listExercices } from "../lib/relation";
+import { lienExercice, listExercices, typeExercice } from "../lib/relation";
 import { useCharte } from "../lib/charte";
 import { useCarnet } from "../lib/carnet";
 import { useMessages, nbNonLus } from "../lib/messages";
 import { nouveautes, useLu } from "../lib/competences";
 import { evaluationsDe } from "../lib/fiche";
+import { useAccesJeu } from "../lib/jeuAcces";
+import ForumActivite from "../components/ForumActivite";
+import ForumSuivis from "../components/ForumSuivis";
 
 export function StagiaireNav() {
   const { pathname } = useLocation();
   const { user } = useAuth();
   const nonLus = nbNonLus(useMessages(user?.uid), user?.uid);
+  const tdb = pathname === "/suivi" || pathname === "/equipe" || pathname === "/seance";
   return (
-    <div className="tabs">
-      <Link to="/" className="tablink" title="Tes exercices à réaliser"><button className={pathname === "/" ? "on" : ""}>Accueil</button></Link>
-      <Link to="/scenarios" className="tablink" title="Tous les scénarios"><button className={pathname === "/scenarios" || pathname.startsWith("/calculs") ? "on" : ""}>Scénarios</button></Link>
-      <Link to="/suivi" className="tablink" title="Tes résultats et commentaires du formateur"><button className={pathname === "/suivi" ? "on" : ""}>Mon suivi</button></Link>
-      <Link to="/fiches" className="tablink" title="Rappels courts : SOIEC, formules, messages"><button className={pathname === "/fiches" ? "on" : ""}>Fiches mémo</button></Link>
-      <Link to="/equipe" className="tablink" title="Rejoindre une équipe avec un code"><button className={pathname === "/equipe" ? "on" : ""}>Mon équipe</button></Link>
-      <Link to="/seance" className="tablink" title="Rejoindre une séance en salle avec un code"><button className={pathname === "/seance" ? "on" : ""}>Séance en salle</button></Link>
-      <Link to="/messages" className="tablink" title="Messages privés avec ton gestionnaire"><button className={pathname === "/messages" ? "on" : ""}>Messages{nonLus > 0 && <span className="tabbadge">{nonLus}</span>}</button></Link>
-      <Link to="/profil" className="tablink" title="Tes informations, e-mail et mot de passe"><button className={pathname === "/profil" ? "on" : ""}>Mon profil</button></Link>
-    </div>
+    <>
+      <div className="tabs navmenu">
+        <Link to="/" className="tablink" title="Tes exercices à réaliser"><button className={pathname === "/" ? "on" : ""}>Accueil</button></Link>
+        <Link to="/suivi" className="tablink" title="Mon suivi, ma séance en salle et mon équipe"><button className={tdb ? "on" : ""}>Tableau de bord</button></Link>
+        <Link to="/scenarios" className="tablink" title="Tous les scénarios"><button className={pathname === "/scenarios" || pathname.startsWith("/calculs") ? "on" : ""}>Scénarios</button></Link>
+        <Link to="/fiches" className="tablink" title="Rappels courts : SOIEC, formules, messages"><button className={pathname === "/fiches" ? "on" : ""}>Fiches mémo</button></Link>
+        <Link to="/messages" className="tablink" title="Messages privés avec ton gestionnaire"><button className={pathname === "/messages" ? "on" : ""}>Messages{nonLus > 0 && <span className="tabbadge">{nonLus}</span>}</button></Link>
+        <Link to="/profil" className="tablink" title="Tes informations, e-mail et mot de passe"><button className={pathname === "/profil" ? "on" : ""}>Mon profil</button></Link>
+      </div>
+      {tdb && (
+        <div className="tabs sub navmenu">
+          <Link to="/suivi" className="tablink" title="Tes résultats et commentaires du formateur"><button className={pathname === "/suivi" ? "on" : ""}>Mon suivi</button></Link>
+          <Link to="/seance" className="tablink" title="Rejoindre une séance en salle avec un code"><button className={pathname === "/seance" ? "on" : ""}>Séance en salle</button></Link>
+          <Link to="/equipe" className="tablink" title="Rejoindre une équipe avec un code"><button className={pathname === "/equipe" ? "on" : ""}>Mon équipe</button></Link>
+        </div>
+      )}
+    </>
   );
 }
 
 export default function Home({ mode = "scenarios" }) {
+  const accesJeu = useAccesJeu();
   const { user, profil, isAdmin, logout } = useAuth();
   const devoirs = useDevoirs(profil);
   const { lu, marquer } = useLu(user?.uid);
@@ -45,13 +58,14 @@ export default function Home({ mode = "scenarios" }) {
   useEffect(() => { if (user && configured) evaluationsDe(user.uid).then(setEvalsN).catch(() => {}); }, [user?.uid]); // eslint-disable-line
   const [list, setList] = useState(null);
   const [calcEx, setCalcEx] = useState([]);
-  useEffect(() => { if (configured) listExercices(isAdmin, { uid: user?.uid, equipeId: profil?.equipeId }).then(setCalcEx).catch(() => {}); }, [isAdmin, user?.uid, profil?.equipeId]);
+  useEffect(() => { if (configured) listExercices(isAdmin, { uid: user?.uid, equipeIds: idsEquipes(profil) }).then(setCalcEx).catch(() => {}); }, [isAdmin, user?.uid, idsEquipes(profil).join()]);
   const [err, setErr] = useState("");
   const [q, setQ] = useState("");
   const [rub, setRub] = useState("");
   const [dur, setDur] = useState("");
   const [etat, setEtat] = useState("");
   const [typ, setTyp] = useState("");
+  const [niv, setNiv] = useState("");
   const [soloFav, setSoloFav] = useState(false);
   const [cadre, setCadre] = useState(() => { try { return localStorage.getItem("op-cadre") || ""; } catch { return ""; } });
   const majCadre = (v) => { setCadre(v); try { localStorage.setItem("op-cadre", v); } catch { /* */ } };
@@ -72,6 +86,7 @@ export default function Home({ mode = "scenarios" }) {
     if (q && !norm(`${s.titre} ${s.description}`).includes(norm(q))) return false;
     if (rub && (s.rubrique || "") !== (rub === "__aucune" ? "" : rub)) return false;
     if (typ && typ !== "soiec") return false;
+    if (niv && nivNorm(s.niveau) !== niv) return false;
     const d = s.duree || 0;
     if (dur === "10" && !(d > 0 && d <= 10)) return false;
     if (dur === "20" && !(d > 10 && d <= 20)) return false;
@@ -81,13 +96,14 @@ export default function Home({ mode = "scenarios" }) {
     if (cadre && !(s.cadres || []).includes(cadre)) return false;
     return true;
   });
-  const filtre = Boolean(q || rub || dur || etat || typ || soloFav || cadre);
+  const filtre = Boolean(q || rub || dur || etat || typ || niv || soloFav || cadre);
   const essaisDe = (id) => (profil?.calculs || {})[id] || [];
   const calcs = calcEx.filter((ex) => {
-    if (typ === "soiec" || (typ === "calc" && ex.kind === "rel") || (typ === "rel" && ex.kind !== "rel")) return false;
+    if (typ === "soiec" || (typ === "calc" && ex.kind !== "calc") || (typ === "rel" && ex.kind !== "rel") || (typ === "quiz" && ex.kind !== "quiz")) return false;
     if (rub && (ex.rubrique || "") !== (rub === "__aucune" ? "" : rub)) return false;
     if (dur) return false;
-    if (q && !norm(`${ex.titre} ${ex.kind === "rel" ? ex.description : ex.contexte}`).includes(norm(q))) return false;
+    if (niv && nivNorm(ex.niveau) !== niv) return false;
+    if (q && !norm(`${ex.titre} ${ex.kind === "rel" || ex.kind === "quiz" ? ex.description : ex.contexte}`).includes(norm(q))) return false;
     if (etat && etat !== (essaisDe(ex.id).length ? "termine" : "nouveau")) return false;
     if (soloFav && !estFav("e:" + ex.id)) return false;
     if (cadre && !(ex.cadres || []).includes(cadre)) return false;
@@ -96,19 +112,18 @@ export default function Home({ mode = "scenarios" }) {
 
   useEffect(() => {
     if (!configured) return;
-    listScenarios(true, { uid: user?.uid, equipeId: profil?.equipeId })
+    listScenarios(true, { uid: user?.uid, equipeIds: idsEquipes(profil) })
       .then(setList)
       .catch((e) => setErr(e.message));
-  }, [user?.uid, profil?.equipeId]); // eslint-disable-line
+  }, [user?.uid, idsEquipes(profil).join()]); // eslint-disable-line
 
   if (mode === "accueil") {
-    const aRendre = devoirs.filter((d) => d.statut !== "ok");
-    const nvx = nouveautes({ devoirs, profil, evals: evalsN, lu });
+    const nvx = nouveautes({ devoirs, profil, evals: evalsN, lu, equipes: equipesDe(profil || {}) });
     const favs = (carnet.favoris || []).map((k) => {
       const id = k.slice(2);
       if (k[0] === "s") { const s = (list || []).find((x) => x.id === id); return s ? { k, titre: s.titre, to: `/scenario/${id}` } : null; }
       const e = calcEx.find((x) => x.id === id);
-      return e ? { k, titre: e.titre, to: e.kind === "rel" ? `/relation/${id}` : `/calculs/${id}` } : null;
+      return e ? { k, titre: e.titre, to: lienExercice(e) } : null;
     }).filter(Boolean);
     return (
       <Layout
@@ -122,27 +137,35 @@ export default function Home({ mode = "scenarios" }) {
       >
         <StagiaireNav />
         {profil?.mdpProvisoire && <div className="card alerte"><strong>Mot de passe provisoire.</strong> Change-le dans <Link to="/profil">Mon profil</Link>.</div>}
-        <h1>Accueil</h1>
+        <h1 style={{ marginBottom: 2 }}>Bonjour {(profil?.nom || "").split(" ")[0]}</h1>
+        <p className="muted" style={{ margin: "0 0 4px" }}>{charte.accueil}</p>
         {!configured && <div className="card warn">Firebase n'est pas configuré. Renseigne le fichier .env (voir README).</div>}
-        {nvx.length > 0 && (
-          <div className="card nvx">
-            <div className="row between"><strong>🔔 Nouveau pour toi ({nvx.length})</strong><button className="btn" onClick={marquer}>Marquer comme lu</button></div>
-            {nvx.map((n, i) => <div key={i} style={{ marginTop: 6 }}>{n.ic} {n.to ? <Link to={n.to}>{n.txt}</Link> : n.txt} <span className="muted">· {new Date(n.t).toLocaleDateString("fr-FR")}</span></div>)}
-          </div>
-        )}
-        {aRendre.length > 0
-          ? <DevoirsCard devoirs={devoirs} />
-          : <div className="card"><strong>Exercices à réaliser</strong><p className="muted" style={{ margin: "4px 0 0" }}>Aucun exercice à rendre pour le moment.</p></div>}
+        {devoirs.erreurs?.length > 0 && <p className="err">Impossible de lire les exercices de {devoirs.erreurs.length} équipe(s) ({devoirs.erreurs[0]}). Les règles Firestore (firestore.rules) ne sont probablement pas publiées.</p>}
+        {profil?.equipeId && <p className="muted" style={{ margin: "6px 0" }}>{idsEquipes(profil).length > 1 ? "Mes équipes" : "Mon équipe"} : {equipesDe(profil).map((t, i) => <span key={t.id}>{i ? ", " : ""}<strong>{t.nom}</strong></span>)} · <Link to="/equipe">voir</Link></p>}
+        <Tuiles devoirs={devoirs} />
+        <div className="ac-grid">
+          <div>
+            <EquipesCartes devoirs={devoirs} />
+        {!devoirs.length && <div className="card"><strong>Exercices à réaliser</strong><p className="muted" style={{ margin: "4px 0 0" }}>Aucun exercice à rendre pour le moment.</p></div>}
         {favs.length > 0 && (
           <div className="card">
             <strong>★ Mes favoris</strong>
             {favs.map((f) => <div key={f.k} style={{ marginTop: 6 }}><Link to={f.to}>{f.titre}</Link></div>)}
           </div>
         )}
-        <div className="card">
-          <strong>Choisir un exercice</strong>
-          <p className="muted" style={{ margin: "4px 0 8px" }}>{charte.accueil}</p>
-          <Link to="/scenarios" className="btn primary">Parcourir tous les scénarios{list ? ` (${list.length + calcEx.length})` : ""}</Link>
+          </div>
+          <div>
+            <AccesRapide jeu={accesJeu === true} />
+        {nvx.length > 0 && (
+          <div className="card nvx">
+            <div className="row between"><strong>🔔 Nouveau pour toi ({nvx.length})</strong><button className="btn" onClick={marquer}>Marquer comme lu</button></div>
+            {nvx.map((n, i) => <div key={i} style={{ marginTop: 6 }}>{n.ic} {n.to ? <Link to={n.to}>{n.txt}</Link> : n.txt} <span className="muted">· {new Date(n.t).toLocaleDateString("fr-FR")}</span></div>)}
+          </div>
+        )}
+            <Echeances devoirs={devoirs} />
+            <ForumSuivis uid={user?.uid} />
+            <ForumActivite uid={user?.uid} />
+          </div>
         </div>
       </Layout>
     );
@@ -180,7 +203,10 @@ export default function Home({ mode = "scenarios" }) {
             {(list.some((s) => !s.rubrique) || calcEx.some((c) => !c.rubrique)) && <option value="__aucune">Autres</option>}
           </select>
           <select value={typ} onChange={(e) => setTyp(e.target.value)} aria-label="Type d'exercice">
-            <option value="">Tous les types</option><option value="soiec">Scénarios</option><option value="calc">Calcul LIF</option><option value="rel">Relationnel</option>
+            <option value="">Tous les types</option><option value="soiec">Scénarios</option><option value="calc">Calcul LIF</option><option value="rel">Relationnel</option><option value="quiz">Quiz / QCM</option>
+          </select>
+          <select value={niv} onChange={(e) => setNiv(e.target.value)} aria-label="Niveau">
+            <option value="">Tous les niveaux</option>{NIVEAUX.map((n) => <option key={n}>{n}</option>)}
           </select>
           <select value={dur} onChange={(e) => setDur(e.target.value)} aria-label="Durée">
             <option value="">Toutes durées</option><option value="10">10 min ou moins</option><option value="20">11 à 20 min</option><option value="21">Plus de 20 min</option>
@@ -194,7 +220,7 @@ export default function Home({ mode = "scenarios" }) {
           </select>
           <button className={"btn" + (soloFav ? " primary" : "")} aria-pressed={soloFav} onClick={() => setSoloFav(!soloFav)} title="Afficher seulement mes favoris">★ Favoris{carnet.favoris.length ? ` (${carnet.favoris.length})` : ""}</button>
           <button className="btn colbtn" onClick={suivCols} title="Changer le nombre de colonnes">▦ Colonnes : {cols}</button>
-          {filtre && <button className="btn" onClick={() => { setQ(""); setRub(""); setDur(""); setEtat(""); setTyp(""); setSoloFav(false); majCadre(""); }}>Réinitialiser</button>}
+          {filtre && <button className="btn" onClick={() => { setQ(""); setRub(""); setDur(""); setEtat(""); setTyp(""); setNiv(""); setSoloFav(false); majCadre(""); }}>Réinitialiser</button>}
           {filtre && <span className="muted">{vue.length + calcs.length} sur {list.length + calcEx.length}</span>}
         </div>
       )}
@@ -223,15 +249,15 @@ export default function Home({ mode = "scenarios" }) {
               {calcs.filter((c) => (c.rubrique || "") === r).map((ex) => {
                 const l = essaisDe(ex.id), last = l[l.length - 1];
                 return (
-                  <Link key={ex.id} to={ex.kind === "rel" ? `/relation/${ex.id}` : `/calculs/${ex.id}`} className="card scn" style={{ position: "relative" }}>
+                  <Link key={ex.id} to={lienExercice(ex)} className="card scn" style={{ position: "relative" }}>
                     {etoile("e:" + ex.id)}
-                                        {ex.kind === "rel" && ex.vignette ? <img src={ex.vignette} alt="" loading="lazy" /> : calcImg(ex) ? <img src={calcImg(ex)} alt="" loading="lazy" /> : <div className="ph" style={{ display: "flex", alignItems: "center", justifyContent: "center", fontSize: "2rem" }}>{ex.kind === "rel" ? "🗣️" : "🧮"}</div>}
+                                        {ex.kind === "rel" && ex.vignette ? <img src={ex.vignette} alt="" loading="lazy" /> : calcImg(ex) ? <img src={calcImg(ex)} alt="" loading="lazy" /> : <div className="ph" style={{ display: "flex", alignItems: "center", justifyContent: "center", fontSize: "2rem" }}>{ex.kind === "rel" ? "🗣️" : ex.kind === "quiz" ? "❓" : "🧮"}</div>}
                     <CadresBadges v={ex.cadres} />
                     <div className="scn-body">
                       <div className="stl"><span className={`stc ${last ? "termine" : ""}`}>{last ? "Terminé" : "Nouveau"}</span></div>
                       <h3>{ex.titre}</h3>
-                      <p className="muted">{ex.kind === "rel" ? ex.description : ex.contexte}</p>
-                      <div><span className="tag">{ex.kind === "rel" ? "Relationnel" : "Calcul LIF"}</span> <span className="tag">{ex.niveau}</span></div>
+                      <p className="muted">{ex.kind === "rel" || ex.kind === "quiz" ? ex.description : ex.contexte}</p>
+                      <div><span className="tag">{typeExercice(ex)}</span> <span className="tag niv">{nivNorm(ex.niveau) || "Débutant"}</span></div>
                       <div className="ft"><span className="muted">{last ? `${l.length} essai(s) · dernier ${last.ok}/${last.tot}` : "Non commencé"}</span><span className="btn pri">{last ? "Refaire" : "Démarrer"}</span></div>
                     </div>
                   </Link>
@@ -247,6 +273,7 @@ export default function Home({ mode = "scenarios" }) {
                     <h3>{s.titre}</h3>
                     <p className="muted">{s.description}</p>
                     <div>
+                      <span className="tag niv">{nivNorm(s.niveau) || "Débutant"}</span>{" "}
                       {s.reserveA && <span className="tag">Réservé</span>}{" "}
                       {s.evolutif && <span className="tag evo">Évolutif</span>}
                       <Dominantes s={s} />

@@ -5,10 +5,17 @@ import { AuthProvider } from "./lib/auth";
 import Home from "./pages/Home";
 import Player from "./pages/Player";
 import AdminGate from "./pages/Admin";
+import AdminDroits from "./pages/AdminDroits";
+import EditeurGest from "./pages/EditeurGest";
+import Quiz from "./pages/Quiz";
+import AdminQuiz from "./pages/AdminQuiz";
+import EditeurQuizGest from "./pages/EditeurQuizGest";
 import AdminList from "./pages/AdminList";
 import AdminEditor from "./pages/AdminEditor";
 import Carte from "./pages/Carte";
 import Parametres from "./pages/Parametres";
+import Jeu from "./pages/Jeu";
+import Forum from "./pages/Forum";
 import Attribution from "./pages/Attribution";
 import Departement from "./pages/Departement";
 import AdminGestionnaires from "./pages/AdminGestionnaires";
@@ -32,6 +39,7 @@ import Tickets from "./pages/Tickets";
 import AdminTickets from "./pages/AdminTickets";
 import Legal from "./pages/Legal";
 import AdminLegal from "./pages/AdminLegal";
+import AdminBanque from "./pages/AdminBanque";
 import Relation from "./pages/Relation";
 import AdminRelation from "./pages/AdminRelation";
 import Site from "./pages/Site";
@@ -39,6 +47,8 @@ import Messagerie from "./pages/Messagerie";
 import AdminAudit from "./pages/AdminAudit";
 import AdminSite from "./pages/AdminSite";
 import Salle from "./pages/Salle";
+import QuizLiveHote from "./pages/QuizLiveHote";
+import QuizLiveJoueur from "./pages/QuizLiveJoueur";
 import SalleProjection from "./pages/SalleProjection";
 import FichesMemo from "./pages/FichesMemo";
 import Suivi from "./pages/Suivi";
@@ -75,6 +85,8 @@ export default function App() {
         <Route path="/departement" element={<RequireUser><Departement /></RequireUser>} />
         <Route path="/gestion" element={<RequireUser><Gestion /></RequireUser>} />
         <Route path="/gestion/salle/:code" element={<RequireUser><Salle /></RequireUser>} />
+        <Route path="/gestion/quiz-live/:code" element={<RequireUser><QuizLiveHote /></RequireUser>} />
+        <Route path="/quiz-live" element={<RequireUser><QuizLiveJoueur /></RequireUser>} />
         <Route path="/gestion/salle/:code/projection" element={<RequireUser><SalleProjection /></RequireUser>} />
         <Route path="/carte" element={<RequireUser><Carte /></RequireUser>} />
         <Route path="/profil" element={<RequireUser><Profil /></RequireUser>} />
@@ -82,11 +94,17 @@ export default function App() {
         <Route path="/fiches" element={<RequireUser><FichesMemo /></RequireUser>} />
         <Route path="/suivi" element={<RequireUser><Suivi /></RequireUser>} />
         <Route path="/scenario/:id" element={<RequireUser><Player /></RequireUser>} />
+        <Route path="/editeur/scenario/:id" element={<EditeurGest />} />
+        <Route path="/editeur/quiz/:id" element={<EditeurQuizGest />} />
+        <Route path="/quiz/:id" element={<RequireUser><Quiz /></RequireUser>} />
+        <Route path="/jeu" element={<RequireUser><Jeu /></RequireUser>} />
+        <Route path="/forum" element={<RequireUser><Forum /></RequireUser>} />
         <Route path="/admin" element={<AdminGate />}>
           <Route index element={<AdminList />} />
           <Route path="scenario/:id" element={<AdminEditor />} />
           <Route path="calcul/:id" element={<AdminCalcul />} />
           <Route path="relation/:id" element={<AdminRelation />} />
+          <Route path="quiz/:id" element={<AdminQuiz />} />
           <Route path="utilisateurs" element={<AdminUsers />} />
           <Route path="stats" element={<AdminStats />} />
           <Route path="parametres" element={<Parametres />} />
@@ -94,6 +112,8 @@ export default function App() {
           <Route path="gestionnaires" element={<AdminGestionnaires />} />
           <Route path="annonces" element={<AdminAnnonces />} />
           <Route path="legal" element={<AdminLegal />} />
+          <Route path="banque" element={<AdminBanque />} />
+          <Route path="droits" element={<AdminDroits />} />
           <Route path="tickets" element={<AdminTickets />} />
           <Route path="site" element={<AdminSite />} />
           <Route path="journal" element={<AdminAudit />} />

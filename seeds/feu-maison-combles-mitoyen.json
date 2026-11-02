@@ -1,5 +1,6 @@
 {
   "titre": "Feu de maison avec propagation aux combles",
+  "niveau": "Avancé",
   "description": "Scénario ÉVOLUTIF : feu d'insert gagnant les combles d'une maison mitoyenne ; à 6 min le feu passe chez la voisine, à 12 min la charpente s'affaisse.",
   "rubrique": "Incendie",
   "dominantes": [

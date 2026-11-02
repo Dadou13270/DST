@@ -66,6 +66,14 @@ export default function AdminGate() {
       </Layout>
     );
 
+  const groupes = [
+    { k: "sc", t: "Scénarios", subs: [["/admin", "Scénarios"]], tst: (p) => p === "/admin" || /^\/admin\/(scenario|calcul|relation)/.test(p) },
+    { k: "in", t: `Inscrits${nbDem > 0 ? ` (${nbDem})` : ""}`, subs: [["/admin/utilisateurs", "Utilisateurs"], ["/admin/gestionnaires", `Gestionnaires${nbDem > 0 ? ` (${nbDem})` : ""}`], ["/admin/droits", "Droits"]] },
+    { k: "ge", t: "Gestion", subs: [["/admin/stats", "Statistiques"], ["/admin/attribution", "Attribution"], ["/admin/journal", "Journal"]] },
+    { k: "ap", t: "Application", subs: [["/admin/annonces", "Annonces"], ["/admin/parametres", "Paramètres"], ["/admin/legal", "Pages légales"], ["/admin/tickets", "Tickets"], ["/admin/banque", "Commentaires types"]] },
+    { k: "si", t: "Site", subs: [["/admin/site", "Site"]] },
+  ];
+  const gActif = groupes.find((g) => (g.tst ? g.tst(pathname) : g.subs.some(([to]) => pathname.startsWith(to)))) || groupes[0];
   return (
     <Layout
       wide
@@ -78,19 +86,14 @@ export default function AdminGate() {
         </>
       }
     >
-      <div className="tabs">
-        <Link to="/admin" className="tablink"><button className={pathname === "/admin" || pathname.startsWith("/admin/scenario") ? "on" : ""}>Scénarios</button></Link>
-        <Link to="/admin/utilisateurs" className="tablink"><button className={pathname.startsWith("/admin/utilisateurs") ? "on" : ""}>Utilisateurs</button></Link>
-        <Link to="/admin/stats" className="tablink"><button className={pathname.startsWith("/admin/stats") ? "on" : ""}>Statistiques</button></Link>
-        <Link to="/admin/attribution" className="tablink"><button className={pathname.startsWith("/admin/attribution") ? "on" : ""}>Attribution</button></Link>
-        <Link to="/admin/gestionnaires" className="tablink"><button className={pathname.startsWith("/admin/gestionnaires") ? "on" : ""}>Gestionnaires{nbDem > 0 ? ` (${nbDem})` : ""}</button></Link>
-        <Link to="/admin/annonces" className="tablink"><button className={pathname.startsWith("/admin/annonces") ? "on" : ""}>Annonces</button></Link>
-        <Link to="/admin/parametres" className="tablink"><button className={pathname.startsWith("/admin/parametres") ? "on" : ""}>Paramètres</button></Link>
-        <Link to="/admin/tickets" className="tablink"><button className={pathname.startsWith("/admin/tickets") ? "on" : ""}>Tickets</button></Link>
-        <Link to="/admin/site" className="tablink"><button className={pathname.startsWith("/admin/site") ? "on" : ""}>Site</button></Link>
-        <Link to="/admin/legal" className="tablink"><button className={pathname.startsWith("/admin/legal") ? "on" : ""}>Pages légales</button></Link>
-        <Link to="/admin/journal" className="tablink"><button className={pathname.startsWith("/admin/journal") ? "on" : ""}>Journal</button></Link>
+      <div className="tabs navmenu">
+        {groupes.map((g) => <Link key={g.k} to={g.subs[0][0]} className="tablink"><button className={gActif.k === g.k ? "on" : ""}>{g.t}</button></Link>)}
       </div>
+      {gActif.subs.length > 1 && (
+        <div className="tabs sub navmenu">
+          {gActif.subs.map(([to, l]) => <Link key={to} to={to} className="tablink"><button className={pathname.startsWith(to) ? "on" : ""}>{l}</button></Link>)}
+        </div>
+      )}
       <Outlet />
     </Layout>
   );

@@ -1,5 +1,6 @@
 {
   "titre": "Fuite d'essence en pied de bac, site Seveso",
+  "niveau": "Avancé",
   "description": "Fuite continue d'essence à la bride d'une vanne en pied de bac dans un dépôt pétrolier Seveso seuil haut : POI déclenché, opérateur manquant, sources d'ignition, vent vers un stockage de gaz.",
   "rubrique": "Risques technologiques",
   "duree": 30,

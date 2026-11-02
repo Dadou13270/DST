@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../lib/auth";
+import { qlExiste } from "../quizlive/quizlive";
+import { adaptateursQuizLive } from "../lib/quizLiveDb";
 import { getSalle, normSalle, rejoindreSalle, etatSalle, fmtDebut } from "../lib/salles";
 
 // Carte « Rejoindre une séance en salle » (page d'accueil du stagiaire)
@@ -17,7 +19,10 @@ export default function SalleJoin() {
     if (!c) return setErr("Saisis le code de la salle.");
     try {
       const s = await getSalle(c);
-      if (!s) return setErr("Code inconnu.");
+      if (!s) {
+        if (await qlExiste(adaptateursQuizLive({ uid: user.uid, nom: profil?.nom }), c)) { nav(`/quiz-live?code=${c}`); return; }
+        return setErr("Code inconnu.");
+      }
       if (s.ouverte === false) return setErr("Cette séance est clôturée.");
       if (etatSalle(s) === "plan") return setErr(`Cette séance débute le ${fmtDebut(s.debut)}. Reviens à cette heure.`);
       await rejoindreSalle(c, user.uid, profil?.nom);

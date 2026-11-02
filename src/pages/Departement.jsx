@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { estMembre } from "../lib/equipes";
 import { Navigate } from "react-router-dom";
 import { collection, getDocs, query, where } from "firebase/firestore";
 import { db } from "../firebase";
@@ -22,7 +23,7 @@ function Stats({ users, teams }) {
   const parCis = {};
   users.forEach((u) => { const c = u.cis || "(non renseigné)"; const o = (parCis[c] = parCis[c] || { n: 0, g: 0, b: {} }); o.n++; if (u.gestionnaire) o.g++; Object.entries(u.bilans || {}).forEach(([k, b]) => { o.b[u.id + k] = b; }); });
   const lignesTeams = teams.map((t) => {
-    const m = users.filter((u) => u.equipeId === t.id);
+    const m = users.filter((u) => estMembre(u, t.id));
     const retards = (t.devoirs || []).reduce((n, d) => n + m.filter((u) => statutDevoir(d, u.bilans, now, u.calculs) === "retard").length, 0);
     const rendus = (t.devoirs || []).reduce((n, d) => n + m.filter((u) => statutDevoir(d, u.bilans, now, u.calculs) === "ok").length, 0);
     return { t, n: m.length, term: m.reduce((n, u) => n + Object.keys(u.bilans || {}).length, 0), retards, rendus, attendus: (t.devoirs || []).length * m.length };

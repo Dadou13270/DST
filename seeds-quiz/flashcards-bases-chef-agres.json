@@ -1,0 +1,22 @@
+{
+  "titre": "Flashcards — Bases du chef d'agrès",
+  "description": "9 cartes à retourner pour réviser les notions de base : SOIEC, feu, propagation, flash-over, matériel.",
+  "rubrique": "Quiz et QCM",
+  "niveau": "Débutant",
+  "format": "cartes",
+  "publie": true,
+  "seuil": 70,
+  "melange": true,
+  "consigne": "Lis la question, réponds dans ta tête, retourne la carte, puis dis si tu savais. Les cartes à revoir reviennent en fin de paquet.",
+  "questions": [
+    {"id": "c1", "type": "carte", "pts": 1, "q": "Que signifie SOIEC ?", "r": "Situation · Objectifs · Idées de manœuvre · Exécution · Commandement", "expl": "Méthode de raisonnement tactique du chef d'agrès.", "theme": "Méthode"},
+    {"id": "c2", "type": "carte", "pts": 1, "q": "Quelles sont les quatre parties du message d'ambiance ?", "r": "Je suis… · Je vois… · Je fais… · Je demande…", "expl": "Identité et position, constat, actions engagées, demande de moyens.", "theme": "Méthode"},
+    {"id": "c3", "type": "carte", "pts": 1, "q": "Que compose le triangle du feu ?", "r": "Un combustible, un comburant et une énergie d'activation.", "expl": "Supprimer l'un des trois côtés éteint le feu.", "theme": "Physique du feu"},
+    {"id": "c4", "type": "carte", "pts": 1, "q": "Quelles sont les classes de feu A, B, C et D ?", "r": "A : solides · B : liquides · C : gaz · D : métaux", "expl": "La classe F concerne les huiles et graisses de cuisson.", "theme": "Physique du feu"},
+    {"id": "c5", "type": "carte", "pts": 1, "q": "Quels sont les modes de propagation de la chaleur ?", "r": "Conduction, convection et rayonnement.", "expl": "La projection d'éléments enflammés peut s'y ajouter.", "theme": "Physique du feu"},
+    {"id": "c6", "type": "carte", "pts": 1, "q": "Qu'est-ce qu'un embrasement généralisé éclair (flash-over) ?", "r": "Le passage brutal d'un feu localisé à un embrasement de tout le local.", "expl": "Il s'annonce par une forte montée de température et des gaz de pyrolyse en couche chaude.", "theme": "Phénomènes thermiques"},
+    {"id": "c7", "type": "carte", "pts": 1, "q": "Qu'est-ce qu'une explosion de fumées (backdraft) ?", "r": "L'inflammation brutale de fumées chaudes et riches en gaz combustibles lors d'un apport soudain d'air.", "expl": "Ouvrir un volume confiné et sous-ventilé sans précaution peut la provoquer.", "theme": "Phénomènes thermiques"},
+    {"id": "c8", "type": "carte", "pts": 1, "q": "Que signifie EPI ?", "r": "Équipement de Protection Individuelle.", "expl": "À porter dès l'engagement et à vérifier avant chaque intervention.", "theme": "Sécurité"},
+    {"id": "c9", "type": "carte", "pts": 1, "q": "Que signifie LDV sur une lance ?", "r": "Lance à débit variable : le débit se règle sur la lance.", "expl": "Le débit nominal est repris dans le nom, par exemple LDV 500.", "theme": "Matériel"}
+  ]
+}

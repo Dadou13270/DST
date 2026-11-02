@@ -1,0 +1,407 @@
+{
+  "titre": "QCM Chef d'agrès tout engin — interventions en présence de gaz",
+  "description": "15 questions pour vérifier les connaissances d'un chef d'agrès tout engin sur les interventions en présence de gaz : propriétés, risques (BLEVE, UVCE), zonage, bouteilles et distances, coupure et coordination. Source : GDO Interventions en présence de gaz (déc. 2021, version relayée par ENASIS).",
+  "rubrique": "Quiz et QCM",
+  "niveau": "Avancé",
+  "format": "qcm",
+  "publie": true,
+  "seuil": 70,
+  "melange": false,
+  "consigne": "Une seule bonne réponse sauf mention contraire. Une question à choix multiples n'est validée que si toutes les bonnes réponses (et seulement elles) sont cochées.",
+  "questions": [
+    {
+      "id": "q1",
+      "type": "unique",
+      "pts": 1,
+      "q": "Selon le GDO, quel est le danger principal d'une intervention en présence de gaz ?",
+      "choix": [
+        {
+          "t": "La fuite de gaz",
+          "ok": true
+        },
+        {
+          "t": "Le bruit de la détente du gaz",
+          "ok": false
+        },
+        {
+          "t": "La température du réseau de distribution",
+          "ok": false
+        },
+        {
+          "t": "L'humidité des locaux",
+          "ok": false
+        }
+      ],
+      "expl": "GDO Interventions en présence de gaz (déc. 2021), §3.2 : le danger principal est la fuite de gaz. L'action doit prévenir le risque d'explosion et limiter les dégâts, et l'anticipation du COS est impérative.",
+      "theme": "Risques"
+    },
+    {
+      "id": "q2",
+      "type": "unique",
+      "pts": 1,
+      "q": "Que représente la limite inférieure d'explosivité (LIE) d'un gaz ?",
+      "choix": [
+        {
+          "t": "La concentration minimale en volume dans le mélange au-dessus de laquelle il peut être enflammé",
+          "ok": true
+        },
+        {
+          "t": "La concentration maximale au-dessus de laquelle il ne s'enflamme plus",
+          "ok": false
+        },
+        {
+          "t": "La température minimale d'inflammation",
+          "ok": false
+        },
+        {
+          "t": "La pression minimale de stockage",
+          "ok": false
+        }
+      ],
+      "expl": "GDO Interventions en présence de gaz (déc. 2021), §2.2 : la LIE est la concentration minimale en volume au-dessus de laquelle le mélange peut être enflammé ; la LSE est la concentration maximale en dessous de laquelle il peut l'être. Chaque gaz a sa propre plage d'explosivité.",
+      "theme": "Connaissance des gaz"
+    },
+    {
+      "id": "q3",
+      "type": "unique",
+      "pts": 1,
+      "q": "Quelle est la plage d'explosivité du méthane (gaz naturel de ville) ?",
+      "choix": [
+        {
+          "t": "5 % à 15 %",
+          "ok": true
+        },
+        {
+          "t": "1,5 % à 8,5 %",
+          "ok": false
+        },
+        {
+          "t": "2,2 % à 9,5 %",
+          "ok": false
+        },
+        {
+          "t": "2,3 % à 83 %",
+          "ok": false
+        }
+      ],
+      "expl": "GDO Interventions en présence de gaz (déc. 2021), §2.1 : méthane 5 % à 15 % (densité 0,55, plus léger que l'air) ; butane 1,5 % à 8,5 % (densité 2) ; propane 2,2 % à 9,5 % (densité 1,53) ; acétylène 2,3 % à 83 %.",
+      "theme": "Connaissance des gaz"
+    },
+    {
+      "id": "q4",
+      "type": "unique",
+      "pts": 1,
+      "q": "Les gaz sont qualifiés de « plus lourds » ou « plus légers » que l'air. Que doit retenir le chef d'agrès en intervention ?",
+      "choix": [
+        {
+          "t": "Il faut s'attendre à avoir du gaz partout, quelle que soit sa densité",
+          "ok": true
+        },
+        {
+          "t": "Le méthane s'accumule toujours au sol",
+          "ok": false
+        },
+        {
+          "t": "Le butane et le propane montent toujours au plafond",
+          "ok": false
+        },
+        {
+          "t": "La densité ne joue aucun rôle dans l'analyse",
+          "ok": false
+        }
+      ],
+      "expl": "GDO Interventions en présence de gaz (déc. 2021), §2.1 : les gaz plus lourds et plus légers le sont en condition de laboratoire ; en intervention, il faut s'attendre à avoir du gaz partout. Les mouvements d'air et les cheminements (ventilation, ouverture de porte) font varier les concentrations (§1.2).",
+      "theme": "Connaissance des gaz"
+    },
+    {
+      "id": "q5",
+      "type": "unique",
+      "pts": 1,
+      "q": "Qu'est-ce qu'un BLEVE ?",
+      "choix": [
+        {
+          "t": "L'explosion d'un gaz liquéfié stocké lorsque son enveloppe se rompt brusquement",
+          "ok": true
+        },
+        {
+          "t": "L'explosion d'un nuage de vapeurs en milieu non confiné",
+          "ok": false
+        },
+        {
+          "t": "Une combustion lente sans flamme",
+          "ok": false
+        },
+        {
+          "t": "La décomposition d'un gaz dissous dans un solvant",
+          "ok": false
+        }
+      ],
+      "expl": "GDO Interventions en présence de gaz (déc. 2021), §2.4 : le BLEVE est l'explosion d'un gaz liquéfié stocké quand l'enveloppe rompt brusquement (fragilisation thermique ou mécanique, hausse de pression interne). Ce phénomène est souvent concomitant à un incendie.",
+      "theme": "Risques"
+    },
+    {
+      "id": "q6",
+      "type": "unique",
+      "pts": 1,
+      "q": "Qu'est-ce qu'un UVCE ?",
+      "choix": [
+        {
+          "t": "L'explosion, en milieu non confiné, d'un nuage de vapeurs inflammables",
+          "ok": true
+        },
+        {
+          "t": "L'explosion d'un réservoir sous pression",
+          "ok": false
+        },
+        {
+          "t": "La détonation d'un mélange en milieu confiné uniquement",
+          "ok": false
+        },
+        {
+          "t": "L'inflammation d'une flamme pilote",
+          "ok": false
+        }
+      ],
+      "expl": "GDO Interventions en présence de gaz (déc. 2021), §2.3 : UVCE = explosion en milieu non confiné d'un nuage de vapeurs inflammables ; elle peut résulter d'une fuite de gaz sur réseau.",
+      "theme": "Risques"
+    },
+    {
+      "id": "q7",
+      "type": "unique",
+      "pts": 1,
+      "q": "Qui fixe les contours effectifs du zonage opérationnel (zones rouge, orange, verte) lors d'une intervention gaz ?",
+      "choix": [
+        {
+          "t": "Le COS, selon la reconnaissance (effets dominos, configuration) et sa capacité à tenir le périmètre",
+          "ok": true
+        },
+        {
+          "t": "Le gestionnaire de réseau seul",
+          "ok": false
+        },
+        {
+          "t": "Le conducteur de l'engin",
+          "ok": false
+        },
+        {
+          "t": "Les forces de l'ordre uniquement",
+          "ok": false
+        }
+      ],
+      "expl": "GDO Interventions en présence de gaz (déc. 2021), §3.3 : trois zones (exclusion rouge, contrôlée orange, de soutien verte). Le COS fixe leurs contours selon la reconnaissance et sa capacité à tenir le périmètre ; des mesures d'explosimétrie permettent de vérifier la pertinence de la zone d'exclusion (§3.2).",
+      "theme": "Zonage et commandement"
+    },
+    {
+      "id": "q8",
+      "type": "unique",
+      "pts": 1,
+      "q": "Dans l'ordre indicatif des principes opérationnels, où positionner les engins ?",
+      "choix": [
+        {
+          "t": "En principe avant l'adresse",
+          "ok": true
+        },
+        {
+          "t": "Devant l'adresse, au plus près de la fuite",
+          "ok": false
+        },
+        {
+          "t": "Après l'adresse, dans l'axe de la rue",
+          "ok": false
+        },
+        {
+          "t": "Sans consigne particulière",
+          "ok": false
+        }
+      ],
+      "expl": "GDO Interventions en présence de gaz (déc. 2021), §3.2 : l'ordre indicatif (modifiable sur ordre du COS) commence par le positionnement des engins, en principe avant l'adresse, puis le contact avec GrDF, la vérification des EPI, la zone d'exclusion, l'explosimétrie et le moyen hydraulique (LDV 500 à minima).",
+      "theme": "Zonage et commandement"
+    },
+    {
+      "id": "q9",
+      "type": "unique",
+      "pts": 1,
+      "q": "En cas de fuite sur une bouteille de gaz, quelle zone d'exclusion minimale mettre en place ?",
+      "choix": [
+        {
+          "t": "50 m",
+          "ok": true
+        },
+        {
+          "t": "10 m",
+          "ok": false
+        },
+        {
+          "t": "25 m",
+          "ok": false
+        },
+        {
+          "t": "200 m",
+          "ok": false
+        }
+      ],
+      "expl": "GDO Interventions en présence de gaz (déc. 2021), §3.6 : fuite sur bouteille = zone d'exclusion de 50 m minimum ; bouteille soumise à un incendie ou à la chaleur = 100 m minimum ; bouteille d'acétylène soumise à la chaleur ou à un choc violent = 200 m minimum.",
+      "theme": "Bouteilles et distances"
+    },
+    {
+      "id": "q10",
+      "type": "unique",
+      "pts": 1,
+      "q": "Une bouteille de gaz est soumise à un incendie ou à la chaleur. Quelle zone d'exclusion minimale ?",
+      "choix": [
+        {
+          "t": "100 m",
+          "ok": true
+        },
+        {
+          "t": "50 m",
+          "ok": false
+        },
+        {
+          "t": "20 m",
+          "ok": false
+        },
+        {
+          "t": "300 m",
+          "ok": false
+        }
+      ],
+      "expl": "GDO Interventions en présence de gaz (déc. 2021), §3.6 : 100 m minimum, avec contrôle de la température à la caméra thermique ; danger si déformation visible ou température supérieure à 80 °C. Même si le gaz brûle, le risque d'explosion ne doit pas être exclu.",
+      "theme": "Bouteilles et distances"
+    },
+    {
+      "id": "q11",
+      "type": "unique",
+      "pts": 1,
+      "q": "Une bouteille d'acétylène est soumise à la chaleur ou à un choc violent. Quelle zone d'exclusion minimale ?",
+      "choix": [
+        {
+          "t": "200 m",
+          "ok": true
+        },
+        {
+          "t": "50 m",
+          "ok": false
+        },
+        {
+          "t": "100 m",
+          "ok": false
+        },
+        {
+          "t": "30 m",
+          "ok": false
+        }
+      ],
+      "expl": "GDO Interventions en présence de gaz (déc. 2021), §2.6 et §3.6 : 200 m minimum. L'acétylène (gaz dissous dans l'acétone, odeur d'ail, bouteille marron clair) peut se décomposer dès que la bouteille dépasse 65 °C, avec risque d'éclatement.",
+      "theme": "Bouteilles et distances"
+    },
+    {
+      "id": "q12",
+      "type": "multiple",
+      "pts": 1,
+      "q": "Une bouteille de gaz est soumise à la chaleur. Quelles actions sont conformes au GDO ? (plusieurs réponses)",
+      "choix": [
+        {
+          "t": "Contrôler sa température à la caméra thermique",
+          "ok": true
+        },
+        {
+          "t": "La refroidir au jet diffusé d'attaque",
+          "ok": true
+        },
+        {
+          "t": "Ne pas la déplacer si sa température dépasse 50 °C",
+          "ok": true
+        },
+        {
+          "t": "La refroidir au jet droit",
+          "ok": false
+        },
+        {
+          "t": "La déplacer pour l'éloigner dès que possible",
+          "ok": false
+        }
+      ],
+      "expl": "GDO Interventions en présence de gaz (déc. 2021), §3.6 : contrôle à la caméra thermique, refroidissement au jet diffusé d'attaque (jet droit interdit), pas de déplacement si la bouteille dépasse 50 °C. Les sapeurs-pompiers ne manipulent une bouteille de gaz qu'en cas d'absolue nécessité.",
+      "theme": "Bouteilles et distances"
+    },
+    {
+      "id": "q13",
+      "type": "unique",
+      "pts": 1,
+      "q": "Lors d'une coupure de gaz, vous trouvez une vanne déjà fermée. Que faites-vous ?",
+      "choix": [
+        {
+          "t": "Je ne l'ouvre pas",
+          "ok": true
+        },
+        {
+          "t": "Je l'ouvre pour tester l'installation",
+          "ok": false
+        },
+        {
+          "t": "Je l'ouvre puis la referme",
+          "ok": false
+        },
+        {
+          "t": "Je laisse la décision au propriétaire",
+          "ok": false
+        }
+      ],
+      "expl": "GDO Interventions en présence de gaz (déc. 2021), §3.5 : lorsqu'une coupure est effectuée, la signaler avec le bandeau adéquat et ne jamais rouvrir la vanne ; lorsqu'une vanne est trouvée fermée, il ne faut pas l'ouvrir.",
+      "theme": "Coupure et coordination"
+    },
+    {
+      "id": "q14",
+      "type": "unique",
+      "pts": 1,
+      "q": "Sur un feu avec énergies présentes, quelle est la priorité du premier COS ?",
+      "choix": [
+        {
+          "t": "S'assurer que les énergies (gaz et électricité) sont coupées",
+          "ok": true
+        },
+        {
+          "t": "Établir un établissement d'attaque sans attendre",
+          "ok": false
+        },
+        {
+          "t": "Faire évacuer uniquement le voisinage",
+          "ok": false
+        },
+        {
+          "t": "Attendre l'arrivée du gestionnaire de réseau",
+          "ok": false
+        }
+      ],
+      "expl": "GDO Interventions en présence de gaz (déc. 2021), §3.5 : en cas d'incendie, la priorité du premier COS est de s'assurer que les énergies sont coupées (gaz et électricité). Plus une fuite dure, plus le risque d'explosion augmente : le barrage du gaz doit être rapide.",
+      "theme": "Coupure et coordination"
+    },
+    {
+      "id": "q15",
+      "type": "unique",
+      "pts": 1,
+      "q": "Sur une installation de propane en citerne chez un particulier (distribution particulière), qui est habilité à intervenir sur le réseau ?",
+      "choix": [
+        {
+          "t": "Seul le fournisseur de gaz ; les sapeurs-pompiers peuvent fermer le robinet de sortie de citerne",
+          "ok": true
+        },
+        {
+          "t": "GrDF, qui est compétent sur tous les réseaux",
+          "ok": false
+        },
+        {
+          "t": "N'importe quel artisan",
+          "ok": false
+        },
+        {
+          "t": "Les forces de l'ordre",
+          "ok": false
+        }
+      ],
+      "expl": "GDO Interventions en présence de gaz (déc. 2021), §1.4 : GRDF ou les exploitants ne sont pas compétents sur ce type de réseau ; seul le fournisseur de gaz est habilité à intervenir (son nom figure près de la citerne). Les sapeurs-pompiers peuvent fermer le robinet de sortie de citerne.",
+      "theme": "Coupure et coordination"
+    }
+  ]
+}

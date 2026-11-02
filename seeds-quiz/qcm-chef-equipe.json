@@ -1,0 +1,273 @@
+{
+  "titre": "QCM Chef d'équipe — les fondamentaux",
+  "description": "10 questions pour vérifier les connaissances de base attendues d'un chef d'équipe : méthode de raisonnement, feu, hydraulique, secours à personne et sécurité.",
+  "rubrique": "Quiz et QCM",
+  "niveau": "Intermédiaire",
+  "format": "qcm",
+  "publie": true,
+  "seuil": 70,
+  "melange": false,
+  "consigne": "Une seule bonne réponse sauf mention contraire. Une question à choix multiples n'est validée que si toutes les bonnes réponses (et seulement elles) sont cochées.",
+  "questions": [
+    {
+      "id": "q1",
+      "type": "unique",
+      "pts": 1,
+      "q": "Que signifie le sigle SOIEC dans la méthode de raisonnement tactique ?",
+      "choix": [
+        {
+          "t": "Situation, Objectifs, Idées de manœuvre, Exécution, Commandement",
+          "ok": true
+        },
+        {
+          "t": "Sécurité, Observation, Information, Évaluation, Compte rendu",
+          "ok": false
+        },
+        {
+          "t": "Situation, Organisation, Intervention, Engagement, Contrôle",
+          "ok": false
+        },
+        {
+          "t": "Secours, Objectifs, Itinéraire, Extinction, Commandement",
+          "ok": false
+        }
+      ],
+      "expl": "SOIEC : Situation, Objectifs, Idées de manœuvre, Exécution, Commandement. C'est l'ossature de l'ordre initial donné par le chef.",
+      "theme": "Méthode et transmissions"
+    },
+    {
+      "id": "q2",
+      "type": "multiple",
+      "pts": 1,
+      "q": "Quels sont les trois éléments du triangle du feu ? (plusieurs réponses)",
+      "choix": [
+        {
+          "t": "Un combustible",
+          "ok": true
+        },
+        {
+          "t": "Un comburant",
+          "ok": true
+        },
+        {
+          "t": "Une énergie d'activation",
+          "ok": true
+        },
+        {
+          "t": "Un agent extincteur",
+          "ok": false
+        }
+      ],
+      "expl": "Il n'y a combustion que si un combustible, un comburant (le plus souvent l'oxygène de l'air) et une énergie d'activation sont réunis. Supprimer l'un des trois éteint le feu.",
+      "theme": "Feu et produits dangereux"
+    },
+    {
+      "id": "q3",
+      "type": "unique",
+      "pts": 1,
+      "q": "Un feu de liquides ou de solides liquéfiables (essence, alcool, huile minérale) est un feu de classe :",
+      "choix": [
+        {
+          "t": "A",
+          "ok": false
+        },
+        {
+          "t": "B",
+          "ok": true
+        },
+        {
+          "t": "C",
+          "ok": false
+        },
+        {
+          "t": "D",
+          "ok": false
+        }
+      ],
+      "expl": "A : solides, B : liquides, C : gaz, D : métaux, F : huiles et graisses de cuisson.",
+      "theme": "Feu et produits dangereux"
+    },
+    {
+      "id": "q4",
+      "type": "unique",
+      "pts": 1,
+      "q": "Quel agent extincteur faut-il proscrire sur un feu de friteuse (huile de cuisson en feu, classe F) ?",
+      "choix": [
+        {
+          "t": "Le jet d'eau",
+          "ok": true
+        },
+        {
+          "t": "Une couverture anti-feu humide",
+          "ok": false
+        },
+        {
+          "t": "Un extincteur adapté aux feux de classe F",
+          "ok": false
+        },
+        {
+          "t": "Un couvercle posé sur le récipient",
+          "ok": false
+        }
+      ],
+      "expl": "L'eau projetée sur de l'huile en feu se vaporise brutalement et projette l'huile enflammée : risque de brûlures graves et d'extension du feu.",
+      "theme": "Feu et produits dangereux"
+    },
+    {
+      "id": "q5",
+      "type": "unique",
+      "pts": 1,
+      "q": "Quel est le débit minimal normalisé d'un poteau d'incendie en défense extérieure contre l'incendie ?",
+      "choix": [
+        {
+          "t": "30 m³/h sous 1 bar",
+          "ok": false
+        },
+        {
+          "t": "60 m³/h sous 1 bar",
+          "ok": true
+        },
+        {
+          "t": "120 m³/h sous 5 bars",
+          "ok": false
+        },
+        {
+          "t": "240 m³/h sous 10 bars",
+          "ok": false
+        }
+      ],
+      "expl": "Un point d'eau incendie doit fournir au moins 60 m³/h sous une pression dynamique d'au moins 1 bar (référence de la DECI).",
+      "theme": "Hydraulique"
+    },
+    {
+      "id": "q6",
+      "type": "multiple",
+      "pts": 1,
+      "q": "Face à une victime adulte en arrêt cardiaque, quelles actions correspondent à la chaîne de survie ? (plusieurs réponses)",
+      "choix": [
+        {
+          "t": "Alerter les secours",
+          "ok": true
+        },
+        {
+          "t": "Pratiquer des compressions thoraciques",
+          "ok": true
+        },
+        {
+          "t": "Utiliser un défibrillateur dès que possible",
+          "ok": true
+        },
+        {
+          "t": "Donner à boire pour réveiller la victime",
+          "ok": false
+        }
+      ],
+      "expl": "Alerter, masser sans attendre (environ 100 à 120 compressions par minute, thorax enfoncé de 5 à 6 cm chez l'adulte) et défibriller le plus tôt possible.",
+      "theme": "Secours à personne"
+    },
+    {
+      "id": "q7",
+      "type": "unique",
+      "pts": 1,
+      "q": "Une victime est inconsciente mais respire normalement. Quelle conduite à tenir ?",
+      "choix": [
+        {
+          "t": "La placer en position latérale de sécurité (PLS) et surveiller sa respiration",
+          "ok": true
+        },
+        {
+          "t": "La laisser sur le dos, tête en arrière",
+          "ok": false
+        },
+        {
+          "t": "L'asseoir pour faciliter sa respiration",
+          "ok": false
+        },
+        {
+          "t": "Débuter immédiatement des compressions thoraciques",
+          "ok": false
+        }
+      ],
+      "expl": "La PLS maintient les voies aériennes libres et évite l'étouffement par les vomissements ou la chute de la langue. On surveille la respiration en attendant les renforts.",
+      "theme": "Secours à personne"
+    },
+    {
+      "id": "q8",
+      "type": "unique",
+      "pts": 1,
+      "q": "Avant tout engagement, quelle est la première préoccupation d'un chef d'équipe ?",
+      "choix": [
+        {
+          "t": "La sécurité de son équipe et la sienne",
+          "ok": true
+        },
+        {
+          "t": "La rapidité d'extinction à tout prix",
+          "ok": false
+        },
+        {
+          "t": "La sauvegarde des biens matériels",
+          "ok": false
+        },
+        {
+          "t": "La préparation du compte rendu",
+          "ok": false
+        }
+      ],
+      "expl": "On ne s'engage que si les risques sont identifiés et maîtrisés : la sécurité des personnels prime sur toute autre considération, y compris la sauvegarde des biens.",
+      "theme": "Sécurité"
+    },
+    {
+      "id": "q9",
+      "type": "unique",
+      "pts": 1,
+      "q": "Sur une étiquette de produit dangereux, que signifie le pictogramme « flamme au-dessus d'un cercle » ?",
+      "choix": [
+        {
+          "t": "Produit inflammable",
+          "ok": false
+        },
+        {
+          "t": "Produit comburant",
+          "ok": true
+        },
+        {
+          "t": "Produit explosif",
+          "ok": false
+        },
+        {
+          "t": "Produit corrosif",
+          "ok": false
+        }
+      ],
+      "expl": "La flamme au-dessus d'un cercle désigne un produit comburant : il peut provoquer ou aggraver un incendie en libérant de l'oxygène. La flamme seule désigne un produit inflammable.",
+      "theme": "Feu et produits dangereux"
+    },
+    {
+      "id": "q10",
+      "type": "unique",
+      "pts": 1,
+      "q": "À quoi sert le message d'ambiance transmis à l'arrivée sur les lieux ?",
+      "choix": [
+        {
+          "t": "Rendre compte au CODIS de la situation observée et des premières actions engagées",
+          "ok": true
+        },
+        {
+          "t": "Demander la fin de l'intervention",
+          "ok": false
+        },
+        {
+          "t": "Transmettre le bilan définitif des victimes",
+          "ok": false
+        },
+        {
+          "t": "Informer la presse et les riverains",
+          "ok": false
+        }
+      ],
+      "expl": "Le message d'ambiance donne dès l'arrivée une image claire de la situation (ce que l'on voit) et des premières décisions, pour que la chaîne de commandement et le CODIS anticipent les moyens.",
+      "theme": "Méthode et transmissions"
+    }
+  ]
+}

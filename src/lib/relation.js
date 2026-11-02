@@ -12,6 +12,7 @@ import s7 from "../../seeds-relation/07-gerant-sans-abri.json";
 import s8 from "../../seeds-relation/08-frere-aidant.json";
 
 import { listCalculs } from "./calculs";
+import { listQuiz } from "./quiz";
 export * from "./relationCore";
 const col = () => collection(db, "exercicesRelation");
 const clean = (o) => JSON.parse(JSON.stringify(o));
@@ -33,15 +34,18 @@ export const seedRelations = (existants = []) => Promise.all(SEEDS_REL.map((x, i
 
 // Exercices de calcul + relationnels (hors scénarios). ctx = { uid, equipeId } : applique la visibilité « réservé à un gestionnaire ».
 export async function listExercices(toutes, ctx) {
-  const [a, b] = await Promise.all([listCalculs(toutes).catch(() => []), listRelations(toutes).catch(() => [])]);
-  const l = [...a.map((x) => ({ ...x, kind: "calc" })), ...b];
+  const [a, b, c] = await Promise.all([listCalculs(toutes).catch(() => []), listRelations(toutes).catch(() => []), listQuiz(toutes).catch(() => [])]);
+  const l = [...a.map((x) => ({ ...x, kind: "calc" })), ...b, ...c];
   if (toutes || !ctx) return l;
-  let owner = null;
-  if (ctx.equipeId) { const t = await getDoc(doc(db, "teams", ctx.equipeId)).catch(() => null); owner = t?.exists() ? t.data().owner : null; }
-  return l.filter((x) => !x.reserveA || x.reserveA === ctx.uid || x.reserveA === owner);
+  const owners = new Set();
+  for (const id of ctx.equipeIds || (ctx.equipeId ? [ctx.equipeId] : [])) { const t = await getDoc(doc(db, "teams", id)).catch(() => null); if (t?.exists()) owners.add(t.data().owner); }
+  return l.filter((x) => !x.reserveA || x.reserveA === ctx.uid || owners.has(x.reserveA));
 }
-export const typeExercice = (e) => (e && e.kind === "rel" ? "Relationnel" : "Calcul LIF");
-export const setReserveExercice = (e, uid) => updateDoc(doc(db, e.kind === "rel" ? "exercicesRelation" : "exercicesCalcul", e.id), { reserveA: uid || null });
+export const typeExercice = (e) => (e && e.kind === "rel" ? "Relationnel" : e && e.kind === "quiz" ? (e.format === "quiz" ? "Quiz" : "QCM") : "Calcul LIF");
+export const lienExercice = (e) => (e.kind === "rel" ? `/relation/${e.id}` : e.kind === "quiz" ? `/quiz/${e.id}` : `/calculs/${e.id}`);
+export const lienAdminExercice = (e) => (e.kind === "rel" ? `/admin/relation/${e.id}` : e.kind === "quiz" ? `/admin/quiz/${e.id}` : `/admin/calcul/${e.id}`);
+const colExercice = (k) => (k === "rel" ? "exercicesRelation" : k === "quiz" ? "exercicesQuiz" : "exercicesCalcul");
+export const setReserveExercice = (e, uid) => updateDoc(doc(db, colExercice(e.kind), e.id), { reserveA: uid || null });
 // Catalogue complet (scénarios + exercices) visible pour l'utilisateur.
 export async function listCatalogue(ctx) {
   const [sc, ex] = await Promise.all([listScenarios(true, ctx).catch(() => []), listExercices(false, ctx)]);

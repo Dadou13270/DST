@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import Logo from "../components/Logo";
 import { watchSite, CONFIG_DEFAUT, SECTIONS_DEFAUT } from "../lib/site";
+import { useAuth } from "../lib/auth";
+import { useAccesJeu } from "../lib/jeuAcces";
 import { watchNouveautes, NOUVEAUTES_INIT } from "../lib/nouveautes";
 
 const fmtJ = (d) => (d || "").split("-").reverse().join("/");
@@ -17,14 +19,21 @@ export default function Site() {
   const [d, setD] = useState(null);
   const [menu, setMenu] = useState(false);
   const [nv, setNv] = useState([]);
+  const { user } = useAuth() || {};
+  const acces = useAccesJeu();
   useEffect(() => watchSite(setD), []);
   useEffect(() => { try { return watchNouveautes(setNv); } catch { return undefined; } }, []);
-  useEffect(() => { document.title = "OPS Training — Simulateur opérationnel pour sapeurs-pompiers"; }, []);
+  useEffect(() => { document.title = "La Caserne Virtuelle — Plateforme de préparation et de révision pour sapeurs-pompiers"; }, []);
   if (!d) return <div className="vit"><p className="vit-load">Chargement…</p></div>;
   const cfg = { ...CONFIG_DEFAUT, ...(d.config || {}) };
   const base = d.vide || d.erreur ? SECTIONS_DEFAUT : d.sections;
   // la section « Nouveautés » est ajoutée d'office si le site enregistré n'en contient pas
-  const secs = base.some((s) => s.type === "nouveautes") ? base : [...base, SECTIONS_DEFAUT.find((s) => s.type === "nouveautes")];
+  const avecNouv = base.some((s) => s.type === "nouveautes") ? base : [...base, SECTIONS_DEFAUT.find((s) => s.type === "nouveautes")];
+  // la section « Jeu » est ajoutée d'office si le site enregistré n'en contient pas
+  const secs = avecNouv.some((s) => s.type === "jeu") ? avecNouv : [...avecNouv, SECTIONS_DEFAUT.find((s) => s.type === "jeu")].sort((a, b) => (a.ordre || 0) - (b.ordre || 0));
+  const boutonJeu = (cls) => (user && acces === false
+    ? <span className={"vit-btn ghost " + (cls || "")} style={{ opacity: 0.7, cursor: "default" }}>Bientôt ouvert à votre profil</span>
+    : <Link className={"vit-btn pri " + (cls || "")} to="/jeu">{user ? "🎲 Jouer maintenant" : "🎲 Se connecter pour jouer"}</Link>);
   return (
     <div className="vit">
       <header className="vit-top">
@@ -41,6 +50,7 @@ export default function Site() {
           <div>
             <h1>{cfg.accroche}</h1>
             <p className="vit-lead">{cfg.sousTitre}</p>
+            <a className="vit-pill" href="#s-jeu">🎲 Nouveau : le jeu Trivial pompiers, révisez en jouant</a>
             <div className="vit-cta">
               <Link className="vit-btn pri lg" to={cfg.ctaLien || "/"}>{cfg.cta}</Link>
               {cfg.cta2 && secs[0] && <a className="vit-btn ghost lg" href={"#" + secs[0].id}>{cfg.cta2}</a>}
@@ -52,7 +62,13 @@ export default function Site() {
       {secs.map((s, i) => (
         <section key={s.id} id={s.id} className={"vit-sec" + (i % 2 ? " alt" : "")}>
           <div className="vit-wrap">
-            {s.type === "nouveautes" ? (
+            {s.type === "jeu" ? (
+              <>
+                <div className="vit-head"><h2>🎲 {s.titre}</h2>{s.texte && <p className="vit-lead">{s.texte}</p>}</div>
+                <div className="vit-cards vit-cards4">{(s.items || []).map((it, k) => <article key={k}><i>{String(k + 1).padStart(2, "0")}</i><h3>{it.titre}</h3><p>{it.texte}</p></article>)}</div>
+                <p className="vit-jeu-cta">{boutonJeu("lg")}</p>
+              </>
+            ) : s.type === "nouveautes" ? (
               <>
                 <div className="vit-head"><h2>{s.titre}</h2>{s.texte && <p className="vit-lead">{s.texte}</p>}</div>
                 <div className="vit-news">

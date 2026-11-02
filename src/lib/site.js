@@ -3,9 +3,9 @@ import { db } from "../firebase";
 
 // Site vitrine : collection "site" — doc "config" (bandeau, textes généraux) + un doc par section (id "s-…").
 export const CONFIG_DEFAUT = {
-  nom: "OPS Training",
+  nom: "La Caserne Virtuelle",
   accroche: "Préparez vos devoirs sur table avant le jour J",
-  sousTitre: "Le simulateur opérationnel des sapeurs-pompiers : observez la situation, interrogez les intervenants, construisez votre SOIEC et rédigez vos messages.",
+  sousTitre: "La plateforme de préparation et de révision des sapeurs-pompiers : observez la situation, interrogez les intervenants, construisez votre SOIEC et rédigez vos messages.",
   cta: "Accéder à l'application",
   ctaLien: "/",
   cta2: "Découvrir les fonctions",
@@ -48,6 +48,7 @@ export const SECTIONS_DEFAUT = [
     C("Collaboratif", "Proposez des scénarios, donnez votre avis : l'application s'enrichit de l'expérience de tous."),
     C("Support intégré", "Un ticket, une réponse en direct de l'équipe.")
   ] },
+  {"id": "s-jeu", "type": "jeu", "ordre": 55, "menu": "Jeu", "titre": "Trivial pompiers : révisez en jouant", "texte": "Un jeu de plateau pour tester vos connaissances, seul ou entre collègues : lancez le dé, avancez, répondez aux questions et gagnez un camembert dans chaque rubrique.", "image": "", "items": [{"titre": "Un vrai plateau", "texte": "Dé animé, pion qui avance case par case, un camembert à gagner dans chaque rubrique, puis la question finale au centre."}, {"titre": "Des questions du métier", "texte": "Feu, bâtiment, secours routier, gaz, secours à personne, méthode et plus encore, tirées des GDO et des documents de formation."}, {"titre": "Trois niveaux, un chrono", "texte": "Chaque question affiche son niveau de difficulté, de facile à difficile, avec un chronomètre en option."}, {"titre": "Seul ou à plusieurs", "texte": "De 1 à 6 joueurs sur le même écran : pour réviser avant un examen ou animer un temps de cohésion."}]},
   {"id": "s-nouveautes", "type": "nouveautes", "ordre": 60, "menu": "Nouveautés", "titre": "Dernières nouveautés", "texte": "Les évolutions récentes de l'application, mises à jour au fil des versions.", "image": "", "items": [] },
 ];
 
@@ -55,7 +56,7 @@ export function watchSite(cb) {
   if (!db) { cb({ config: null, sections: [], vide: true }); return () => {}; }
   return onSnapshot(collection(db, "site"), (s) => {
     let config = null; const sections = [];
-    s.docs.forEach((d) => { if (d.id === "config") config = d.data(); else if (!d.id.startsWith("legal-")) sections.push({ id: d.id, ...d.data() }); });
+    s.docs.forEach((d) => { if (d.id === "config") config = d.data(); else if (!d.id.startsWith("legal-") && d.id !== "banque" && d.id !== "droits") sections.push({ id: d.id, ...d.data() }); });
     sections.sort((a, b) => (a.ordre || 0) - (b.ordre || 0));
     cb({ config, sections, vide: !config && !sections.length });
   }, () => cb({ config: null, sections: [], vide: true, erreur: true }));

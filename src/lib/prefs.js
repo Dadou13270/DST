@@ -13,6 +13,10 @@ export function basculerTheme() {
   set("soiec-theme", sombre ? "light" : "dark");
   appliquerPrefs();
 }
+export function definirTheme(v) {
+  set("soiec-theme", v);
+  appliquerPrefs();
+}
 export function changerTaille(delta) {
   const cur = Number(get("soiec-taille", 100));
   let i = TAILLES.indexOf(cur); if (i < 0) i = 1;

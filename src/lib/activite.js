@@ -1,4 +1,5 @@
 import { db } from "../firebase";
+import { estMembre } from "./equipes";
 import { collection, getDocs, getCountFromServer } from "firebase/firestore";
 
 // Suivi de l'activité (admin) : équipes, stagiaires, séances en salle.
@@ -6,7 +7,7 @@ export async function chargerActivite(users) {
   const [t, s] = await Promise.all([getDocs(collection(db, "teams")), getDocs(collection(db, "salles"))]);
   const equipes = t.docs.map((d) => {
     const e = { id: d.id, ...d.data() };
-    const m = users.filter((u) => u.equipeId === d.id);
+    const m = users.filter((u) => estMembre(u, d.id));
     return { ...e, membres: m.length, termines: m.reduce((n, u) => n + Object.keys(u.bilans || {}).length, 0) };
   }).sort((a, b) => (b.membres - a.membres) || (a.nom || "").localeCompare(b.nom || "", "fr"));
   const salles = await Promise.all(

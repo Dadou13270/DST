@@ -39,7 +39,19 @@ export async function marquerLus(ids) {
   ids.slice(0, 400).forEach((id) => b.update(doc(db, "messages", id), { lu: true }));
   await b.commit();
 }
-// identifiant du gestionnaire de mon équipe
+// gestionnaires de mes équipes (une entrée par gestionnaire, avec les équipes concernées)
+export async function mesGestionnaires(profil) {
+  const ids = [profil?.equipeId, profil?.equipeId2, profil?.equipeId3, profil?.equipeId4].filter(Boolean);
+  const ts = await Promise.all(ids.map((id) => getDoc(doc(db, "teams", id)).catch(() => null)));
+  const m = new Map();
+  ts.forEach((t) => {
+    if (!t || !t.exists()) return;
+    const o = t.data().owner, g = m.get(o) || { id: o, nom: t.data().ownerNom || "Gestionnaire", equipes: [] };
+    g.equipes.push(t.data().nom || "Équipe"); m.set(o, g);
+  });
+  return [...m.values()];
+}
+// gestionnaire de mon équipe principale
 export async function monGestionnaire(profil) {
   if (!profil?.equipeId) return null;
   const t = await getDoc(doc(db, "teams", profil.equipeId));

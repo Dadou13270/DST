@@ -7,10 +7,10 @@ export const GALIM_DEBIT = 4000;
 export const TOLERANCE = 0.02; // ±2 % (ou ±1 unité)
 
 export const CALC_DEF = [
-  { id: "c1", titre: "Bac à toit fixe — feu de cuvette", niveau: "Initiation",
+  { id: "c1", titre: "Bac à toit fixe — feu de cuvette", niveau: "Débutant",
     contexte: "Feu de cuvette de rétention autour d'un bac de gazole. Produit non miscible (hydrocarbure). Le réseau incendie de l'établissement est opérationnel.",
     S: 150, miscible: false, C: 3, Qref: 1200, reseau: 3000, F: 7, h: 0.15 },
-  { id: "c2", titre: "Grande cuvette — réseau insuffisant", niveau: "Initiation",
+  { id: "c2", titre: "Grande cuvette — réseau insuffisant", niveau: "Débutant",
     contexte: "Feu généralisé d'une cuvette de rétention de 300 m² (essence, non miscible). Le refroidissement des bacs voisins est engagé.",
     S: 300, miscible: false, C: 3, Qref: 1500, reseau: 2500, F: 7, h: 0.15 },
   { id: "c3", titre: "Poste de chargement — éthanol", niveau: "Intermédiaire",

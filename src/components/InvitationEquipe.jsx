@@ -5,7 +5,7 @@ import { copierAvecQr, imageInvitation, telecharger } from "../lib/invitation";
 export const lienEquipe = (code) => `${window.location.origin}/equipe?code=${code}`;
 export const texteEquipe = (team, gestNom) => `Bonjour,
 
-Rejoindre l'équipe « ${team.nom} » sur OPS Training
+Rejoindre l'équipe « ${team.nom} » sur La Caserne Virtuelle
 Formateur : ${gestNom || team.ownerNom || "—"}
 
 Pour vous inscrire :

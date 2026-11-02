@@ -68,7 +68,7 @@ export default function Attribution() {
         <p className="muted">Un scénario attribué à un gestionnaire n'est visible que par lui et les membres de ses équipes.</p>
         {scs.map((s) => (
           <div className="row between" key={s.id} style={{ margin: "6px 0" }}>
-            <span>{s.titre} <span className="muted">{s.rubrique}</span></span>
+            <span>{s.titre} <span className="muted">{s.rubrique}</span>{s.auteur && <> <span className="tag">Personnalisé · {s.auteurNom || "gestionnaire"}{s.departement ? ` · ${s.departement}` : ""}</span></>}</span>
             <select value={s.reserveA || ""} onChange={(e) => attribuer(s, e.target.value)}>
               <option value="">Tous (public)</option>
               {gests.map((g) => <option key={g.id} value={g.id}>{g.nom}</option>)}

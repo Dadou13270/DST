@@ -1,13 +1,18 @@
+import BanqueSelect from "../components/BanqueSelect";
+import { idsEquipes, estMembre } from "../lib/equipes";
 import InvitationEquipe from "../components/InvitationEquipe";
 import TachesBilan from "../components/TachesBilan";
 import AutoBilan from "../components/AutoBilan";
 import { listExercices, typeExercice, listCatalogue } from "../lib/relation";
 import { useEffect, useState } from "react";
-import { Link, Navigate } from "react-router-dom";
+import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { doc, updateDoc } from "firebase/firestore";
 import { db } from "../firebase";
 import Layout from "../components/Layout";
 import { useAuth } from "../lib/auth";
+import { editeurAutorise, useDroits } from "../lib/droits";
+import MesScenarios from "./MesScenarios";
+import MesQuiz from "./MesQuiz";
 import CoFormateurs from "../components/CoFormateurs";
 import HistoriqueSeances from "../components/HistoriqueSeances";
 import CalendrierSeances from "../components/CalendrierSeances";
@@ -26,7 +31,10 @@ import Frise from "../components/Frise";
 import FilMessages, { nonLus, nonLusMembre } from "../components/FilMessages";
 import TableauBord from "../components/TableauBord";
 import SalleCard from "../components/SalleCard";
+import QuizLiveCard from "../components/QuizLiveCard";
 import { pdfEquipe, pdfRapports } from "../lib/pdf";
+import AttestationsCard from "../components/AttestationsCard";
+import { bilanParcours, parcoursDevoirs, pdfAttestations, slug } from "../lib/attestation";
 import DemandeScenario from "../components/DemandeScenario";
 
 const d = (t) => (t?.toDate ? t.toDate().toLocaleString("fr-FR", { dateStyle: "short", timeStyle: "short" }) : "—");
@@ -117,7 +125,7 @@ function Devoirs({ team, membres, scs, pcs, onChange }) {
             <button className="btn" onClick={() => setRouvert(!rouvert)}>{rouvert ? "Masquer le texte" : "Modifier le texte"}</button>
             {rmsg && <span className="muted">{rmsg}</span>}
           </div>
-          {rouvert && <><textarea rows={3} value={modele} onChange={(e) => setModele(e.target.value)} /><div className="muted">Variables : {"{nom}"} (prénom), {"{exercice}"}, {"{date}"} (échéance).</div></>}
+          {rouvert && <><BanqueSelect cat="relance" libelle="Choisir un modèle de relance…" onPick={setModele} /><textarea rows={3} value={modele} onChange={(e) => setModele(e.target.value)} /><div className="muted">Variables : {"{nom}"} (prénom), {"{exercice}"}, {"{date}"} (échéance).</div></>}
         </div>
       )}
       {dev.length === 0 && <p className="muted">Aucun exercice imposé. La liste est obligatoire pour les membres de l'équipe, avec une date limite.</p>}
@@ -130,7 +138,7 @@ function Devoirs({ team, membres, scs, pcs, onChange }) {
               const r = membres.filter((u) => statutDevoir(d, u.bilans, now, u.calculs) === "retard").length;
               return (
                 <tr key={d.scId}>
-                  <td>{d.pc ? `${(d.rg || 0) + 1}. ` : ""}{d.titre}{d.pcT && <div className="muted" style={{ fontSize: ".8rem" }}>Parcours « {d.pcT} »</div>}</td><td>{ed?.k === "sc:" + d.scId
+                  <td>{d.pc ? `${(d.rg || 0) + 1}. ` : ""}{d.titre}{d.dg ? <> <span className="tag">Diagnostic</span></> : null}{d.pcT && <div className="muted" style={{ fontSize: ".8rem" }}>Parcours « {d.pcT} »</div>}</td><td>{ed?.k === "sc:" + d.scId
                     ? <span className="row"><input type="date" value={ed.v} onChange={(e) => setEd({ ...ed, v: e.target.value })} style={{ width: "auto" }} /><button className="btn primary" onClick={saveLim}>OK</button><button className="btn" onClick={() => setEd(null)}>×</button></span>
                     : <>{fmtLimite(d.limite)} <button className="btn" title="Modifier l'échéance" onClick={() => setEd({ k: "sc:" + d.scId, v: inputDepuisLimite(d.limite) })}>Modifier</button></>}</td><td>{ok}/{membres.length}</td>
                   <td>{r > 0 ? <span className="tag late">{r}</span> : "0"}</td>
@@ -145,7 +153,7 @@ function Devoirs({ team, membres, scs, pcs, onChange }) {
         <div className="item" style={{ marginTop: 8 }}>
           {pcIds.map((id) => (
             <div key={id} className="row item">
-              <strong>Parcours « {dev.find((x) => x.pc === id)?.pcT} »</strong>{dev.find((x) => x.pc === id)?.pcJ && <span className="muted"> — Objectif : {dev.find((x) => x.pc === id).pcJ}</span>}
+              <strong>Parcours « {dev.find((x) => x.pc === id)?.pcT} »</strong>{dev.find((x) => x.pc === id)?.pcJ && <span className="muted"> — Objectif : {dev.find((x) => x.pc === id).pcJ}</span>}{dev.find((x) => x.pc === id)?.pcP && <span className="muted"> — Prérequis : {dev.find((x) => x.pc === id).pcP}</span>}
               {ed?.k === "pc:" + id
                 ? <><input type="date" value={ed.v} onChange={(e) => setEd({ ...ed, v: e.target.value })} style={{ width: "auto" }} /><button className="btn primary" onClick={saveLim}>Décaler tout le parcours</button><button className="btn" onClick={() => setEd(null)}>Annuler</button></>
                 : <button className="btn" onClick={() => setEd({ k: "pc:" + id, v: inputDepuisLimite(dev.find((x) => x.pc === id)?.limite) })}>Décaler l'échéance</button>}
@@ -157,7 +165,7 @@ function Devoirs({ team, membres, scs, pcs, onChange }) {
       <form className="row item" onSubmit={assigner} style={{ marginTop: 8 }}>
         <select className="grow" value={pcId} onChange={(e) => setPcId(e.target.value)}>
           <option value="">Assigner un parcours…</option>
-          {pcs.map((x) => <option key={x.id} value={x.id}>{x.titre} ({(x.scIds || []).length})</option>)}
+          {pcs.map((x) => <option key={x.id} value={x.id}>{x.titre} ({(x.scIds || []).length + (x.diag && x.diagId ? 1 : 0)})</option>)}
         </select>
         <input type="date" value={pcLim} onChange={(e) => setPcLim(e.target.value)} style={{ width: "auto" }} />
         <button className="btn primary">Assigner</button>
@@ -165,7 +173,7 @@ function Devoirs({ team, membres, scs, pcs, onChange }) {
       <form className="row item" onSubmit={add} style={{ marginTop: 8 }}>
         <select value={scId} onChange={(e) => setScId(e.target.value)}>
           <option value="">Exercice à ajouter…</option>
-          {scs.map((x) => <option key={x.id} value={x.id}>{x.titre}{x.kind === "rel" ? " · Relationnel" : x.kind === "calc" ? " · Calcul LIF" : ""}</option>)}
+          {scs.map((x) => <option key={x.id} value={x.id}>{x.titre}{x.kind === "rel" ? " · Relationnel" : x.kind === "calc" ? " · Calcul LIF" : x.kind === "quiz" ? (x.format === "quiz" ? " · Quiz" : " · QCM") : ""}</option>)}
         </select>
         <input type="date" value={lim} onChange={(e) => setLim(e.target.value)} style={{ width: "auto" }} />
         <button className="btn primary">Ajouter</button>
@@ -188,7 +196,7 @@ function FriseBilan({ b, sc }) {
   return <>{entete}<div style={{ marginTop: 10 }}><Frise sc={sc} sess={sess} interName={interName} /></div></>;
 }
 
-function Equipe({ team, autres, scs, pcs, onChange, cible }) {
+function Equipe({ team, autres, scs, pcs, onChange, cible, replie }) {
   const { profil, user, isAdmin } = useAuth();
   const proprio = team.owner === user.uid || isAdmin;
   const [m, setM] = useState(null);
@@ -197,10 +205,12 @@ function Equipe({ team, autres, scs, pcs, onChange, cible }) {
   const [err, setErr] = useState("");
   const [copie, setCopie] = useState(false);
   const [inv, setInv] = useState(false);
+  const [ferme, setFerme] = useState(!!replie);
+  const [act, setAct] = useState(false);
   const [dup, setDup] = useState(null); // nom de la copie en cours de saisie
   const [decal, setDecal] = useState(0);
   const load = () => listMembres(team.id).then(setM).catch((e) => setErr(e.message));
-  useEffect(() => { if (cible && cible.tid === team.id) { setOpen(cible.uid); setTimeout(() => document.getElementById("eq-" + team.id)?.scrollIntoView({ behavior: "smooth", block: "start" }), 300); } }, [cible]); // eslint-disable-line
+  useEffect(() => { if (cible && cible.tid === team.id) { setFerme(false); setOpen(cible.uid); setTimeout(() => document.getElementById("eq-" + team.id)?.scrollIntoView({ behavior: "smooth", block: "start" }), 300); } }, [cible]); // eslint-disable-line
   const [calcEx, setCalcEx] = useState([]);
   useEffect(() => { listExercices(true).then(setCalcEx).catch(() => {}); }, []);
   useEffect(() => { load(); }, [team.id]); // eslint-disable-line
@@ -209,8 +219,12 @@ function Equipe({ team, autres, scs, pcs, onChange, cible }) {
     conf === k ? <button className="btn danger" onClick={() => run(fn)}>Confirmer ?</button>
       : <button className={`btn ${cls}`} onClick={() => setConf(k)}>{label}</button>;
   const tot = (m || []).reduce((a, u) => a + statsOf(u.bilans).n, 0);
+  const pcsEq = parcoursDevoirs(team.devoirs);
+  const attestations = (membres) => membres.flatMap((u) => pcsEq.map((pc) => ({ profil: u, bp: bilanParcours(pc, u, scs), equipe: team.nom, gest: profil?.nom }))).filter((x) => x.bp.termine);
+  const pdfAtt = (membres, nom) => { const l = attestations(membres); if (!l.length) return setErr("Aucun stagiaire n'a terminé un parcours."); pdfAttestations(l, nom).catch((e) => setErr("Génération du PDF impossible : " + (e.message || e))); };
   return (
-    <div className="card" id={"eq-" + team.id}>
+    <div id={"eq-" + team.id}>
+    <div className="card">
       <div className="row between item">
         <div>
           <h2 style={{ margin: 0 }}>{team.nom}</h2>
@@ -221,9 +235,17 @@ function Equipe({ team, autres, scs, pcs, onChange, cible }) {
           <span className="muted">Code d'accès</span>
           <code style={{ fontSize: "1.3rem", letterSpacing: ".15em", fontWeight: 600 }}>{team.code}</code>
           <button className="btn" onClick={() => { navigator.clipboard?.writeText(team.code); setCopie(true); setTimeout(() => setCopie(false), 1500); }}>{copie ? "Copié" : "Copier"}</button></>}
+          {!ferme && <button className="btn" onClick={() => setAct((v) => !v)}>{act ? "Fermer les actions" : "Actions ▾"}</button>}
+          {!ferme && !team.archivee && <button className="btn" onClick={() => setInv((v) => !v)}>{inv ? "Masquer l'invitation" : "Inviter des agents"}</button>}
+          <button className="btn" onClick={() => setFerme((v) => !v)} aria-expanded={!ferme}>{ferme ? "Déplier ▾" : "Replier ▴"}</button>
+        </div>
+      </div>
+      {!ferme && <>
+      {act && (
+      <div className="row item eq-barre">
           <button className="btn" disabled={!m} onClick={() => pdfEquipe(team, m)}>Export PDF</button>
           <button className="btn" disabled={!m || !m.length} title="Un rapport de fin de formation par stagiaire (PDF unique)" onClick={() => pdfRapports(team, m)}>Rapports de fin de formation</button>
-          {!team.archivee && <button className="btn" onClick={() => setInv((v) => !v)}>{inv ? "Masquer l'invitation" : "Inviter des agents"}</button>}
+          <button className="btn" disabled={!m || !pcsEq.length} title={pcsEq.length ? "Une attestation par stagiaire et par parcours terminé (PDF unique)" : "Aucun parcours assigné à cette équipe"} onClick={() => pdfAtt(m, "attestations-" + slug(team.nom))}>Attestations de fin de parcours</button>
           {proprio && !team.archivee && two("rg", "Nouveau code", async () => { await regenCode(team); onChange(); })}
           {proprio && (team.archivee
             ? two("rs", "Restaurer", async () => { await restaurerEquipe(team); onChange(); }, "primary")
@@ -232,8 +254,8 @@ function Equipe({ team, autres, scs, pcs, onChange, cible }) {
                 {two("ar", "Archiver", async () => { await archiverEquipe(team); onChange(); })}
               </>)}
           {proprio && two("del", "Supprimer l'équipe", async () => { await supprimerEquipe(team); onChange(); }, "danger")}
-        </div>
       </div>
+      )}
       {inv && !team.archivee && <InvitationEquipe team={team} gestNom={profil?.nom} />}
       {!team.archivee && <CoFormateurs col="teams" id={team.id} obj={team} onChange={onChange} />}
       {dup !== null && (
@@ -249,7 +271,7 @@ function Equipe({ team, autres, scs, pcs, onChange, cible }) {
       {m && <Devoirs team={team} membres={m} scs={scs} pcs={pcs} onChange={onChange} />}
       {m && m.length === 0 && <p className="muted">Aucun membre. Donne le code aux stagiaires : ils le saisissent dans « Mon équipe ».</p>}
       {m && m.length > 0 && (
-        <table className="cmp" style={{ marginTop: 10 }}>
+        <table className="cmp tmem" style={{ marginTop: 10 }}>
           <thead><tr><th>Stagiaire</th><th>Terminés</th><th>Temps moyen</th><th>Essentielles</th><th>Dernière connexion</th><th></th></tr></thead>
           <tbody>
             {m.map((u) => {
@@ -263,19 +285,21 @@ function Equipe({ team, autres, scs, pcs, onChange, cible }) {
                       <button className="btn" onClick={() => setOpen(open === u.id ? null : u.id)}>{open === u.id ? "Masquer" : "Suivi"}</button>
                       <Link className="btn" to={`/messages?avec=${u.id}`} title="Envoyer un message privé">✉</Link>
                       <button className="btn" title="Rapport de fin de formation (PDF)" onClick={() => pdfRapports(team, [u])}>Rapport PDF</button>
+                      {pcsEq.length > 0 && attestations([u]).length > 0 && <button className="btn" title="Attestation(s) de fin de parcours (PDF)" onClick={() => pdfAtt([u], "attestation-" + slug(u.nom))}>Attestation</button>}
                       {autres.length > 0 && (
-                        <select value="" onChange={(e) => { const t = autres.find((x) => x.id === e.target.value); if (t) run(async () => { await deplacerMembre(u.id, t); await load(); onChange(); }); }}>
+                        <select value="" onChange={(e) => { const t = autres.find((x) => x.id === e.target.value); if (t) run(async () => { await deplacerMembre(u, team.id, t); await load(); onChange(); }); }}>
                           <option value="">Déplacer vers…</option>
                           {autres.map((t) => <option key={t.id} value={t.id}>{t.nom}</option>)}
                         </select>
                       )}
-                      {two("rm" + u.id, "Retirer", async () => { await retirerMembre(u.id); await load(); }, "danger")}
+                      {two("rm" + u.id, "Retirer", async () => { await retirerMembre(u, team.id); await load(); }, "danger")}
                     </div>
                   </td>
                 </tr>,
                 open === u.id && (
                   <tr key={u.id + "d"}><td colSpan={6}>
                     <CourbeStag u={u} user={user} />
+                    <AttestationsCard compact profil={u} devoirs={team.devoirs} catalogue={scs} equipe={team.nom} gest={profil?.nom} />
                     {Object.keys(u.bilans || {}).length === 0 ? (Object.keys(u.calculs || {}).length === 0 ? <span className="muted">Aucun exercice terminé.</span> : null) : (
                       <div className="ex-liste">
                         {Object.entries(u.bilans).map(([scId, b]) => (
@@ -313,6 +337,8 @@ function Equipe({ team, autres, scs, pcs, onChange, cible }) {
           </tbody>
         </table>
       )}
+      </>}
+    </div>
     </div>
   );
 }
@@ -354,11 +380,11 @@ function AffecterCis({ teams, profil, user, onDone }) {
   const ok = Boolean(profil?.cis && profil?.departement);
   useEffect(() => { if (ok) listUtilisateursCis(profil.departement, profil.cis).then(setUsers).catch((e) => { setUsers([]); setMsg("Lecture impossible : " + e.message); }); else setUsers([]); }, [profil?.cis, profil?.departement]); // eslint-disable-line
   const team = teams.find((t) => t.id === (tid || teams[0]?.id));
-  const dispo = (users || []).filter((u) => u.id !== user?.uid && u.equipeId !== team?.id && !sel.some((x) => x.id === u.id));
+  const dispo = (users || []).filter((u) => u.id !== user?.uid && !estMembre(u, team?.id) && !sel.some((x) => x.id === u.id));
   const go = async () => {
     setBusy(true); setMsg("");
     let n = 0; const ko = [];
-    for (const u of sel) { try { await affecterMembre(u.id, team); n++; } catch (e) { ko.push(`${u.nom} (${e.code || e.message})`); } }
+    for (const u of sel) { try { await affecterMembre(u, team); n++; } catch (e) { ko.push(`${u.nom} (${e.code || e.message})`); } }
     setSel([]); setBusy(false);
     setMsg(`${n} utilisateur(s) affecté(s) à ${team.nom}.` + (ko.length ? " Échec : " + ko.join(", ") : ""));
     listUtilisateursCis(profil.departement, profil.cis).then(setUsers).catch(() => {});
@@ -446,11 +472,19 @@ export default function Gestion() {
   const [err, setErr] = useState("");
   const [scs, setScs] = useState([]);
   const [pcs, setPcs] = useState([]);
-  const [onglet, setOnglet] = useState("ac");
+  const [onglet, setOnglet] = useState(() => { const o = new URLSearchParams(window.location.search).get("onglet"); return o || "ac"; });
+  const droits = useDroits();
+  const edOk = isAdmin || editeurAutorise(droits, profil);
+  const quizOk = isAdmin || editeurAutorise(droits, profil, "quiz");
   const [cible, setCible] = useState(null);
+  const [sousEq, setSousEq] = useState(() => new URLSearchParams(window.location.search).get("sub") || "ge");
+  const loc = useLocation(), navG = useNavigate();
+  // le menu latéral navigue via ?onglet=…&sub=… ; l'URL suit aussi les onglets internes
+  useEffect(() => { const q = new URLSearchParams(loc.search), o = q.get("onglet"); if (!o) return; setOnglet(o); if (q.get("sub")) setSousEq(q.get("sub")); }, [loc.key]); // eslint-disable-line
+  useEffect(() => { const q = new URLSearchParams(); q.set("onglet", onglet); if (onglet === "eq") q.set("sub", sousEq); if (q.toString() !== loc.search.replace(/^\?/, "")) navG({ search: q.toString() }, { replace: true }); }, [onglet, sousEq]); // eslint-disable-line
   const loadPcs = () => listParcours(user.uid, isAdmin).then(setPcs).catch(() => {});
   useEffect(() => { if (user) loadPcs(); }, [user?.uid, isAdmin]); // eslint-disable-line
-  useEffect(() => { if (user) listCatalogue({ uid: user.uid, equipeId: profil?.equipeId }).then(setScs).catch(() => {}); }, [user?.uid]); // eslint-disable-line
+  useEffect(() => { if (user) listCatalogue({ uid: user.uid, equipeIds: idsEquipes(profil) }).then(setScs).catch(() => {}); }, [user?.uid]); // eslint-disable-line
   const ok = Boolean(profil?.gestionnaire || isAdmin);
   const load = () => listMesEquipes(user.uid).then(setTeams).catch((e) => setErr(e.message));
   useEffect(() => { if (user && ok) load(); }, [user, ok]); // eslint-disable-line
@@ -466,8 +500,8 @@ export default function Gestion() {
       let ch = false;
       const nd = (t.devoirs || []).map((d) => {
         const p = d.pc ? pcs.find((x) => x.id === d.pc) : null;
-        if (!p || (d.pcJ || "") === (p.objectif || "")) return d;
-        ch = true; const { pcJ, ...r } = d; return p.objectif ? { ...r, pcJ: p.objectif } : r; // eslint-disable-line no-unused-vars
+        if (!p || ((d.pcJ || "") === (p.objectif || "") && JSON.stringify(d.pcI || []) === JSON.stringify(p.objectifs || []) && d.oi === (p.objLiens || {})[d.scId] && (d.pcP || "") === (p.prerequis || ""))) return d;
+        ch = true; const { pcJ, pcI, oi, pcP, ...r } = d; return { ...r, ...(p.prerequis ? { pcP: p.prerequis } : {}), ...((p.objLiens || {})[d.scId] !== undefined ? { oi: p.objLiens[d.scId] } : {}), ...(p.objectif ? { pcJ: p.objectif } : {}), ...((p.objectifs || []).length ? { pcI: p.objectifs } : {}) }; // eslint-disable-line no-unused-vars
       });
       if (ch) updateDoc(doc(db, "teams", t.id), { devoirs: nd }).catch(() => {});
     });
@@ -480,15 +514,32 @@ export default function Gestion() {
     try { await createEquipe(user.uid, profil.nom, nom.trim(), profil.departement || ""); setNom(""); await load(); } catch (x) { setErr(x.message); }
   };
   const actives = (teams || []).filter((t) => !t.archivee), archivees = (teams || []).filter((t) => t.archivee);
-  const onglets = [["ac", "Accueil"], ["eq", "Équipes"], ["tb", "Tableau de bord"], ["pc", "Parcours pédagogiques"], ["sa", "Séance en salle"], ["ca", "Calendrier"], ["hs", "Historique des séances"], ["dm", "Demande de scénario"]];
+  const groupes = [
+    ["ac", "Accueil", [["ac", "Accueil"]]],
+    ["eq", "Équipes", [["cr", "Création de l'équipe"], ["ge", "Gestion de l'équipe"], ["tb", "Tableau de bord"]]],
+    ["se", "Séances", [["sa", "Séance en salle"], ["ca", "Calendrier"], ["hs", "Historique des séances"]]],
+    ["co", "Contenus", [["pc", "Parcours pédagogiques"], ...(edOk ? [["ms", "Mes scénarios"]] : []), ...(quizOk ? [["mq", "Mes quiz"]] : []), ["dm", "Demande de scénario"]]],
+  ];
+  const groupeDe = (o) => (o === "eq" || o === "tb" ? "eq" : groupes.find((g) => g[2].some(([k]) => k === o))?.[0] || "ac");
+  const gActif = groupes.find((g) => g[0] === groupeDe(onglet));
+  const cleSub = onglet === "eq" ? sousEq : onglet;
+  const allerSub = (k) => { if (["cr", "ge", "tb"].includes(k)) { setSousEq(k); setOnglet("eq"); } else setOnglet(k); };
+  const allerGroupe = (g) => { if (g[0] === "eq") setOnglet("eq"); else setOnglet(g[2][0][0]); };
   return (
     <Layout>
-      <div className="tabs">
-        {onglets.map(([k, l]) => <button key={k} className={onglet === k ? "on" : ""} onClick={() => setOnglet(k)}>{l}</button>)}
+      <div className="tabs navmenu">
+        {groupes.map((g) => <button key={g[0]} className={gActif[0] === g[0] ? "on" : ""} onClick={() => allerGroupe(g)}>{g[1]}</button>)}
       </div>
       <div className="row between item"><h1>Espace gestionnaire</h1><Link className="btn" to="/messages">✉ Messagerie</Link></div>
+      {gActif[2].length > 1 && (
+        <div className="tabs sub navmenu">
+          {gActif[2].map(([k, l]) => <button key={k} className={cleSub === k ? "on" : ""} onClick={() => allerSub(k)}>{l}</button>)}
+        </div>
+      )}
       {onglet === "eq" && (
         <>
+          {sousEq === "tb" && <TableauBord teams={actives} scs={scs} />}
+          {sousEq === "cr" && <>
           <form className="card row item" onSubmit={creer}>
         <input className="grow" placeholder="Nom de la nouvelle équipe (ex. FMPA Chef d'agrès 2026)" value={nom} onChange={(e) => setNom(e.target.value)} required minLength={2} />
         <button className="btn primary">Créer l'équipe</button>
@@ -500,25 +551,29 @@ export default function Gestion() {
           Tu peux créer plusieurs équipes. Les stagiaires rejoignent avec le code de n'importe laquelle de tes équipes, puis tu les répartis avec « Déplacer vers… ».
         </p>
       )}
+      </>}
+      {sousEq === "ge" && <>
       {err && <div className="card warn">Erreur : {err} (les règles Firestore sont-elles republiées ?)</div>}
       {!teams && !err && <p>Chargement…</p>}
       {teams && actives.length === 0 && <div className="card">Aucune équipe. Crée-en une : un code d'accès est généré.</div>}
-      {actives.map((t) => <Equipe key={t.id} team={t} autres={actives.filter((x) => x.id !== t.id)} scs={scs} pcs={pcs} onChange={load} cible={cible} />)}
+      {actives.map((t) => <Equipe key={t.id} replie={actives.length > 1} team={t} autres={actives.filter((x) => x.id !== t.id)} scs={scs} pcs={pcs} onChange={load} cible={cible} />)}
       {archivees.length > 0 && (
         <>
           <h2 style={{ marginTop: 24 }}>Équipes archivées ({archivees.length})</h2>
           <p className="muted">Formations terminées : suivi conservé, plus d'inscription possible. « Restaurer » génère un nouveau code d'accès.</p>
-          {archivees.map((t) => <Equipe key={t.id} team={t} autres={[]} scs={scs} pcs={pcs} onChange={load} />)}
+          {archivees.map((t) => <Equipe key={t.id} replie team={t} autres={[]} scs={scs} pcs={pcs} onChange={load} />)}
         </>
       )}
+      </>}
         </>
       )}
-      {onglet === "ac" && (actives.length > 0 ? <ATraiter teams={actives} user={user} profil={profil} onOuvrir={(tid, uid) => { setCible({ tid, uid, n: Date.now() }); setOnglet("eq"); }} /> : <div className="card">{teams ? "Aucune équipe. Crée-en une dans l'onglet Équipes." : "Chargement…"}</div>)}
+      {onglet === "ac" && (actives.length > 0 ? <ATraiter teams={actives} user={user} profil={profil} onOuvrir={(tid, uid) => { setCible({ tid, uid, n: Date.now() }); setSousEq("ge"); setOnglet("eq"); }} /> : <div className="card">{teams ? "Aucune équipe. Crée-en une dans l'onglet Équipes." : "Chargement…"}</div>)}
       {onglet === "ca" && <CalendrierSeances user={user} onHistorique={() => setOnglet("hs")} />}
       {onglet === "hs" && <HistoriqueSeances user={user} />}
-      {onglet === "tb" && <TableauBord teams={actives} scs={scs} />}
       {onglet === "pc" && <Parcours user={user} profil={profil} isAdmin={isAdmin} scs={scs} pcs={pcs} onChange={loadPcs} />}
-      {onglet === "sa" && <SalleCard scs={scs.filter((x) => x.kind === "sc")} />}
+      {onglet === "sa" && <><SalleCard scs={scs.filter((x) => x.kind === "sc")} /><QuizLiveCard quizs={scs.filter((x) => x.kind === "quiz")} /></>}
+      {onglet === "mq" && quizOk && <MesQuiz user={user} profil={profil} />}
+      {onglet === "ms" && edOk && <MesScenarios user={user} profil={profil} />}
       {onglet === "dm" && <DemandeScenario user={user} profil={profil} />}
     </Layout>
   );

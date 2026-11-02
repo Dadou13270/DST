@@ -3,7 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import Layout from "../components/Layout";
 import { StagiaireNav } from "./Home";
 import { useAuth } from "../lib/auth";
-import { useMessages, envoyer, marquerLus, conversations, monGestionnaire } from "../lib/messages";
+import { useMessages, envoyer, marquerLus, conversations, mesGestionnaires } from "../lib/messages";
 import { listMesEquipes, listMembres } from "../lib/equipes";
 
 const quand = (ms) => new Date(ms).toLocaleString("fr-FR", { dateStyle: "short", timeStyle: "short" });
@@ -16,12 +16,13 @@ export default function Messagerie() {
   const [sel, setSel] = useState(null);
   const [txt, setTxt] = useState("");
   const [err, setErr] = useState("");
-  const [gest, setGest] = useState(null);
+  const [gests, setGests] = useState([]);
+  const gest = gests[0] || null;
   const [membres, setMembres] = useState([]);
   const bas = useRef(null);
 
   // mon gestionnaire (si stagiaire rattaché) et mes stagiaires (si gestionnaire)
-  useEffect(() => { monGestionnaire(profil).then(setGest).catch(() => {}); }, [profil?.equipeId]); // eslint-disable-line
+  useEffect(() => { mesGestionnaires(profil).then(setGests).catch(() => {}); }, [[profil?.equipeId, profil?.equipeId2, profil?.equipeId3, profil?.equipeId4].join()]); // eslint-disable-line
   useEffect(() => {
     if (!profil?.gestionnaire || !user) return;
     listMesEquipes(user.uid).then((ts) => Promise.all(ts.map((t) => listMembres(t.id)))).then((l) => setMembres(l.flat().filter((m) => m.id !== user.uid))).catch(() => {});
@@ -47,8 +48,8 @@ export default function Messagerie() {
   const dest = actif
     ? { stagId: actif.stagId, stagNom: actif.stagNom, gestId: actif.gestId, gestNom: actif.gestNom }
     : nouvelle
-      ? (nouvelle === gest?.id
-        ? { stagId: user.uid, stagNom: profil?.nom || "", gestId: gest.id, gestNom: gest.nom }
+      ? (gests.some((g) => g.id === nouvelle)
+        ? { stagId: user.uid, stagNom: profil?.nom || "", gestId: nouvelle, gestNom: gests.find((g) => g.id === nouvelle).nom }
         : (() => { const m = membres.find((x) => x.id === nouvelle); return m ? { stagId: m.id, stagNom: m.nom || "", gestId: user.uid, gestNom: profil?.nom || "" } : null; })())
       : null;
   const nomDest = actif ? actif.nomAutre : dest ? (dest.stagId === user.uid ? dest.gestNom : dest.stagNom) : "";
@@ -61,7 +62,7 @@ export default function Messagerie() {
     catch (x) { setErr(x.code === "permission-denied" ? "Envoi refusé : ce contact n'est plus dans ton équipe." : x.message); }
   };
   const peutNouveau = [
-    ...(gest && !convs.some((c) => c.gestId === gest.id && c.stagId === user.uid) ? [{ id: gest.id, nom: `${gest.nom} (mon gestionnaire)` }] : []),
+    ...gests.filter((g) => !convs.some((c) => c.gestId === g.id && c.stagId === user.uid)).map((g) => ({ id: g.id, nom: `${g.nom} (mon gestionnaire)` })),
     ...membres.filter((m) => !convs.some((c) => c.stagId === m.id && c.gestId === user.uid)).map((m) => ({ id: m.id, nom: m.nom || m.email })),
   ];
 

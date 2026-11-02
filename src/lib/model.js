@@ -38,8 +38,27 @@ export const cubStat = (sc, asked) =>
     return { c, l, q, ok: q.some((x) => asked.has(x.id)) };
   });
 
+// Niveaux des exercices. « Initiation » (ancien nom) est lu comme « Débutant ».
+export const NIVEAUX = ["Débutant", "Intermédiaire", "Avancé"];
+export const nivNorm = (n) => (n === "Initiation" ? "Débutant" : NIVEAUX.includes(n) ? n : "");
+// Niveau proposé d'après la complexité du scénario (utilisé tant qu'aucun niveau n'est enregistré).
+export const nivAuto = (s) => {
+  const qa = (s.qa || []).length, inter = (s.interlocuteurs || []).length;
+  let p = 0;
+  if (qa >= 20) p++;
+  if (qa >= 28) p++;
+  if (inter >= 4) p++;
+  if (s.evolutif) p += 2;
+  if ((s.duree || 0) >= 30) p++;
+  if ((s.dominantes || []).length >= 5) p++;
+  if (s.rubrique === "Commandement" || s.commandement) p += 2;
+  return p === 0 ? "Débutant" : p <= 2 ? "Intermédiaire" : "Avancé";
+};
+export const nivDe = (x) => nivNorm(x?.niveau) || (x?.kind === "rel" || x?.S !== undefined ? "Intermédiaire" : nivAuto(x || {}));
+
 export const newScenario = () => ({
   titre: "",
+  niveau: "Débutant",
   description: "",
   rubrique: "",
   dominantes: [],
@@ -80,6 +99,7 @@ export const mergeScenario = (d) => {
   return {
     ...base,
     ...d,
+    niveau: nivNorm(d.niveau) || (d.titre ? nivAuto(d) : "Débutant"),
     situation: { ...base.situation, ...(d.situation || {}) },
     correction: { ...base.correction, ...(d.correction || {}) },
     interlocuteurs: d.interlocuteurs || [],
