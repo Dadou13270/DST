@@ -98,7 +98,7 @@ select { width: auto; max-width: 100%; } textarea { resize: vertical; } input[ty
 
 .foot{margin:48px 0 0;padding:0;background:#1b2127;color:#c9d0d6;font-size:.9rem;text-align:left;border-top:4px solid #c42a1c;max-width:none}
 .foot a{color:#e8ecef;text-decoration:none;cursor:pointer}.foot a:hover{color:#fff;text-decoration:underline}
-.foot .fin{max-width:1480px;margin:0 auto;padding:30px 24px 22px;display:grid;grid-template-columns:minmax(220px,1.4fr) repeat(3,minmax(140px,1fr));gap:28px}
+.foot .fin{max-width:1480px;margin:0 auto;padding:30px 24px 22px;display:grid;grid-template-columns:minmax(220px,1.4fr) repeat(4,minmax(130px,1fr));gap:24px}@media(max-width:1100px){.foot .fin{grid-template-columns:repeat(2,1fr)}.foot .fbrand{grid-column:1/-1}}
 .foot .fbrand{display:flex;flex-direction:column;gap:10px}.foot .fbrand b{color:#fff;font-family:"Barlow Condensed",sans-serif;font-size:1.25rem;letter-spacing:.02em}
 .foot .fbrand span{color:#9aa4ad;max-width:320px}
 .foot h4{margin:0 0 10px;color:#fff;font-size:.8rem;letter-spacing:.12em;text-transform:uppercase}
