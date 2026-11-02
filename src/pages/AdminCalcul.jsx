@@ -65,7 +65,7 @@ export default function AdminCalcul() {
             <p className="muted" style={{ marginTop: 0 }}>Importe une image depuis ton ordinateur ou choisis-en une dans la bibliothèque d'illustrations. Elle est redimensionnée automatiquement.</p>
             <div className="row">
               <label className="btn" style={{ cursor: "pointer" }}>Importer une image<input type="file" accept="image/*" hidden onChange={importerImage} /></label>
-              <button type="button" className="btn" onClick={ouvrirLib}>{libOpen ? "Fermer la bibliothèque" : "Bibliothèque d'illustrations"}</button>
+              <button type="button" className="btn" onClick={ouvrirLib}>{libOpen ? "Fermer la bibliothèque" : "📚 Bibliothèque d'images"}</button>
               {im && <button type="button" className="btn danger" onClick={() => set("image", "")}>Retirer l'image</button>}
             </div>
           </div>

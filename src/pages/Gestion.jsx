@@ -1,3 +1,5 @@
+import EvenementBloc from "../components/EvenementBloc";
+import EvenementsGestion from "../components/EvenementsGestion";
 import BanqueSelect from "../components/BanqueSelect";
 import { idsEquipes, estMembre } from "../lib/equipes";
 import InvitationEquipe from "../components/InvitationEquipe";
@@ -173,7 +175,7 @@ function Devoirs({ team, membres, scs, pcs, onChange }) {
       <form className="row item" onSubmit={add} style={{ marginTop: 8 }}>
         <select value={scId} onChange={(e) => setScId(e.target.value)}>
           <option value="">Exercice à ajouter…</option>
-          {scs.map((x) => <option key={x.id} value={x.id}>{x.titre}{x.kind === "rel" ? " · Relationnel" : x.kind === "calc" ? " · Calcul LIF" : x.kind === "quiz" ? (x.format === "quiz" ? " · Quiz" : " · QCM") : ""}</option>)}
+          {scs.map((x) => <option key={x.id} value={x.id}>{x.titre}{x.kind === "dec" ? " · Décision" : x.kind === "rel" ? " · Relationnel" : x.kind === "calc" ? " · Calcul LIF" : x.kind === "quiz" ? (x.format === "quiz" ? " · Quiz" : " · QCM") : ""}</option>)}
         </select>
         <input type="date" value={lim} onChange={(e) => setLim(e.target.value)} style={{ width: "auto" }} />
         <button className="btn primary">Ajouter</button>
@@ -476,6 +478,7 @@ export default function Gestion() {
   const droits = useDroits();
   const edOk = isAdmin || editeurAutorise(droits, profil);
   const quizOk = isAdmin || editeurAutorise(droits, profil, "quiz");
+  const evtOk = isAdmin || editeurAutorise(droits, profil, "evt");
   const [cible, setCible] = useState(null);
   const [sousEq, setSousEq] = useState(() => new URLSearchParams(window.location.search).get("sub") || "ge");
   const loc = useLocation(), navG = useNavigate();
@@ -518,7 +521,7 @@ export default function Gestion() {
     ["ac", "Accueil", [["ac", "Accueil"]]],
     ["eq", "Équipes", [["cr", "Création de l'équipe"], ["ge", "Gestion de l'équipe"], ["tb", "Tableau de bord"]]],
     ["se", "Séances", [["sa", "Séance en salle"], ["ca", "Calendrier"], ["hs", "Historique des séances"]]],
-    ["co", "Contenus", [["pc", "Parcours pédagogiques"], ...(edOk ? [["ms", "Mes scénarios"]] : []), ...(quizOk ? [["mq", "Mes quiz"]] : []), ["dm", "Demande de scénario"]]],
+    ["co", "Contenus", [["pc", "Parcours pédagogiques"], ...(edOk ? [["ms", "Mes scénarios"]] : []), ...(quizOk ? [["mq", "Mes quiz"]] : []), ...(evtOk ? [["ev", "Évènements"]] : []), ["dm", "Demande de scénario"]]],
   ];
   const groupeDe = (o) => (o === "eq" || o === "tb" ? "eq" : groupes.find((g) => g[2].some(([k]) => k === o))?.[0] || "ac");
   const gActif = groupes.find((g) => g[0] === groupeDe(onglet));
@@ -567,11 +570,13 @@ export default function Gestion() {
       </>}
         </>
       )}
+      {onglet === "ac" && <EvenementBloc />}
       {onglet === "ac" && (actives.length > 0 ? <ATraiter teams={actives} user={user} profil={profil} onOuvrir={(tid, uid) => { setCible({ tid, uid, n: Date.now() }); setSousEq("ge"); setOnglet("eq"); }} /> : <div className="card">{teams ? "Aucune équipe. Crée-en une dans l'onglet Équipes." : "Chargement…"}</div>)}
       {onglet === "ca" && <CalendrierSeances user={user} onHistorique={() => setOnglet("hs")} />}
       {onglet === "hs" && <HistoriqueSeances user={user} />}
       {onglet === "pc" && <Parcours user={user} profil={profil} isAdmin={isAdmin} scs={scs} pcs={pcs} onChange={loadPcs} />}
       {onglet === "sa" && <><SalleCard scs={scs.filter((x) => x.kind === "sc")} /><QuizLiveCard quizs={scs.filter((x) => x.kind === "quiz")} /></>}
+      {onglet === "ev" && evtOk && <EvenementsGestion user={user} profil={profil} />}
       {onglet === "mq" && quizOk && <MesQuiz user={user} profil={profil} />}
       {onglet === "ms" && edOk && <MesScenarios user={user} profil={profil} />}
       {onglet === "dm" && <DemandeScenario user={user} profil={profil} />}

@@ -15,6 +15,7 @@ import SalleChat from "../components/SalleChat";
 import AutoBilan, { AUTO_CH } from "../components/AutoBilan";
 import { posterQuestion, watchSalle, watchMessages, chronoReste, signalerEvo, repondreTache } from "../lib/salles";
 import { buildBilan, saveBilan } from "../lib/users";
+import { ajouterXp, ptsScenario, annonceXp } from "../lib/xp";
 import Fiches from "../components/Fiches";
 import NotePerso from "../components/NotePerso";
 import { useCarnet } from "../lib/carnet";
@@ -170,7 +171,7 @@ export default function Player() {
     if (!chrono?.fin || !sess.start || sess.finished) return;
     const fin = { ...sess, finished: true, finishedAt: Date.now() };
     setSess(fin);
-    if (user) saveBilan(user.uid, profil?.bilans, id, buildBilan(sc, fin, profil?.bilans?.[id])).then(refreshProfil).catch(() => {});
+    if (user) { const bil = buildBilan(sc, fin, profil?.bilans?.[id]); const g = ajouterXp(profil?.xp, "sc_" + id, ptsScenario(bil)); saveBilan(user.uid, profil?.bilans, id, bil, g.xp).then(() => { annonceXp(g.gain); return refreshProfil(); }).catch(() => {}); }
   }, [chrono?.fin, sess.start, sess.finished]); // eslint-disable-line react-hooks/exhaustive-deps
   const vus = useRef(new Set());
   useEffect(() => (salle ? watchMessages(salle, (l) => setSalleMsgs(l.filter((m) => m.kind))) : undefined), [salle]);
@@ -635,10 +636,13 @@ export default function Player() {
                 if (!autoOpen) return setAutoOpen(true);
                 const fin = { ...sess, finished: true, finishedAt: Date.now() };
                 setSess(fin);
-                if (user)
-                  saveBilan(user.uid, profil?.bilans, id, buildBilan(sc, fin, profil?.bilans?.[id]))
-                    .then(refreshProfil)
+                if (user) {
+                  const bil = buildBilan(sc, fin, profil?.bilans?.[id]);
+                  const g = ajouterXp(profil?.xp, "sc_" + id, ptsScenario(bil));
+                  saveBilan(user.uid, profil?.bilans, id, bil, g.xp)
+                    .then(() => { annonceXp(g.gain); return refreshProfil(); })
                     .catch((e) => setSaveMsg("Ton résultat n'a pas pu être enregistré dans ton suivi (" + (e.code || e.message) + "). L'exercice est bien terminé."));
+                }
               }}
             >
               {autoOpen ? "Valider et terminer l'exercice" : "Terminer l'exercice"}

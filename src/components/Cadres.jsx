@@ -1,5 +1,6 @@
 // Cadre d'emploi visé par un exercice (cases à cocher dans les éditeurs, petits badges sous l'image des cartes).
 export const CADRES = [
+  { k: "cet", l: "Chef d'équipe", c: "Chef d'équipe" },
   { k: "cae", l: "Chef d'agrès une équipe", c: "CA 1 équipe" },
   { k: "cate", l: "Chef d'agrès tout engin", c: "CA tout engin" },
   { k: "cg", l: "Chef de groupe", c: "Chef de groupe" },

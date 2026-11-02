@@ -16,6 +16,7 @@ import Carte from "./pages/Carte";
 import Parametres from "./pages/Parametres";
 import Jeu from "./pages/Jeu";
 import Forum from "./pages/Forum";
+import AdminEvenements from "./pages/AdminEvenements";
 import Attribution from "./pages/Attribution";
 import Departement from "./pages/Departement";
 import AdminGestionnaires from "./pages/AdminGestionnaires";
@@ -52,6 +53,7 @@ import QuizLiveJoueur from "./pages/QuizLiveJoueur";
 import SalleProjection from "./pages/SalleProjection";
 import FichesMemo from "./pages/FichesMemo";
 import Suivi from "./pages/Suivi";
+import Decision from "./pages/Decision";
 import RequireUser from "./components/RequireUser";
 
 const vu = () => { try { return sessionStorage.getItem("soiec-intro") === "1"; } catch { return false; } };
@@ -65,6 +67,8 @@ export default function App() {
       <Routes>
         <Route path="/connexion" element={<Login />} />
         <Route path="/" element={<RequireUser><Home mode="accueil" /></RequireUser>} />
+        <Route path="/decision" element={<RequireUser><Decision /></RequireUser>} />
+        <Route path="/decision/:id" element={<RequireUser><Decision /></RequireUser>} />
         <Route path="/scenarios" element={<RequireUser><Home mode="scenarios" /></RequireUser>} />
         <Route path="/aide-equipes" element={<AideEquipes />} />
         <Route path="/aide-salle" element={<AideSalle />} />
@@ -111,6 +115,7 @@ export default function App() {
           <Route path="attribution" element={<Attribution />} />
           <Route path="gestionnaires" element={<AdminGestionnaires />} />
           <Route path="annonces" element={<AdminAnnonces />} />
+          <Route path="evenements" element={<AdminEvenements />} />
           <Route path="legal" element={<AdminLegal />} />
           <Route path="banque" element={<AdminBanque />} />
           <Route path="droits" element={<AdminDroits />} />

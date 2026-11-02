@@ -51,7 +51,7 @@ export default function Parcours({ user, profil, isAdmin, scs, pcs, onChange }) 
               <label>Exercice diagnostic (placé en premier, un seul)</label>
               <select value={ed.diagId || ""} onChange={(e) => setEd({ ...ed, diagId: e.target.value })}>
                 <option value="">Choisir l'exercice diagnostic…</option>
-                {diagChoix.filter((x) => !ed.scIds.includes(x.id)).map((x) => <option key={x.id} value={x.id}>{x.titre}{x.kind === "quiz" && !x.publie ? " · brouillon" : ""}{x.kind === "quiz" ? (x.format === "cartes" ? " · Flashcards" : x.format === "quiz" ? " · Quiz" : " · QCM") : x.kind === "rel" ? " · Relationnel" : x.kind === "calc" ? " · Calcul LIF" : ""}</option>)}
+                {diagChoix.filter((x) => !ed.scIds.includes(x.id)).map((x) => <option key={x.id} value={x.id}>{x.titre}{x.kind === "quiz" && !x.publie ? " · brouillon" : ""}{x.kind === "quiz" ? (x.format === "cartes" ? " · Flashcards" : x.format === "quiz" ? " · Quiz" : " · QCM") : x.kind === "dec" ? " · Décision" : x.kind === "rel" ? " · Relationnel" : x.kind === "calc" ? " · Calcul LIF" : ""}</option>)}
               </select>
               {brouillons.some((b) => b.id === ed.diagId) && <p className="muted">Ce quiz est un brouillon : publie-le pour que les stagiaires puissent le faire.</p>}
             </>

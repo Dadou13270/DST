@@ -8,6 +8,7 @@ import AvisModal from "./AvisModal";
 import HorsLigne from "./HorsLigne";
 import Annonces from "./Annonces";
 import SideMenu from "./SideMenu";
+import XpBarre, { XpToast } from "./XpBarre";
 import { useAuth } from "../lib/auth";
 import { useAccesJeu } from "../lib/jeuAcces";
 import { profilComplet } from "../lib/model";
@@ -56,6 +57,7 @@ export default function Layout({ children, extra }) {
   }, [uid]);
   return (
     <>
+      <XpToast />
       <header className={"top" + (menu ? " open" : "") + (extra ? " nc" : "")}>
         <Link to="/" className="brand"><Logo size={36} />{charte.nom}</Link>
         <button className="burger" aria-label="Menu" aria-expanded={menu} onClick={() => setMenu((v) => !v)}>☰</button>
@@ -90,6 +92,7 @@ export default function Layout({ children, extra }) {
                 </button>
                 {acc && (
                   <div className="nb-menu" role="menu">
+                    {!adm && <XpBarre />}
                     <Link to="/profil" role="menuitem">Mon profil</Link>
                     <div className="nb-row"><span>Taille du texte</span><span><button onClick={() => changerTaille(-1)} aria-label="Réduire le texte">A−</button><button onClick={() => changerTaille(1)} aria-label="Agrandir le texte">A+</button></span></div>
                     <div className="nb-row"><span>Thème</span><span><button onClick={() => definirTheme("light")}>Clair</button><button onClick={() => definirTheme("dark")}>Sombre</button></span></div>

@@ -3,7 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 
 // Menu latéral (disposition « menu à gauche », réglage admin) : chaque menu se déplie en sous-menus.
 // Visible uniquement quand html[data-menu="g"] sur grand écran (voir styles.css) ; la barre du haut reste en place.
-const ICO = {"Espace stagiaire": "🎓", "Espace gestionnaire": "🧑‍🏫", "Espace département": "🏛️", "Espace admin": "⚙️", "Jeu": "🎲", "Forum": "💬", "Accueil": "🏠", "Scénarios": "🎯", "Mon suivi": "📈", "Séance en salle": "🏫", "Mon équipe": "👥", "Fiches mémo": "📚", "Messages": "✉️", "Mon profil": "👤", "Carte des inscrits": "🗺️", "Création de l'équipe": "➕", "Gestion de l'équipe": "🛠️", "Tableau de bord": "📊", "Calendrier": "📅", "Historique des séances": "🕘", "Parcours pédagogiques": "🧭", "Mes scénarios": "✏️", "Mes quiz": "❓", "Demande de scénario": "📝", "Statistiques du département": "📊", "Utilisateurs": "🧑‍🤝‍🧑", "Gestionnaires": "🧑‍🏫", "Droits": "🔑", "Statistiques": "📊", "Attribution": "🔗", "Journal": "📜", "Annonces": "📣", "Paramètres": "⚙️", "Pages légales": "⚖️", "Tickets": "🎫", "Commentaires types": "💬", "Site": "🌐", "Trivial pompiers": "🎲", "Jouer à plusieurs": "🎮"};
+const ICO = {"Espace stagiaire": "🎓", "Espace gestionnaire": "🧑‍🏫", "Espace département": "🏛️", "Espace admin": "⚙️", "Jeu": "🎲", "Forum": "💬", "Évènements": "📅", "Accueil": "🏠", "Scénarios": "🎯", "Scénarios à décisions": "🔀", "Mon suivi": "📈", "Séance en salle": "🏫", "Mon équipe": "👥", "Fiches mémo": "📚", "Messages": "✉️", "Mon profil": "👤", "Carte des inscrits": "🗺️", "Création de l'équipe": "➕", "Gestion de l'équipe": "🛠️", "Tableau de bord": "📊", "Calendrier": "📅", "Historique des séances": "🕘", "Parcours pédagogiques": "🧭", "Mes scénarios": "✏️", "Mes quiz": "❓", "Demande de scénario": "📝", "Statistiques du département": "📊", "Utilisateurs": "🧑‍🤝‍🧑", "Gestionnaires": "🧑‍🏫", "Droits": "🔑", "Statistiques": "📊", "Attribution": "🔗", "Journal": "📜", "Annonces": "📣", "Paramètres": "⚙️", "Pages légales": "⚖️", "Tickets": "🎫", "Commentaires types": "💬", "Site": "🌐", "Trivial pompiers": "🎲", "Jouer à plusieurs": "🎮"};
 const ico = (l) => ICO[String(l).replace(/^\p{Extended_Pictographic}\uFE0F?\s*/u, "").replace(/\s*\(\d+\)$/, "")] || "•";
 const sans = (l) => String(l).replace(/^\p{Extended_Pictographic}\uFE0F?\s*/u, "");
 
@@ -30,7 +30,7 @@ export default function SideMenu({ isAdmin, profil, accesJeu, nonLus }) {
       id: "ge", t: "Espace gestionnaire", on: gestOn,
       it: [it("Accueil", g("ac"), on("ac")), { g: "Équipes" }, it("Création de l'équipe", g("eq", "cr"), on("eq", "cr"), 1), it("Gestion de l'équipe", g("eq", "ge"), on("eq", "ge"), 1), it("Tableau de bord", g("eq", "tb"), on("eq", "tb"), 1),
         { g: "Séances" }, it("Séance en salle", g("sa"), on("sa"), 1), it("Calendrier", g("ca"), on("ca"), 1), it("Historique des séances", g("hs"), on("hs"), 1),
-        { g: "Contenus" }, it("Parcours pédagogiques", g("pc"), on("pc"), 1), it("Mes scénarios", g("ms"), on("ms"), 1), it("Mes quiz", g("mq"), on("mq"), 1), it("Demande de scénario", g("dm"), on("dm"), 1)],
+        { g: "Contenus" }, it("Parcours pédagogiques", g("pc"), on("pc"), 1), it("Mes scénarios", g("ms"), on("ms"), 1), it("Mes quiz", g("mq"), on("mq"), 1), it("Scénarios à décisions", "/decision", pathname.startsWith("/decision"), 1), it("Demande de scénario", g("dm"), on("dm"), 1)],
     });
   }
   if (profil?.adminDept || isAdmin) S.push({ id: "dp", t: "Espace département", on: pathname.startsWith("/departement"), it: [it("Statistiques du département", "/departement", pathname.startsWith("/departement"))] });
@@ -39,9 +39,10 @@ export default function SideMenu({ isAdmin, profil, accesJeu, nonLus }) {
     S.push({
       id: "ad", t: "Espace admin", on: pathname.startsWith("/admin"),
       it: [it("Scénarios", "/admin", a("/admin") || /^\/admin\/(scenario|calcul|relation|quiz)\//.test(pathname)),
+        it("Scénarios à décisions", "/decision", pathname.startsWith("/decision"), 1),
         { g: "Inscrits" }, it("Utilisateurs", "/admin/utilisateurs", a("/admin/utilisateurs"), 1), it("Gestionnaires", "/admin/gestionnaires", a("/admin/gestionnaires"), 1), it("Droits", "/admin/droits", a("/admin/droits"), 1),
         { g: "Gestion" }, it("Statistiques", "/admin/stats", a("/admin/stats"), 1), it("Attribution", "/admin/attribution", a("/admin/attribution"), 1), it("Journal", "/admin/journal", a("/admin/journal"), 1),
-        { g: "Application" }, it("Annonces", "/admin/annonces", a("/admin/annonces"), 1), it("Paramètres", "/admin/parametres", a("/admin/parametres"), 1), it("Pages légales", "/admin/legal", a("/admin/legal"), 1), it("Tickets", "/admin/tickets", a("/admin/tickets"), 1), it("Commentaires types", "/admin/banque", a("/admin/banque"), 1),
+        { g: "Application" }, it("Annonces", "/admin/annonces", a("/admin/annonces"), 1), it("Évènements", "/admin/evenements", a("/admin/evenements"), 1), it("Paramètres", "/admin/parametres", a("/admin/parametres"), 1), it("Pages légales", "/admin/legal", a("/admin/legal"), 1), it("Tickets", "/admin/tickets", a("/admin/tickets"), 1), it("Commentaires types", "/admin/banque", a("/admin/banque"), 1),
         it("Site", "/admin/site", a("/admin/site"))],
     });
   }

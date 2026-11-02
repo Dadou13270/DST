@@ -21,6 +21,7 @@ import { nouveautes, useLu } from "../lib/competences";
 import { evaluationsDe } from "../lib/fiche";
 import { useAccesJeu } from "../lib/jeuAcces";
 import ForumActivite from "../components/ForumActivite";
+import EvenementBloc from "../components/EvenementBloc";
 import ForumSuivis from "../components/ForumSuivis";
 
 export function StagiaireNav() {
@@ -142,6 +143,7 @@ export default function Home({ mode = "scenarios" }) {
         {!configured && <div className="card warn">Firebase n'est pas configuré. Renseigne le fichier .env (voir README).</div>}
         {devoirs.erreurs?.length > 0 && <p className="err">Impossible de lire les exercices de {devoirs.erreurs.length} équipe(s) ({devoirs.erreurs[0]}). Les règles Firestore (firestore.rules) ne sont probablement pas publiées.</p>}
         {profil?.equipeId && <p className="muted" style={{ margin: "6px 0" }}>{idsEquipes(profil).length > 1 ? "Mes équipes" : "Mon équipe"} : {equipesDe(profil).map((t, i) => <span key={t.id}>{i ? ", " : ""}<strong>{t.nom}</strong></span>)} · <Link to="/equipe">voir</Link></p>}
+        <EvenementBloc />
         <Tuiles devoirs={devoirs} />
         <div className="ac-grid">
           <div>

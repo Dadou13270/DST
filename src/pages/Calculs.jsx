@@ -7,6 +7,7 @@ import Layout from "../components/Layout";
 import { useAuth } from "../lib/auth";
 import { StagiaireNav } from "./Home";
 import { fmtDate, fmtDuree } from "../lib/users";
+import { ajouterXp, ptsExercice, annonceXp } from "../lib/xp";
 import { listCalculs, CALC_Q, attendu, corriger, detail, mettreEssai, taOf } from "../lib/calculs";
 
 const fnum = (n) => Number(n).toLocaleString("fr-FR");
@@ -92,7 +93,9 @@ export function CalculExercice() {
     const r = corriger(ex, rep);
     const essai = { le: Date.now(), duree: Math.round((Date.now() - t0) / 1000), rep: Object.fromEntries(CALC_Q.map(([k]) => [k, rep[k] ?? ""])), ok: r.ok, tot: r.tot };
     try {
-      await updateDoc(doc(db, "users", user.uid), { calculs: mettreEssai(profil?.calculs, ex.id, essai) });
+      const g = ajouterXp(profil?.xp, "ex_" + ex.id, ptsExercice(essai.ok, essai.tot));
+      await updateDoc(doc(db, "users", user.uid), { calculs: mettreEssai(profil?.calculs, ex.id, essai), xp: g.xp });
+      annonceXp(g.gain);
       await refreshProfil();
       setFait(essai);
     } catch (e) { setErr(e.message); }

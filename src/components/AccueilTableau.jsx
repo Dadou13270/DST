@@ -3,7 +3,7 @@ import BarreEquipe from "./ProgressionEquipes";
 import { fmtLimite } from "../lib/devoirs";
 import { CorpsEquipe } from "./DevoirsCard";
 
-const lien = (d) => (d.k === "rel" ? `/relation/${d.scId}` : d.k === "quiz" ? `/quiz/${d.scId}` : d.k ? `/calculs/${d.scId}` : `/scenario/${d.scId}`);
+const lien = (d) => (d.k === "dec" ? `/decision/${d.scId}` : d.k === "rel" ? `/relation/${d.scId}` : d.k === "quiz" ? `/quiz/${d.scId}` : d.k ? `/calculs/${d.scId}` : `/scenario/${d.scId}`);
 const court = (ms) => new Date(ms).toLocaleDateString("fr-FR", { day: "2-digit", month: "short" });
 
 // Pastilles chiffrées : en retard, à rendre, terminés, prochaine échéance.

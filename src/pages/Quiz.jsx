@@ -6,6 +6,7 @@ import Layout from "../components/Layout";
 import { useAuth } from "../lib/auth";
 import { StagiaireNav } from "./Home";
 import { blancs, bonneReponse, listMesQuiz, listQuiz, noterQuestion, noterQuiz, TYPES_Q } from "../lib/quiz";
+import { ajouterXp, ptsExercice, annonceXp } from "../lib/xp";
 import { mettreEssai } from "../lib/calculs";
 
 const mel = (a) => [...a].map((x) => [Math.random(), x]).sort((p, q) => p[0] - q[0]).map((x) => x[1]);
@@ -272,7 +273,9 @@ export default function Quiz() {
   const fini = async (res, duree) => {
     try {
       const essai = { le: Date.now(), duree, ok: res.ok, tot: res.tot, quiz: { pct: res.pct, reussi: res.reussi, ...(Object.keys(res.themes).length ? { themes: res.themes } : {}) } };
-      await updateDoc(doc(db, "users", user.uid), { calculs: mettreEssai(profil?.calculs, ex.id, essai) });
+      const g = ajouterXp(profil?.xp, "ex_" + ex.id, ptsExercice(essai.ok, essai.tot));
+      await updateDoc(doc(db, "users", user.uid), { calculs: mettreEssai(profil?.calculs, ex.id, essai), xp: g.xp });
+      annonceXp(g.gain);
       await refreshProfil();
       setMsg("Résultat enregistré.");
     } catch (e) { setMsg("Erreur d'enregistrement : " + e.message); }

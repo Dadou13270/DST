@@ -359,7 +359,7 @@ html[data-style="b"] .foot,html[data-style="b"] footer{background:var(--navy);co
 .sv-pill{padding:6px 14px;border-radius:99px;border:1px solid var(--line,#d8dde1);background:var(--card,#fff);color:var(--ink,#1b2127);font:inherit;font-weight:600;font-size:.85rem;cursor:pointer}.sv-pill.on{background:var(--ink,#1b2127);color:var(--bg,#fff);border-color:var(--ink,#1b2127)}.sv-pill em{font-style:normal;opacity:.65;margin-left:4px}
 .sv-rub{padding:12px 16px}.sv-h{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:4px}.sv-h h3{margin:0}.sv-h .muted{font-size:.85rem}
 .sv-row{display:grid;grid-template-columns:minmax(0,2.2fr) 112px minmax(0,2fr) auto;gap:12px;align-items:center;padding:10px 0;border-top:1px solid var(--line,#d8dde1)}
-.sv-t{min-width:0}.sv-t b{display:block;line-height:1.25}.sv-t .tag{margin:3px 0 0}
+.sv-t{min-width:0;display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center}.sv-t b{display:block;flex:0 0 100%;line-height:1.25}.sv-t .tag{margin:2px 0 0}
 .sv-info{font-size:.85rem;color:var(--mut,#667079);min-width:0}
 .sv-st{display:inline-block;padding:2px 10px;border-radius:99px;font-size:.75rem;font-weight:700;background:#eef1f6;color:#3b4658;white-space:nowrap}.sv-st.termine{background:#e4f3ec;color:#16794a}.sv-st.encours{background:#fdf1d6;color:#8a5a12}
 .sv-fil{grid-column:1/-1}
@@ -626,3 +626,7 @@ html[data-look="sp"][data-menu="g"] .side .sd-sec+.sd-sec{border-top-color:#ffff
 
 .side .sd-ic{display:inline-block;width:1.5em;text-align:center;margin-right:6px;font-style:normal}
 .side .sd-h .sd-ic{margin-right:6px}
+.ev-bloc{border-left:4px solid var(--red)}.ev-it{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:8px 0;border-top:1px solid var(--line)}.ev-it:first-of-type{border-top:0}.ev-th{font-weight:700;margin-top:4px}.ev-cd{font-variant-numeric:tabular-nums;font-weight:800;font-size:1.35rem;color:var(--red);white-space:nowrap}.ev-cd.now{color:#15803d}
+@media(max-width:600px){.ev-it{flex-direction:column;align-items:flex-start}}
+
+.ev-res{background:var(--soft);border-radius:8px;padding:10px 12px;margin:4px 0}.ev-res .pre{white-space:pre-wrap}

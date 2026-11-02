@@ -40,10 +40,10 @@ export default function AdminDroits() {
   const [d, setD] = useState(null);
   const [deps, setDeps] = useState([]);
   const [msg, setMsg] = useState("");
-  useEffect(() => { if (src && !d) setD({ mode: src.mode, deps: [...(src.deps || [])], quiz: { mode: src.quiz.mode, deps: [...(src.quiz.deps || [])] } }); }, [src]); // eslint-disable-line
+  useEffect(() => { if (src && !d) setD({ mode: src.mode, deps: [...(src.deps || [])], quiz: { mode: src.quiz.mode, deps: [...(src.quiz.deps || [])] }, evt: { mode: src.evt.mode, deps: [...(src.evt.deps || [])] } }); }, [src]); // eslint-disable-line
   useEffect(() => { departementsGest().then(setDeps).catch(() => {}); }, []);
   if (!d) return <p>Chargement…</p>;
-  const liste = [...new Set([...deps.map((x) => x[0]), ...d.deps, ...d.quiz.deps])].sort((a, b) => a.localeCompare(b, "fr", { numeric: true }));
+  const liste = [...new Set([...deps.map((x) => x[0]), ...d.deps, ...d.quiz.deps, ...d.evt.deps])].sort((a, b) => a.localeCompare(b, "fr", { numeric: true }));
   const nb = (dep) => deps.find((x) => x[0] === dep)?.[1] || 0;
   const sauver = async () => { setMsg(""); try { await sauverDroits(d); setMsg("Droits enregistrés."); } catch (e) { setMsg("Erreur : " + (e.code || e.message)); } };
   return (
@@ -53,6 +53,8 @@ export default function AdminDroits() {
         v={{ mode: d.mode, deps: d.deps }} onChange={(v) => setD({ ...d, ...v })} liste={liste} nb={nb} />
       <BlocDroit titre="Quiz et QCM" texte="Un gestionnaire autorisé voit « Mes quiz » dans son espace. Ses quiz sont réservés à lui et à ses équipes : il les ajoute à un parcours ou les propose en exercice libre ; l'admin les retrouve dans « Scénarios personnalisés »."
         v={d.quiz} onChange={(v) => setD({ ...d, quiz: v })} liste={liste} nb={nb} />
+      <BlocDroit titre="Évènements" texte="Un gestionnaire autorisé voit « Évènements » dans Contenus : il crée des évènements (scénario flash, mise en place, retour d'expérience) affichés avec compte à rebours aux utilisateurs de son département, et suit les inscriptions."
+        v={d.evt} onChange={(v) => setD({ ...d, evt: v })} liste={liste} nb={nb} />
       <div className="row" style={{ justifyContent: "flex-end" }}>
         {msg && <span className={msg.startsWith("Erreur") ? "err" : "ok-txt"}>{msg}</span>}
         <button className="btn primary" onClick={sauver}>Enregistrer</button>

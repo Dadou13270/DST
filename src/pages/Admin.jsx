@@ -70,7 +70,7 @@ export default function AdminGate() {
     { k: "sc", t: "Scénarios", subs: [["/admin", "Scénarios"]], tst: (p) => p === "/admin" || /^\/admin\/(scenario|calcul|relation)/.test(p) },
     { k: "in", t: `Inscrits${nbDem > 0 ? ` (${nbDem})` : ""}`, subs: [["/admin/utilisateurs", "Utilisateurs"], ["/admin/gestionnaires", `Gestionnaires${nbDem > 0 ? ` (${nbDem})` : ""}`], ["/admin/droits", "Droits"]] },
     { k: "ge", t: "Gestion", subs: [["/admin/stats", "Statistiques"], ["/admin/attribution", "Attribution"], ["/admin/journal", "Journal"]] },
-    { k: "ap", t: "Application", subs: [["/admin/annonces", "Annonces"], ["/admin/parametres", "Paramètres"], ["/admin/legal", "Pages légales"], ["/admin/tickets", "Tickets"], ["/admin/banque", "Commentaires types"]] },
+    { k: "ap", t: "Application", subs: [["/admin/annonces", "Annonces"], ["/admin/evenements", "Évènements"], ["/admin/parametres", "Paramètres"], ["/admin/legal", "Pages légales"], ["/admin/tickets", "Tickets"], ["/admin/banque", "Commentaires types"]] },
     { k: "si", t: "Site", subs: [["/admin/site", "Site"]] },
   ];
   const gActif = groupes.find((g) => (g.tst ? g.tst(pathname) : g.subs.some(([to]) => pathname.startsWith(to)))) || groupes[0];

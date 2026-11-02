@@ -44,8 +44,8 @@ export function buildBilan(sc, sess, ancien) {
     auto: sess.auto || null,
   };
 }
-export const saveBilan = (uid, bilans, id, bilan) =>
-  setDoc(doc(db, "users", uid), { bilans: JSON.parse(JSON.stringify({ ...(bilans || {}), [id]: bilan })) }, { merge: true });
+export const saveBilan = (uid, bilans, id, bilan, xp) =>
+  setDoc(doc(db, "users", uid), { bilans: JSON.parse(JSON.stringify({ ...(bilans || {}), [id]: bilan })), ...(xp ? { xp } : {}) }, { merge: true });
 
 export function statsOf(bilans) {
   const a = Object.values(bilans || {});

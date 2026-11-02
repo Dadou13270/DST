@@ -362,7 +362,7 @@ export default function AdminEditor({ perso = false }) {
                 if (!lib) chargerLib();
               }}
             >
-              {libOpen ? "Fermer la bibliothèque" : "Bibliothèque d'illustrations" + (lib ? ` (${lib.length})` : "")}
+              {libOpen ? "Fermer la bibliothèque" : "📚 Bibliothèque d'images" + (lib ? ` (${lib.length})` : "")}
             </button>
           </div>
           {libOpen && (

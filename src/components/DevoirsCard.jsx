@@ -6,7 +6,7 @@ import ObjectifsPc from "./ObjectifsPc";
 export function CorpsEquipe({ liste }) {
   const ligne = (d, next, dim) => (
     <div key={d.key || d.scId} style={dim ? { opacity: 0.55 } : undefined}>
-      {d.pc && d.rg !== undefined ? `${d.rg + 1}. ` : ""}{d.oi !== undefined && d.pcI?.[d.oi] ? <><span className="tag" title={d.pcI[d.oi]}>🎯 Objectif {d.oi + 1}</span>{" "}</> : null}{d.dg ? <span className="tag">Diagnostic</span> : null}{d.dg ? " " : ""}<Link to={d.k === "rel" ? `/relation/${d.scId}` : d.k === "quiz" ? `/quiz/${d.scId}` : d.k ? `/calculs/${d.scId}` : `/scenario/${d.scId}`}>{d.titre}</Link> — avant le {fmtLimite(d.limite)}{" "}
+      {d.pc && d.rg !== undefined ? `${d.rg + 1}. ` : ""}{d.oi !== undefined && d.pcI?.[d.oi] ? <><span className="tag" title={d.pcI[d.oi]}>🎯 Objectif {d.oi + 1}</span>{" "}</> : null}{d.dg ? <span className="tag">Diagnostic</span> : null}{d.dg ? " " : ""}<Link to={d.k === "dec" ? `/decision/${d.scId}` : d.k === "rel" ? `/relation/${d.scId}` : d.k === "quiz" ? `/quiz/${d.scId}` : d.k ? `/calculs/${d.scId}` : `/scenario/${d.scId}`}>{d.titre}</Link> — avant le {fmtLimite(d.limite)}{" "}
       {null}{d.statut === "retard" && <span className="tag late">En retard</span>}{next && <span className="tag">Prochaine étape</span>}
     </div>
   );
