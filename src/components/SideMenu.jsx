@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
+import { espaceDecision } from "../lib/decision";
 
 // Menu latéral (disposition « menu à gauche », réglage admin) : chaque menu se déplie en sous-menus.
 // Visible uniquement quand html[data-menu="g"] sur grand écran (voir styles.css) ; la barre du haut reste en place.
