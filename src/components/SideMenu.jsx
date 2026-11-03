@@ -23,9 +23,9 @@ export default function SideMenu({ isAdmin, profil, accesJeu, nonLus }) {
   const eg = (p) => pathname === p;
   S.push({
     id: "st", t: "Espace stagiaire",
-    on: !(pathname === "/roles" || pathname.startsWith("/admin") || pathname.startsWith("/gestion") || pathname.startsWith("/departement") || pathname === "/jeu" || pathname === "/forum"),
+    on: !(esp === "gestion" || esp === "admin" || pathname === "/roles" || pathname.startsWith("/admin") || pathname.startsWith("/gestion") || pathname.startsWith("/departement") || pathname === "/jeu" || pathname === "/forum"),
     it: [it("Accueil", "/", eg("/")), it("Scénarios", "/scenarios", eg("/scenarios") || pathname.startsWith("/scenario/") || pathname.startsWith("/calculs") || pathname.startsWith("/quiz") || pathname.startsWith("/relation")),
-      it("Mon suivi", "/suivi", eg("/suivi")), it("Séance en salle", "/seance", eg("/seance")), it("Jeu de rôle", "/roles/jouer", pathname.startsWith("/roles/jouer")), it("Situations en images", "/reco", pathname.startsWith("/reco")), it("Mon équipe", "/equipe", eg("/equipe")),
+      it("Mon suivi", "/suivi", eg("/suivi")), it("Séance en salle", "/seance", eg("/seance")), it("Jeu de rôle", "/roles/jouer", pathname.startsWith("/roles/jouer")), it("Situations en images", "/reco?esp=stagiaire", pathname.startsWith("/reco") && esp === "stagiaire"), it("Mon équipe", "/equipe", eg("/equipe")),
       it("Fiches mémo", "/fiches", eg("/fiches")), it(`Messages${nonLus ? ` (${nonLus})` : ""}`, "/messages", eg("/messages")), it("Mon profil", "/profil", eg("/profil"))],
   });
   if (profil?.gestionnaire || isAdmin) {
