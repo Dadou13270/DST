@@ -40,7 +40,7 @@ export default function SideMenu({ isAdmin, profil, accesJeu, nonLus }) {
     const a = (p) => pathname === p;
     S.push({
       id: "ad", t: "Espace admin", on: pathname.startsWith("/admin") || esp === "admin",
-      it: [it("Scénarios", "/admin", a("/admin") || /^\/admin\/(scenario|calcul|relation|quiz)\//.test(pathname)),
+      it: [{ g: "Scénarios" }, it("Scénarios", "/admin", a("/admin") || /^\/admin\/(scenario|calcul|relation|quiz)\//.test(pathname), 1),
         it("Scénarios à décisions", "/decision?esp=admin", pathname.startsWith("/decision") && esp === "admin", 1),
         { g: "Inscrits" }, it("Utilisateurs", "/admin/utilisateurs", a("/admin/utilisateurs"), 1), it("Gestionnaires", "/admin/gestionnaires", a("/admin/gestionnaires"), 1), it("Droits", "/admin/droits", a("/admin/droits"), 1),
         { g: "Gestion" }, it("Statistiques", "/admin/stats", a("/admin/stats"), 1), it("Attribution", "/admin/attribution", a("/admin/attribution"), 1), it("Journal", "/admin/journal", a("/admin/journal"), 1),
