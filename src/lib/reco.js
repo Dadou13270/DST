@@ -40,5 +40,5 @@ export function espaceReco(pathname, search, isAdmin, gestionnaire) {
   if (esp === "admin" && isAdmin) return "admin";
   if (esp === "gestion" && (gestionnaire || isAdmin)) return "gestion";
   if (esp === "stagiaire" || /^\/reco\/./.test(pathname)) return "stagiaire";
-  return isAdmin ? "admin" : gestionnaire ? "gestion" : "stagiaire";
+  return "stagiaire";
 }
