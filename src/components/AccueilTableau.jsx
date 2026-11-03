@@ -2,6 +2,8 @@ import { Link } from "react-router-dom";
 import BarreEquipe from "./ProgressionEquipes";
 import { fmtLimite } from "../lib/devoirs";
 import { CorpsEquipe } from "./DevoirsCard";
+import { useEffect, useState } from "react";
+import { VarianteA, VarianteB, infosEquipe } from "./EquipesVariantes";
 
 const lien = (d) => (d.k === "dec" ? `/decision/${d.scId}` : d.k === "rel" ? `/relation/${d.scId}` : d.k === "quiz" ? `/quiz/${d.scId}` : d.k ? `/calculs/${d.scId}` : `/scenario/${d.scId}`);
 const court = (ms) => new Date(ms).toLocaleDateString("fr-FR", { day: "2-digit", month: "short" });
@@ -22,9 +24,15 @@ export function Tuiles({ devoirs }) {
 
 // Une carte par équipe : barre de progression et prochaine étape.
 export function EquipesCartes({ devoirs }) {
+  const [mode, setMode] = useState(() => document.documentElement.dataset.equipes || "");
+  useEffect(() => { const f = () => setMode(document.documentElement.dataset.equipes || ""); window.addEventListener("op-equipes", f); return () => window.removeEventListener("op-equipes", f); }, []);
   if (!devoirs.length) return null;
   const parEq = new Map();
   devoirs.forEach((d) => { const k = d.eq || ""; if (!parEq.has(k)) parEq.set(k, []); parEq.get(k).push(d); });
+  if (mode === "a" || mode === "b") {
+    const groupes = [...parEq.entries()].map(([eq, l]) => infosEquipe(eq, l));
+    return mode === "a" ? <VarianteA groupes={groupes} /> : <VarianteB groupes={groupes} />;
+  }
   return (
     <div className="card">
       <h3 style={{ margin: "0 0 8px" }}>Mes équipes</h3>

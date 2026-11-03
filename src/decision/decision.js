@@ -100,7 +100,7 @@ const libGrille = () => {
 };
 
 // ---- Styles ------------------------------------------------------------------------------
-const CSS = `.dc{max-width:980px;margin:0 auto;font:inherit}.dc *{box-sizing:border-box}
+const CSS = `.dc{width:100%;font:inherit}.dc *{box-sizing:border-box}
 .dc .bx{background:var(--card,#fff);border:1px solid var(--line,#d8dde1);border-radius:12px;padding:16px;margin:12px 0;color:var(--ink,#1b2127)}
 .dc h2,.dc h3{margin:0 0 8px}.dc .m{opacity:.75;font-size:.9em}
 .dc button.b{padding:9px 14px;border-radius:10px;border:1px solid var(--line,#d8dde1);background:var(--card,#fff);color:var(--ink,#1b2127);font:inherit;font-weight:600;cursor:pointer}

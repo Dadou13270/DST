@@ -54,6 +54,7 @@ import SalleProjection from "./pages/SalleProjection";
 import FichesMemo from "./pages/FichesMemo";
 import Suivi from "./pages/Suivi";
 import Decision from "./pages/Decision";
+import Roles, { RolesJouer } from "./pages/Roles";
 import RequireUser from "./components/RequireUser";
 
 const vu = () => { try { return sessionStorage.getItem("soiec-intro") === "1"; } catch { return false; } };
@@ -67,6 +68,9 @@ export default function App() {
       <Routes>
         <Route path="/connexion" element={<Login />} />
         <Route path="/" element={<RequireUser><Home mode="accueil" /></RequireUser>} />
+        <Route path="/roles" element={<RequireUser><Roles /></RequireUser>} />
+        <Route path="/roles/jouer" element={<RequireUser><RolesJouer /></RequireUser>} />
+        <Route path="/roles/jouer/:code" element={<RequireUser><RolesJouer /></RequireUser>} />
         <Route path="/decision" element={<RequireUser><Decision /></RequireUser>} />
         <Route path="/decision/:id" element={<RequireUser><Decision /></RequireUser>} />
         <Route path="/scenarios" element={<RequireUser><Home mode="scenarios" /></RequireUser>} />

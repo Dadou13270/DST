@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../lib/auth";
 import { qlExiste } from "../quizlive/quizlive";
 import { adaptateursQuizLive } from "../lib/quizLiveDb";
+import { rolesExiste } from "../lib/roles";
 import { getSalle, normSalle, rejoindreSalle, etatSalle, fmtDebut } from "../lib/salles";
 
 // Carte « Rejoindre une séance en salle » (page d'accueil du stagiaire)
@@ -20,6 +21,7 @@ export default function SalleJoin() {
     try {
       const s = await getSalle(c);
       if (!s) {
+        if (await rolesExiste(c)) { nav(`/roles/jouer/${c}`); return; }
         if (await qlExiste(adaptateursQuizLive({ uid: user.uid, nom: profil?.nom }), c)) { nav(`/quiz-live?code=${c}`); return; }
         return setErr("Code inconnu.");
       }
@@ -33,9 +35,9 @@ export default function SalleJoin() {
   useEffect(() => { if (code && sp.get("code") && user && profil && !auto.current) { auto.current = true; go(); } }, [user, profil]); // eslint-disable-line
   return (
     <form className="card row item" onSubmit={go}>
-      <strong>Séance en salle</strong>
       <input className="grow" maxLength={8} placeholder="Code donné par le formateur (ex. K7M2P)" value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} autoComplete="off" />
       <button className="btn primary">Rejoindre</button>
+      <Link className="btn" to="/roles/jouer">🎭 Jeu de rôle</Link>
       {err && <span className="err">{err}</span>}
     </form>
   );

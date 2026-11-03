@@ -42,3 +42,12 @@ export async function listDecisionExercices(toutes) {
   }
   return l.filter((x) => toutes || x.publie).map((x) => ({ ...x, kind: "dec", description: x.contexte || "", cadres: x.cadres && x.cadres.length ? x.cadres : ["cet"] })).sort((a, b) => (a.o || 0) - (b.o || 0));
 }
+
+// Espace d'où l'on vient (?esp=admin|gestion) ; sans paramètre : stagiaire si un scénario est ouvert, sinon l'espace du compte.
+export function espaceDecision(pathname, search, isAdmin, gestionnaire) {
+  const esp = new URLSearchParams(search || "").get("esp");
+  if (esp === "admin" && isAdmin) return "admin";
+  if (esp === "gestion" && (gestionnaire || isAdmin)) return "gestion";
+  if (esp === "stagiaire" || /^\/decision\/./.test(pathname)) return "stagiaire";
+  return isAdmin ? "admin" : gestionnaire ? "gestion" : "stagiaire";
+}

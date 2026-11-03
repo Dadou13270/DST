@@ -14,7 +14,7 @@ export function useDevoirs(profil) {
       .then((ts) => {
         const multi = ts.filter(Boolean).length > 1, m = [];
         ts.filter(Boolean).forEach((t) => (t.devoirs || []).forEach((d) => {
-          m.push({ ...d, pc: d.pc && multi ? t.id + "~" + d.pc : d.pc, eq: t.nom, multi, key: t.id + "|" + d.scId + "|" + (d.pc || ""), statut: statutDevoir(d, profil.bilans, Date.now(), profil.calculs) });
+          m.push({ ...d, pc: d.pc && multi ? t.id + "~" + d.pc : d.pc, eq: t.nom, gest: multi ? t.ownerNom : undefined, multi, key: t.id + "|" + d.scId + "|" + (d.pc || ""), statut: statutDevoir(d, profil.bilans, Date.now(), profil.calculs) });
         }));
         const l = m.sort((a, b) => (a.limite || 0) - (b.limite || 0));
         l.erreurs = erreurs; setListe(l);

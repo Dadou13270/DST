@@ -82,6 +82,11 @@ export function appliquerBarre(v) {
   if (v === "n") document.documentElement.dataset.barre = "n"; else delete document.documentElement.dataset.barre;
   try { localStorage.setItem("op-barre", v === "n" ? "n" : ""); } catch { /* ignore */ }
 }
+export function appliquerEquipes(v) {
+  if (v === "a" || v === "b") document.documentElement.dataset.equipes = v; else delete document.documentElement.dataset.equipes;
+  try { localStorage.setItem("op-equipes", v === "a" || v === "b" ? v : ""); } catch { /* ignore */ }
+  window.dispatchEvent(new Event("op-equipes"));
+}
 export function appliquerMenu(v) {
   if (v === "g") document.documentElement.dataset.menu = "g"; else delete document.documentElement.dataset.menu;
   try { localStorage.setItem("op-menu", v === "g" ? "g" : ""); } catch { /* ignore */ }
@@ -99,6 +104,7 @@ export function initStyle() {
   try { if (localStorage.getItem("op-style") === "b") document.documentElement.dataset.style = "b"; } catch { /* ignore */ }
   try { if (localStorage.getItem("op-cartes") === "h") document.documentElement.dataset.cartes = "h"; } catch { /* ignore */ }
   try { if (localStorage.getItem("op-barre") === "n") document.documentElement.dataset.barre = "n"; } catch { /* ignore */ }
+  try { const e = localStorage.getItem("op-equipes"); if (e === "a" || e === "b") document.documentElement.dataset.equipes = e; } catch { /* ignore */ }
   try { if (localStorage.getItem("op-menu") === "g") document.documentElement.dataset.menu = "g"; } catch { /* ignore */ }
   try { if (localStorage.getItem("op-look") === "sp") document.documentElement.dataset.look = "sp"; } catch { /* ignore */ }
   initCharte();
@@ -106,7 +112,7 @@ export function initStyle() {
   let off = () => {};
   const offAuth = onAuthStateChanged(auth, (u) => {
     off();
-    off = u ? onSnapshot(doc(db, "nouveautes", "_reglages"), (d) => { appliquerStyle(d.exists() ? d.data().style : ""); appliquerCartes(d.exists() ? d.data().cartes : ""); appliquerBarre(d.exists() ? d.data().barre : ""); appliquerMenu(d.exists() ? d.data().menu : ""); appliquerLook(d.exists() ? d.data().look : ""); appliquerCharte(d.exists() ? d.data().charte : null); }, () => {}) : () => {};
+    off = u ? onSnapshot(doc(db, "nouveautes", "_reglages"), (d) => { appliquerStyle(d.exists() ? d.data().style : ""); appliquerCartes(d.exists() ? d.data().cartes : ""); appliquerBarre(d.exists() ? d.data().barre : ""); appliquerMenu(d.exists() ? d.data().menu : ""); appliquerEquipes(d.exists() ? d.data().equipes : ""); appliquerLook(d.exists() ? d.data().look : ""); appliquerCharte(d.exists() ? d.data().charte : null); }, () => {}) : () => {};
   });
   return () => { off(); offAuth(); };
 }
@@ -118,3 +124,5 @@ export const setMenu = (v) => setDoc(doc(db, "nouveautes", "_reglages"), { menu:
 export const setBarre = (v) => setDoc(doc(db, "nouveautes", "_reglages"), { barre: v === "n" ? "n" : "" }, { merge: true });
 
 export const setLook = (v) => setDoc(doc(db, "nouveautes", "_reglages"), { look: v === "sp" ? "sp" : "" }, { merge: true });
+// Bloc « Mes équipes » de la page stagiaire : "" = actuel, "a" = cartes repliables, "b" = onglets par équipe.
+export const setEquipes = (v) => setDoc(doc(db, "nouveautes", "_reglages"), { equipes: v === "a" || v === "b" ? v : "" }, { merge: true });

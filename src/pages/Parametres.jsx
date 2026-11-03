@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { initialiserVisibilite } from "../lib/db";
-import { setStyle, setCartes, setBarre, setMenu, setLook, apercuLook, appliquerLook } from "../lib/nouveautes";
+import { setStyle, setCartes, setBarre, setMenu, setEquipes, setLook, apercuLook, appliquerLook } from "../lib/nouveautes";
 import { useCharte, setCharte, lireLogo, CHARTE_DEF } from "../lib/charte";
 
 function Charte({ onMsg }) {
@@ -88,6 +88,17 @@ export default function Parametres() {
           onChange={(e) => setCartes(e.target.value).then(() => setMsg("Présentation enregistrée.")).catch((er) => setMsg("Erreur : " + er.message))}>
           <option value="">Actuelle (image en haut)</option>
           <option value="h">Image à gauche, texte à droite</option>
+        </select>
+      </div>
+
+      <div className="card">
+        <h3>Bloc « Mes équipes » (page stagiaire)</h3>
+        <p className="muted">Mise en page du bloc « Mes équipes » pour tous les utilisateurs. A : une carte par équipe avec sections repliables. B : un onglet par équipe, chiffres clés et frise du parcours.</p>
+        <select defaultValue={document.documentElement.dataset.equipes || ""}
+          onChange={(e) => setEquipes(e.target.value).then(() => setMsg("Mise en page enregistrée.")).catch((er) => setMsg("Erreur : " + er.message))}>
+          <option value="">Version actuelle</option>
+          <option value="a">Version A : cartes par équipe, sections repliables</option>
+          <option value="b">Version B : onglets par équipe, tableau de bord</option>
         </select>
       </div>
 
