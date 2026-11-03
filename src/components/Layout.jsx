@@ -11,6 +11,7 @@ import SideMenu from "./SideMenu";
 import XpBarre, { XpToast } from "./XpBarre";
 import { useAuth } from "../lib/auth";
 import { espaceDecision } from "../lib/decision";
+import { espaceReco } from "../lib/reco";
 import { useAccesJeu } from "../lib/jeuAcces";
 import { profilComplet } from "../lib/model";
 import { useEffect, useState } from "react";
@@ -23,7 +24,7 @@ export default function Layout({ children, extra }) {
   const charte = useCharte();
   const { pathname, search } = useLocation();
   const adm = pathname.startsWith("/admin");
-  const espDec = pathname.startsWith("/decision") ? espaceDecision(pathname, search, !!isAdmin, !!profil?.gestionnaire) : "";
+  const espDec = pathname.startsWith("/decision") ? espaceDecision(pathname, search, !!isAdmin, !!profil?.gestionnaire) : pathname.startsWith("/reco") ? espaceReco(pathname, search, !!isAdmin, !!profil?.gestionnaire) : "";
   const decAdm = espDec === "admin", decGest = espDec === "gestion" || pathname === "/roles";
   const [cnt, setCnt] = useState(null);
   const [avisOpen, setAvisOpen] = useState(false);

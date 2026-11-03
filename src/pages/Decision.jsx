@@ -19,7 +19,7 @@ function BarreDecision({ esp }) {
         <div className="tabs navmenu">
           <T to="/admin" l="Scénarios" on /><T to="/admin/utilisateurs" l="Inscrits" /><T to="/admin/stats" l="Gestion" /><T to="/admin/annonces" l="Application" /><T to="/admin/site" l="Site" />
         </div>
-        <div className="tabs sub navmenu"><T to="/admin" l="Scénarios" /><T to="/decision?esp=admin" l="Scénarios à décisions" on /></div>
+        <div className="tabs sub navmenu"><T to="/admin" l="Scénarios" /><T to="/decision?esp=admin" l="Scénarios à décisions" on /><T to="/reco?esp=admin" l="Situations en images" /></div>
       </>
     );
   if (gest)
@@ -29,7 +29,7 @@ function BarreDecision({ esp }) {
           <T to="/gestion" l="Accueil" /><T to="/gestion?onglet=eq" l="Équipes" /><T to="/gestion?onglet=sa" l="Séances" /><T to="/gestion?onglet=pc" l="Contenus" on />
         </div>
         <div className="tabs sub navmenu">
-          <T to="/gestion?onglet=pc" l="Parcours pédagogiques" /><T to="/gestion?onglet=ms" l="Mes scénarios" /><T to="/gestion?onglet=mq" l="Mes quiz" /><T to="/decision?esp=gestion" l="Scénarios à décisions" on /><T to="/gestion?onglet=dm" l="Demande de scénario" />
+          <T to="/gestion?onglet=pc" l="Parcours pédagogiques" /><T to="/gestion?onglet=ms" l="Mes scénarios" /><T to="/gestion?onglet=mq" l="Mes quiz" /><T to="/decision?esp=gestion" l="Scénarios à décisions" on /><T to="/reco?esp=gestion" l="Situations en images" /><T to="/gestion?onglet=dm" l="Demande de scénario" />
         </div>
       </>
     );

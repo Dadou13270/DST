@@ -67,7 +67,7 @@ export default function AdminGate() {
     );
 
   const groupes = [
-    { k: "sc", t: "Scénarios", subs: [["/admin", "Scénarios"], ["/decision?esp=admin", "Scénarios à décisions"]], tst: (p) => p === "/admin" || /^\/admin\/(scenario|calcul|relation)/.test(p) },
+    { k: "sc", t: "Scénarios", subs: [["/admin", "Scénarios"], ["/decision?esp=admin", "Scénarios à décisions"], ["/reco?esp=admin", "Situations en images"]], tst: (p) => p === "/admin" || /^\/admin\/(scenario|calcul|relation)/.test(p) },
     { k: "in", t: `Inscrits${nbDem > 0 ? ` (${nbDem})` : ""}`, subs: [["/admin/utilisateurs", "Utilisateurs"], ["/admin/gestionnaires", `Gestionnaires${nbDem > 0 ? ` (${nbDem})` : ""}`], ["/admin/droits", "Droits"]] },
     { k: "ge", t: "Gestion", subs: [["/admin/stats", "Statistiques"], ["/admin/attribution", "Attribution"], ["/admin/journal", "Journal"]] },
     { k: "ap", t: "Application", subs: [["/admin/annonces", "Annonces"], ["/admin/evenements", "Évènements"], ["/admin/parametres", "Paramètres"], ["/admin/legal", "Pages légales"], ["/admin/tickets", "Tickets"], ["/admin/banque", "Commentaires types"]] },

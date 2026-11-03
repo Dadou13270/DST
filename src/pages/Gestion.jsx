@@ -521,12 +521,12 @@ export default function Gestion() {
     ["ac", "Accueil", [["ac", "Accueil"]]],
     ["eq", "Équipes", [["cr", "Création de l'équipe"], ["ge", "Gestion de l'équipe"], ["tb", "Tableau de bord"]]],
     ["se", "Séances", [["sa", "Séance en salle"], ["rl", "Jeu de rôle"], ["ca", "Calendrier"], ["hs", "Historique des séances"]]],
-    ["co", "Contenus", [["pc", "Parcours pédagogiques"], ...(edOk ? [["ms", "Mes scénarios"]] : []), ...(quizOk ? [["mq", "Mes quiz"]] : []), ...(evtOk ? [["ev", "Évènements"]] : []), ["dec", "Scénarios à décisions"], ["dm", "Demande de scénario"]]],
+    ["co", "Contenus", [["pc", "Parcours pédagogiques"], ...(edOk ? [["ms", "Mes scénarios"]] : []), ...(quizOk ? [["mq", "Mes quiz"]] : []), ...(evtOk ? [["ev", "Évènements"]] : []), ["dec", "Scénarios à décisions"], ["rec", "Situations en images"], ["dm", "Demande de scénario"]]],
   ];
   const groupeDe = (o) => (o === "eq" || o === "tb" ? "eq" : groupes.find((g) => g[2].some(([k]) => k === o))?.[0] || "ac");
   const gActif = groupes.find((g) => g[0] === groupeDe(onglet));
   const cleSub = onglet === "eq" ? sousEq : onglet;
-  const allerSub = (k) => { if (k === "rl") { navG("/roles"); return; } if (k === "dec") { navG("/decision?esp=gestion"); return; } if (["cr", "ge", "tb"].includes(k)) { setSousEq(k); setOnglet("eq"); } else setOnglet(k); };
+  const allerSub = (k) => { if (k === "rl") { navG("/roles"); return; } if (k === "dec") { navG("/decision?esp=gestion"); return; } if (k === "rec") { navG("/reco?esp=gestion"); return; } if (["cr", "ge", "tb"].includes(k)) { setSousEq(k); setOnglet("eq"); } else setOnglet(k); };
   const allerGroupe = (g) => { if (g[0] === "eq") setOnglet("eq"); else setOnglet(g[2][0][0]); };
   return (
     <Layout>

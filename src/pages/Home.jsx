@@ -34,11 +34,17 @@ export function StagiaireNav() {
       <div className="tabs navmenu">
         <Link to="/" className="tablink" title="Tes exercices à réaliser"><button className={pathname === "/" ? "on" : ""}>Accueil</button></Link>
         <Link to="/suivi" className="tablink" title="Mon suivi, ma séance en salle et mon équipe"><button className={tdb ? "on" : ""}>Tableau de bord</button></Link>
-        <Link to="/scenarios" className="tablink" title="Tous les scénarios"><button className={pathname === "/scenarios" || pathname.startsWith("/calculs") ? "on" : ""}>Scénarios</button></Link>
+        <Link to="/scenarios" className="tablink" title="Tous les scénarios"><button className={pathname === "/scenarios" || pathname.startsWith("/calculs") || pathname.startsWith("/reco") ? "on" : ""}>Scénarios</button></Link>
         <Link to="/fiches" className="tablink" title="Rappels courts : SOIEC, formules, messages"><button className={pathname === "/fiches" ? "on" : ""}>Fiches mémo</button></Link>
         <Link to="/messages" className="tablink" title="Messages privés avec ton gestionnaire"><button className={pathname === "/messages" ? "on" : ""}>Messages{nonLus > 0 && <span className="tabbadge">{nonLus}</span>}</button></Link>
         <Link to="/profil" className="tablink" title="Tes informations, e-mail et mot de passe"><button className={pathname === "/profil" ? "on" : ""}>Mon profil</button></Link>
       </div>
+      {pathname.startsWith("/reco") && (
+        <div className="tabs sub navmenu">
+          <Link to="/scenarios" className="tablink" title="Tous les scénarios"><button>Scénarios</button></Link>
+          <Link to="/reco" className="tablink" title="Observer une image, puis décider"><button className="on">Situations en images</button></Link>
+        </div>
+      )}
       {tdb && (
         <div className="tabs sub navmenu">
           <Link to="/suivi" className="tablink" title="Tes résultats et commentaires du formateur"><button className={pathname === "/suivi" ? "on" : ""}>Mon suivi</button></Link>

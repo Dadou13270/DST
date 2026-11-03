@@ -54,6 +54,7 @@ import SalleProjection from "./pages/SalleProjection";
 import FichesMemo from "./pages/FichesMemo";
 import Suivi from "./pages/Suivi";
 import Decision from "./pages/Decision";
+import Reco from "./pages/Reco";
 import Roles, { RolesJouer } from "./pages/Roles";
 import RequireUser from "./components/RequireUser";
 
@@ -73,6 +74,8 @@ export default function App() {
         <Route path="/roles/jouer/:code" element={<RequireUser><RolesJouer /></RequireUser>} />
         <Route path="/decision" element={<RequireUser><Decision /></RequireUser>} />
         <Route path="/decision/:id" element={<RequireUser><Decision /></RequireUser>} />
+        <Route path="/reco" element={<RequireUser><Reco /></RequireUser>} />
+        <Route path="/reco/:id" element={<RequireUser><Reco /></RequireUser>} />
         <Route path="/scenarios" element={<RequireUser><Home mode="scenarios" /></RequireUser>} />
         <Route path="/aide-equipes" element={<AideEquipes />} />
         <Route path="/aide-salle" element={<AideSalle />} />
