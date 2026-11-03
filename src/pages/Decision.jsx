@@ -3,6 +3,7 @@ import { useParams, useLocation } from "react-router-dom";
 import { Link } from "react-router-dom";
 import Layout from "../components/Layout";
 import { StagiaireNav } from "./Home";
+import { editeurAutorise, useDroits } from "../lib/droits";
 import { useAuth } from "../lib/auth";
 import decisionMount, { decisionDetach } from "../decision/decision";
 import { listIllustrations } from "../lib/illustrations";
@@ -11,6 +12,9 @@ import { espaceDecision, listDecision, saveDecision, deleteDecision, saveResultD
 
 // Barres de navigation comme sur les autres pages (admin, gestionnaire ou stagiaire).
 function BarreDecision({ esp }) {
+  const { profil, isAdmin: adm } = useAuth();
+  const droits = useDroits();
+  const edOk = adm || editeurAutorise(droits, profil), quizOk = adm || editeurAutorise(droits, profil, "quiz"), evtOk = adm || editeurAutorise(droits, profil, "evt");
   const isAdmin = esp === "admin", gest = esp === "gestion";
   const T = ({ to, l, on }) => <Link to={to} className="tablink"><button className={on ? "on" : ""}>{l}</button></Link>;
   if (isAdmin)
@@ -29,7 +33,7 @@ function BarreDecision({ esp }) {
           <T to="/gestion" l="Accueil" /><T to="/gestion?onglet=eq" l="Équipes" /><T to="/gestion?onglet=sa" l="Séances" /><T to="/gestion?onglet=pc" l="Contenus" on />
         </div>
         <div className="tabs sub navmenu">
-          <T to="/gestion?onglet=pc" l="Parcours pédagogiques" /><T to="/gestion?onglet=ms" l="Mes scénarios" /><T to="/gestion?onglet=mq" l="Mes quiz" /><T to="/decision?esp=gestion" l="Scénarios à décisions" on /><T to="/reco?esp=gestion" l="Situations en images" /><T to="/gestion?onglet=dm" l="Demande de scénario" />
+          <T to="/gestion?onglet=pc" l="Parcours pédagogiques" />{edOk && <T to="/gestion?onglet=ms" l="Mes scénarios" />}{quizOk && <T to="/gestion?onglet=mq" l="Mes quiz" />}{evtOk && <T to="/gestion?onglet=ev" l="Évènements" />}<T to="/decision?esp=gestion" l="Scénarios à décisions" on /><T to="/reco?esp=gestion" l="Situations en images" /><T to="/gestion?onglet=dm" l="Demande de scénario" />
         </div>
       </>
     );
