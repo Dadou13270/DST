@@ -102,8 +102,9 @@ export default function recoMount(el, o) {
   // ---------- liste
   function vueListe() {
     const l = ST.liste;
-    let h = `<h2>🖼️ Situations en images</h2><p class="m">Observe l'image, touche les zones qui te paraissent importantes, puis prends tes décisions. Plus tu repères d'éléments essentiels, meilleur est ton bilan.</p>${ST.msg ? `<p class="m">${esc(ST.msg)}</p>` : ""}${ST.err ? `<p class="err">${esc(ST.err)}</p>` : ""}`;
+    let h = `<div class="cd" style="margin:12px 0"><h2>🖼️ Situations en images</h2><p class="m">Observe l'image, touche les zones qui te paraissent importantes, puis prends tes décisions. Plus tu repères d'éléments essentiels, meilleur est ton bilan.</p>${ST.msg ? `<p class="m">${esc(ST.msg)}</p>` : ""}${ST.err ? `<p class="err">${esc(ST.err)}</p>` : ""}`;
     if (o.canEdit) h += `<div class="row"><button class="b p" data-a="new">➕ Nouvelle situation</button><button class="b" data-a="ex">✨ Ajouter l'exemple (feu d'appartement)</button></div>`;
+    h += `</div>`;
     if (!l) return h + `<p class="m">Chargement…</p>`;
     if (!l.length) return h + `<div class="cd"><p class="m">Aucune situation pour le moment.</p></div>`;
     return h + `<div class="grid" style="margin-top:12px">${l.map((s) => `<div class="cd" style="margin:0">${s.image ? `<img class="thumb" src="${esc(s.image)}" alt="">` : '<div class="ph">🖼️</div>'}<b>${esc(s.titre || "Sans titre")}</b>${o.canEdit ? (s.publie ? ' <span class="tg v">Publié</span>' : ' <span class="tg">Brouillon</span>') : ""}<div class="m">${(s.zones || []).length} zone(s) · ${(s.decisions || []).length} décision(s)${s.temps ? " · " + mmss(s.temps) : ""}</div>

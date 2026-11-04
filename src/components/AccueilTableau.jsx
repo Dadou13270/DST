@@ -77,3 +77,25 @@ export function Echeances({ devoirs }) {
     </div>
   );
 }
+
+// Parcours de formation : frise des étapes de chaque parcours (terminé, en cours, à venir).
+export function ParcoursFormation({ devoirs }) {
+  const m = new Map();
+  devoirs.forEach((d) => { if (!d.pc) return; const k = (d.eq || "") + "|" + d.pc; if (!m.has(k)) m.set(k, { eq: d.eq || "", nom: d.pcT || "", it: [] }); m.get(k).it.push(d); });
+  const g = [...m.values()].map((x) => ({ ...x, it: [...x.it].sort((a, b) => (a.rg || 0) - (b.rg || 0)) }));
+  if (!g.length) return null;
+  return (
+    <div className="card">
+      <h3 style={{ margin: "0 0 8px" }}>Parcours de formation</h3>
+      {g.map((x) => {
+        const cur = x.it.findIndex((d) => d.statut !== "ok"), fait = x.it.filter((d) => d.statut === "ok").length;
+        return (
+          <div key={x.eq + x.nom} className="pcf-g">
+            <p className="pcf-h">{x.eq ? `Équipe « ${x.eq} » · ` : ""}Parcours « {x.nom} » · {fait}/{x.it.length} terminé(s)</p>
+            <ol className="pcf-s">{x.it.map((d, i) => <li key={d.key || d.scId} className={"pcf-i" + (d.statut === "ok" ? " d" : i === cur ? " c" : "")}><span className="pcf-n">{d.statut === "ok" ? "✔" : i + 1}</span><span className="pcf-t">{d.titre}</span></li>)}</ol>
+          </div>
+        );
+      })}
+    </div>
+  );
+}

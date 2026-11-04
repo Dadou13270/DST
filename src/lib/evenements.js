@@ -35,3 +35,6 @@ export const resumeBilan = (b) => ({ titre: b.titre || "", fin: b.fin || 0, dure
 export const terminerPart = (evId, uid, res) => updateDoc(doc(db, "evtPart", evId + "_" + uid), { statut: "fait", maj: Date.now(), ...(res ? { res: JSON.parse(JSON.stringify(res)) } : {}) });
 export const rouvrirPart = (evId, uid) => updateDoc(doc(db, "evtPart", evId + "_" + uid), { statut: "inscrit", maj: Date.now(), res: null });
 export const majPart = (evId, uid, statut) => updateDoc(doc(db, "evtPart", evId + "_" + uid), { statut, maj: Date.now() });
+
+// Webinaires à venir ou en direct (bloc d'accueil).
+export const watchWebinaires = (cb) => snap(collection(db, "webinaires"), cb);

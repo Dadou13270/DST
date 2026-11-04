@@ -4,13 +4,13 @@ import { db } from "../firebase";
 
 // Droits d'accès : doc site/droits = { mode: "aucun" | "tous" | "choix", deps: [départements autorisés] }
 // Éditeur de scénarios ouvert aux gestionnaires : « tous », ou seulement ceux des départements listés (mode « choix »).
-export const DROITS_DEFAUT = { mode: "aucun", deps: [], quiz: { mode: "aucun", deps: [] }, evt: { mode: "aucun", deps: [] } };
+export const DROITS_DEFAUT = { mode: "aucun", deps: [], quiz: { mode: "aucun", deps: [] }, evt: { mode: "aucun", deps: [] }, web: { mode: "aucun", deps: [] } };
 
 export function useDroits() {
   const [d, setD] = useState(null);
   useEffect(() => {
     if (!db) { setD(DROITS_DEFAUT); return; }
-    return onSnapshot(doc(db, "site", "droits"), (s) => setD({ ...DROITS_DEFAUT, ...(s.exists() ? s.data() : {}), quiz: { ...DROITS_DEFAUT.quiz, ...(s.exists() ? s.data().quiz || {} : {}) }, evt: { ...DROITS_DEFAUT.evt, ...(s.exists() ? s.data().evt || {} : {}) } }), () => setD(DROITS_DEFAUT));
+    return onSnapshot(doc(db, "site", "droits"), (s) => setD({ ...DROITS_DEFAUT, ...(s.exists() ? s.data() : {}), quiz: { ...DROITS_DEFAUT.quiz, ...(s.exists() ? s.data().quiz || {} : {}) }, evt: { ...DROITS_DEFAUT.evt, ...(s.exists() ? s.data().evt || {} : {}) }, web: { ...DROITS_DEFAUT.web, ...(s.exists() ? s.data().web || {} : {}) } }), () => setD(DROITS_DEFAUT));
   }, []);
   return d;
 }
@@ -18,13 +18,13 @@ export function useDroits() {
 // quoi : "scenario" (éditeur de scénarios) ou "quiz" (quiz et QCM)
 export const editeurAutorise = (droits, profil, quoi = "scenario") => {
   if (!droits || !profil?.gestionnaire) return false;
-  const r = quoi === "quiz" ? droits.quiz : quoi === "evt" ? droits.evt : droits;
+  const r = quoi === "quiz" ? droits.quiz : quoi === "evt" ? droits.evt : quoi === "web" ? droits.web : droits;
   if (!r) return false;
   if (r.mode === "tous") return true;
   return r.mode === "choix" && (r.deps || []).includes(profil.departement || "");
 };
 
-export const sauverDroits = (d) => setDoc(doc(db, "site", "droits"), { mode: d.mode, deps: d.deps || [], quiz: { mode: d.quiz?.mode || "aucun", deps: d.quiz?.deps || [] }, evt: { mode: d.evt?.mode || "aucun", deps: d.evt?.deps || [] } });
+export const sauverDroits = (d) => setDoc(doc(db, "site", "droits"), { mode: d.mode, deps: d.deps || [], quiz: { mode: d.quiz?.mode || "aucun", deps: d.quiz?.deps || [] }, evt: { mode: d.evt?.mode || "aucun", deps: d.evt?.deps || [] }, web: { mode: d.web?.mode || "aucun", deps: d.web?.deps || [] } });
 
 // Départements où il y a au moins un gestionnaire (+ nombre), pour l'écran d'administration.
 export async function departementsGest() {

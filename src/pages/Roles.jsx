@@ -5,12 +5,14 @@ import { StagiaireNav } from "./Home";
 import { useAuth } from "../lib/auth";
 import rolesGestMount, { rolesJoueMount, rolesDetach } from "../roles/roles";
 import { adaptateurGest, adaptateurJoue } from "../lib/roles";
+import { editeurAutorise, useDroits } from "../lib/droits";
 
 const T = ({ to, l, on }) => <Link to={to} className="tablink"><button className={on ? "on" : ""}>{l}</button></Link>;
 
 // Jeu de rôle, côté formateur (gestionnaire / admin) : scénarios, éditeur, pilotage de la séance.
 export default function Roles() {
   const { user, profil, isAdmin } = useAuth();
+  const droits = useDroits();
   const ref = useRef(null);
   const uid = user?.uid || "";
   const ok = !!(isAdmin || profil?.gestionnaire || profil?.adminDept);
@@ -24,7 +26,7 @@ export default function Roles() {
       </div>
       <div className="row between item"><h1>Espace gestionnaire</h1><Link className="btn" to="/messages">✉ Messagerie</Link></div>
       <div className="tabs sub navmenu">
-        <T to="/gestion?onglet=sa" l="Séance en salle" /><T to="/gestion?onglet=ca" l="Calendrier" /><T to="/gestion?onglet=hs" l="Historique des séances" /><T to="/roles" l="Jeu de rôle" on />
+        <T to="/gestion?onglet=sa" l="Séance en salle" /><T to="/roles" l="Jeu de rôle" on />{(isAdmin || editeurAutorise(droits, profil, "web")) && <T to="/webinaires?esp=gestion" l="Webinaires" />}<T to="/gestion?onglet=ca" l="Calendrier" /><T to="/gestion?onglet=hs" l="Historique des séances" />
       </div>
       <div ref={ref} />
     </Layout>

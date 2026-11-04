@@ -102,7 +102,7 @@ service cloud.firestore {
         || (deptOk(resource.data.get("departement", "")) && request.auth.uid != uid
             && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["gestionnaire"]))
         || (request.auth.uid == uid
-            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["derniereConnexion", "email", "nom", "bilans", "encours", "equipeId", "equipeNom", "equipeCode", "equipeGest", "equipeId2", "equipeId3", "equipeId4", "equipes", "equipeCodeAjout", "grade", "cis", "departement", "mdpProvisoire", "reponses", "calculs"])
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["derniereConnexion", "email", "nom", "bilans", "encours", "equipeId", "equipeNom", "equipeCode", "equipeGest", "equipeId2", "equipeId3", "equipeId4", "equipes", "equipeCodeAjout", "grade", "cadre", "dateNaissance", "fonction", "statutSp", "cis", "departement", "mdpProvisoire", "reponses", "calculs", "xp", "cartes"])
             && slotsAjoutOk(request.resource.data, resource.data))
         // le gestionnaire peut commenter les exercices d'un membre de son équipe
         || (gestAny(resource.data)
@@ -113,7 +113,7 @@ service cloud.firestore {
                   && resource.data.get("cis", "") == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get("cis", null)
                   && resource.data.get("departement", "") == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get("departement", null)))
             && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["equipeId", "equipeNom", "equipeCode", "equipeGest", "equipeId2", "equipeId3", "equipeId4", "equipes"])
-            && slotsGestOk(request.resource.data, resource.data)));
+            && slotsGestOk(request.resource.data, resource.data));
       // suppression : par un admin (pas lui-même), ou par la personne elle-même (droit à l'effacement ; un admin doit d'abord perdre ses droits)
       allow delete: if (isAdmin() && request.auth.uid != uid) || (request.auth != null && request.auth.uid == uid && !isAdmin());
     }
@@ -160,6 +160,10 @@ service cloud.firestore {
       allow update: if isAdmin() || (isGest() && resource.data.owner == request.auth.uid)
         || (isGest() && request.auth.uid in resource.data.get("co", [])
             && !request.resource.data.diff(resource.data).affectedKeys().hasAny(["owner", "co", "coNoms"]));
+      // un stagiaire de l'équipe met à jour uniquement le compteur d'inscrits
+      allow update: if request.auth != null && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["nb"])
+        && request.resource.data.nb is int && request.resource.data.nb >= 0 && request.resource.data.nb < 1000
+        && aEquipe(get(/databases/$(database)/documents/users/$(request.auth.uid)).data, tid);
       allow delete: if isAdmin() || (isGest() && resource.data.owner == request.auth.uid);
     }
     // Codes d'accès : lecture unitaire (pas de liste) pour rejoindre une équipe
@@ -252,6 +256,25 @@ service cloud.firestore {
     }
 
     // Annonces globales : lues par tout compte connecté, gérées par l'admin
+    // Évènements : l'admin crée des évènements généraux ; un gestionnaire autorisé (site/droits.evt) crée des évènements pour son département.
+    function evtOk() {
+      return isGest() && exists(/databases/$(database)/documents/site/droits)
+        && (get(/databases/$(database)/documents/site/droits).data.get("evt", {}).get("mode", "aucun") == "tous"
+            || (get(/databases/$(database)/documents/site/droits).data.get("evt", {}).get("mode", "aucun") == "choix"
+                && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get("departement", "") in get(/databases/$(database)/documents/site/droits).data.get("evt", {}).get("deps", [])));
+    }
+    match /evenements/{id} {
+      allow read: if request.auth != null;
+      allow create: if isAdmin() || (evtOk() && request.resource.data.par == request.auth.uid
+        && request.resource.data.dept == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get("departement", ""));
+      allow update, delete: if isAdmin() || (request.auth != null && resource.data.par == request.auth.uid);
+    }
+    // Participations : le participant gère la sienne ; l'organisateur et l'admin les lisent.
+    match /evtPart/{id} {
+      allow create: if request.auth != null && request.resource.data.uid == request.auth.uid && id == request.resource.data.ev + "_" + request.auth.uid;
+      allow update, delete: if request.auth != null && resource.data.uid == request.auth.uid;
+      allow read: if request.auth != null && (resource.data.uid == request.auth.uid || resource.data.org == request.auth.uid || isAdmin());
+    }
     match /annonces/{id} {
       allow read: if request.auth != null;
       allow write: if isAdmin();
@@ -404,9 +427,114 @@ service cloud.firestore {
       allow delete: if isAdmin() || (isGest() && resource.data.get("auteur", "") == request.auth.uid);
     }
 
+    // Scénarios « Décision » (chef d'équipe) : lecture = publiés ou les siens (admin : tout) ; écriture = admin ou gestionnaire auteur
+    match /scenariosDecision/{id} {
+      allow read: if request.auth != null && (isAdmin() || resource.data.get("publie", false) == true
+        || resource.data.get("auteur", "") == request.auth.uid);
+      allow create: if isAdmin() || (isGest() && request.resource.data.auteur == request.auth.uid);
+      allow update: if isAdmin() || (isGest() && resource.data.get("auteur", "") == request.auth.uid
+        && request.resource.data.auteur == request.auth.uid);
+      allow delete: if isAdmin() || (isGest() && resource.data.get("auteur", "") == request.auth.uid);
+    }
+
+    // Webinaires en direct : l'admin ou un gestionnaire autorisé (site/droits.web) crée des salles ; tout utilisateur connecté peut rejoindre.
+    function webOk() {
+      return isGest() && exists(/databases/$(database)/documents/site/droits)
+        && (get(/databases/$(database)/documents/site/droits).data.get("web", {}).get("mode", "aucun") == "tous"
+            || (get(/databases/$(database)/documents/site/droits).data.get("web", {}).get("mode", "aucun") == "choix"
+                && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get("departement", "") in get(/databases/$(database)/documents/site/droits).data.get("web", {}).get("deps", [])));
+    }
+    function webOwner(code) {
+      return get(/databases/$(database)/documents/webinaires/$(code)).data.owner == request.auth.uid;
+    }
+    match /webinaires/{id} {
+      allow read: if request.auth != null;
+      allow create: if isAdmin() || (webOk() && request.resource.data.owner == request.auth.uid);
+      allow update: if isAdmin() || (resource.data.owner == request.auth.uid && request.resource.data.owner == request.auth.uid);
+      allow delete: if isAdmin() || resource.data.owner == request.auth.uid;
+    }
+    match /webinairesP/{id} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null && request.resource.data.uid == request.auth.uid && request.resource.data.get("parole", false) == false;
+      allow update: if request.auth != null && ((resource.data.uid == request.auth.uid && request.resource.data.uid == request.auth.uid
+          && (request.resource.data.get("parole", false) == false || request.resource.data.get("parole", false) == resource.data.get("parole", false)))
+        || isAdmin() || webOwner(resource.data.web));
+      allow delete: if request.auth != null && (resource.data.uid == request.auth.uid || isAdmin() || webOwner(resource.data.web));
+    }
+    match /webinairesM/{id} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null && request.resource.data.uid == request.auth.uid;
+      allow delete: if request.auth != null && (resource.data.uid == request.auth.uid || isAdmin() || webOwner(resource.data.web));
+    }
+
+    // Visio intégrée des webinaires : signalisation WebRTC (offres/réponses et candidats réseau), supprimée à la fin.
+    match /webinairesS/{id} {
+      allow read: if request.auth != null;
+      allow create, update: if request.auth != null && (request.resource.data.viewer == request.auth.uid || isAdmin() || webOwner(request.resource.data.web));
+      allow delete: if request.auth != null && (resource.data.viewer == request.auth.uid || isAdmin() || webOwner(resource.data.web));
+    }
+    match /webinairesC/{id} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null && request.resource.data.uid == request.auth.uid;
+      allow delete: if request.auth != null && (resource.data.uid == request.auth.uid || isAdmin() || webOwner(resource.data.web));
+    }
+
+    // Situations en images (reconnaissance) : lecture = publiés ou les siens (admin : tout) ; écriture = admin ou gestionnaire auteur
+    match /scenariosReco/{id} {
+      allow read: if request.auth != null && (isAdmin() || resource.data.get("publie", false) == true
+        || resource.data.get("auteur", "") == request.auth.uid);
+      allow create: if isAdmin() || (isGest() && request.resource.data.auteur == request.auth.uid);
+      allow update: if isAdmin() || (isGest() && resource.data.get("auteur", "") == request.auth.uid
+        && request.resource.data.auteur == request.auth.uid);
+      allow delete: if isAdmin() || (isGest() && resource.data.get("auteur", "") == request.auth.uid);
+    }
+
+
+    // Jeu de rôle en salle : scénarios (formateur), séances et leurs sous-données (collections à plat, champ "sall" = code de la séance).
+    function roleOwner(code) {
+      return get(/databases/$(database)/documents/sallesRoles/$(code)).data.owner == request.auth.uid;
+    }
+    match /scenariosRoles/{id} {
+      allow read: if request.auth != null && (isAdmin() || resource.data.get("publie", false) == true
+        || resource.data.get("auteur", "") == request.auth.uid);
+      allow create: if isAdmin() || (isGest() && request.resource.data.auteur == request.auth.uid);
+      allow update: if isAdmin() || (isGest() && resource.data.get("auteur", "") == request.auth.uid
+        && request.resource.data.auteur == request.auth.uid);
+      allow delete: if isAdmin() || (isGest() && resource.data.get("auteur", "") == request.auth.uid);
+    }
+    match /sallesRoles/{code} {
+      allow read: if request.auth != null && userActif();
+      allow create: if isGest() && request.resource.data.owner == request.auth.uid;
+      allow update, delete: if isAdmin() || (isGest() && resource.data.owner == request.auth.uid);
+    }
+    match /sallesRolesJ/{id} {
+      allow read: if request.auth != null && (resource.data.uid == request.auth.uid || isAdmin() || roleOwner(resource.data.sall));
+      allow create, update: if request.auth != null && userActif() && request.resource.data.uid == request.auth.uid
+        && id == request.resource.data.sall + "_" + request.auth.uid;
+      allow delete: if request.auth != null && (resource.data.uid == request.auth.uid || isAdmin() || roleOwner(resource.data.sall));
+    }
+    match /sallesRolesP/{id} {
+      allow read: if request.auth != null && userActif();
+      allow create: if request.auth != null && userActif() && (request.resource.data.uid == request.auth.uid || roleOwner(request.resource.data.sall));
+      allow update: if request.auth != null && (isAdmin() || roleOwner(resource.data.sall));
+      allow delete: if request.auth != null && (resource.data.uid == request.auth.uid || isAdmin() || roleOwner(resource.data.sall));
+    }
+    match /sallesRolesR/{id} {
+      allow read: if request.auth != null && userActif();
+      allow create: if request.auth != null && userActif() && request.resource.data.uid == request.auth.uid && request.resource.data.texte.size() <= 400;
+      allow delete: if request.auth != null && (isAdmin() || roleOwner(resource.data.sall));
+    }
+
     match /exercicesCalcul/{id} {
       allow read: if request.auth != null;
       allow write: if isAdmin();
+    }
+
+    // Cartes mentales : lisibles par tout compte connecté (l'attribution se fait sur l'équipe), modifiables par leur auteur
+    match /cartes/{id} {
+      allow read: if request.auth != null;
+      allow create: if isGest() && request.resource.data.auteur == request.auth.uid;
+      allow update, delete: if isAdmin() || (isGest() && resource.data.get("auteur", "") == request.auth.uid);
     }
 
     match /scenarios/{id} {

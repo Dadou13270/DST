@@ -14,7 +14,7 @@ export default function MesScenarios({ user, profil }) {
   return (
     <>
       <div className="row between item">
-        <h3 style={{ margin: 0 }}>Mes scénarios</h3>
+        <h2 style={{ margin: 0 }}>Mes scénarios</h2>
         <Link className="btn primary" to="/editeur/scenario/nouveau">+ Nouveau scénario</Link>
       </div>
       <p className="muted">Tes scénarios sont rattachés à ton département{profil?.departement ? ` (${profil.departement})` : ""} et visibles uniquement par toi et les membres de tes équipes, une fois publiés. L'administrateur peut les consulter.</p>

@@ -15,10 +15,11 @@ import { useAuth } from "../lib/auth";
 import { editeurAutorise, useDroits } from "../lib/droits";
 import MesScenarios from "./MesScenarios";
 import MesQuiz from "./MesQuiz";
+import CartesGestion from "./CartesGestion";
 import CoFormateurs from "../components/CoFormateurs";
 import HistoriqueSeances from "../components/HistoriqueSeances";
 import CalendrierSeances from "../components/CalendrierSeances";
-import { archiverEquipe, restaurerEquipe, dupliquerEquipe, listUtilisateursCis, affecterMembre, createEquipe, listMesEquipes, listMembres, regenCode, retirerMembre, supprimerEquipe, deplacerMembre, envoyerMessageFormateur, marquerFilLu, effacerFil } from "../lib/equipes";
+import { archiverEquipe, restaurerEquipe, dupliquerEquipe, listUtilisateursCis, affecterMembre, createEquipe, listMesEquipes, listMembres, regenCode, retirerMembre, supprimerEquipe, deplacerMembre, envoyerMessageFormateur, marquerFilLu, effacerFil, syncNb } from "../lib/equipes";
 import { fmtDate, fmtDuree, statsOf } from "../lib/users";
 import { inscrireStagiaire, parseLignes } from "../lib/inscription";
 import { listScenarios } from "../lib/db";
@@ -211,7 +212,7 @@ function Equipe({ team, autres, scs, pcs, onChange, cible, replie }) {
   const [act, setAct] = useState(false);
   const [dup, setDup] = useState(null); // nom de la copie en cours de saisie
   const [decal, setDecal] = useState(0);
-  const load = () => listMembres(team.id).then(setM).catch((e) => setErr(e.message));
+  const load = () => listMembres(team.id).then((l) => { setM(l); if (!team.archivee) syncNb(team, l.length); }).catch((e) => setErr(e.message));
   useEffect(() => { if (cible && cible.tid === team.id) { setFerme(false); setOpen(cible.uid); setTimeout(() => document.getElementById("eq-" + team.id)?.scrollIntoView({ behavior: "smooth", block: "start" }), 300); } }, [cible]); // eslint-disable-line
   const [calcEx, setCalcEx] = useState([]);
   useEffect(() => { listExercices(true).then(setCalcEx).catch(() => {}); }, []);
@@ -229,8 +230,8 @@ function Equipe({ team, autres, scs, pcs, onChange, cible, replie }) {
     <div className="card">
       <div className="row between item">
         <div>
-          <h2 style={{ margin: 0 }}>{team.nom}</h2>
-          <div className="muted">{m ? `${m.length} membre(s) · ${tot} exercice(s) terminé(s)` : "Chargement…"}</div>
+          <h2 style={{ margin: 0 }}>{team.nom} {m && <span className="tag" title="Stagiaires inscrits dans cette équipe" style={{ verticalAlign: "middle" }}>👥 {m.length} inscrit{m.length > 1 ? "s" : ""}</span>}</h2>
+          <div className="muted">{m ? `${tot} exercice(s) terminé(s)` : "Chargement…"}</div>
         </div>
         <div className="row item">
           {team.archivee ? <span className="tag">Archivée le {fmtLimite(team.archiveeLe)}</span> : <>
@@ -479,6 +480,7 @@ export default function Gestion() {
   const edOk = isAdmin || editeurAutorise(droits, profil);
   const quizOk = isAdmin || editeurAutorise(droits, profil, "quiz");
   const evtOk = isAdmin || editeurAutorise(droits, profil, "evt");
+  const webOk = isAdmin || editeurAutorise(droits, profil, "web");
   const [cible, setCible] = useState(null);
   const [sousEq, setSousEq] = useState(() => new URLSearchParams(window.location.search).get("sub") || "ge");
   const loc = useLocation(), navG = useNavigate();
@@ -519,14 +521,14 @@ export default function Gestion() {
   const actives = (teams || []).filter((t) => !t.archivee), archivees = (teams || []).filter((t) => t.archivee);
   const groupes = [
     ["ac", "Accueil", [["ac", "Accueil"]]],
-    ["eq", "Équipes", [["cr", "Création de l'équipe"], ["ge", "Gestion de l'équipe"], ["tb", "Tableau de bord"]]],
-    ["se", "Séances", [["sa", "Séance en salle"], ["rl", "Jeu de rôle"], ["ca", "Calendrier"], ["hs", "Historique des séances"]]],
-    ["co", "Contenus", [["pc", "Parcours pédagogiques"], ...(edOk ? [["ms", "Mes scénarios"]] : []), ...(quizOk ? [["mq", "Mes quiz"]] : []), ...(evtOk ? [["ev", "Évènements"]] : []), ["dec", "Scénarios à décisions"], ["rec", "Situations en images"], ["dm", "Demande de scénario"]]],
+    ["eq", "Équipes", [["cr", "Création de l'équipe"], ["ge", "Gestion de l'équipe"], ["tb", "Tableau de bord"], ["pf", "Profils du CIS"]]],
+    ["se", "Séances", [["sa", "Séance en salle"], ["rl", "Jeu de rôle"], ...(webOk ? [["wb", "Webinaires"]] : []), ["ca", "Calendrier"], ["hs", "Historique des séances"]]],
+    ["co", "Contenus", [["pc", "Parcours pédagogiques"], ...(edOk ? [["ms", "Mes scénarios"]] : []), ...(quizOk ? [["mq", "Mes quiz"]] : []), ["cm", "Cartes mentales"], ...(evtOk ? [["ev", "Évènements"]] : []), ["dec", "Scénarios à décisions"], ["rec", "Situations en images"], ["dm", "Demande de scénario"]]],
   ];
   const groupeDe = (o) => (o === "eq" || o === "tb" ? "eq" : groupes.find((g) => g[2].some(([k]) => k === o))?.[0] || "ac");
   const gActif = groupes.find((g) => g[0] === groupeDe(onglet));
   const cleSub = onglet === "eq" ? sousEq : onglet;
-  const allerSub = (k) => { if (k === "rl") { navG("/roles"); return; } if (k === "dec") { navG("/decision?esp=gestion"); return; } if (k === "rec") { navG("/reco?esp=gestion"); return; } if (["cr", "ge", "tb"].includes(k)) { setSousEq(k); setOnglet("eq"); } else setOnglet(k); };
+  const allerSub = (k) => { if (k === "rl") { navG("/roles"); return; } if (k === "dec") { navG("/decision?esp=gestion"); return; } if (k === "rec") { navG("/reco?esp=gestion"); return; } if (k === "wb") { navG("/webinaires?esp=gestion"); return; } if (k === "pf") { navG("/profils?esp=gestion"); return; } if (["cr", "ge", "tb"].includes(k)) { setSousEq(k); setOnglet("eq"); } else setOnglet(k); };
   const allerGroupe = (g) => { if (g[0] === "eq") setOnglet("eq"); else setOnglet(g[2][0][0]); };
   return (
     <Layout>
@@ -577,6 +579,7 @@ export default function Gestion() {
       {onglet === "pc" && <Parcours user={user} profil={profil} isAdmin={isAdmin} scs={scs} pcs={pcs} onChange={loadPcs} />}
       {onglet === "sa" && <><SalleCard scs={scs.filter((x) => x.kind === "sc")} /><QuizLiveCard quizs={scs.filter((x) => x.kind === "quiz")} /></>}
       {onglet === "ev" && evtOk && <EvenementsGestion user={user} profil={profil} />}
+      {onglet === "cm" && <CartesGestion user={user} profil={profil} teams={actives} onChange={load} />}
       {onglet === "mq" && quizOk && <MesQuiz user={user} profil={profil} />}
       {onglet === "ms" && edOk && <MesScenarios user={user} profil={profil} />}
       {onglet === "dm" && <DemandeScenario user={user} profil={profil} />}

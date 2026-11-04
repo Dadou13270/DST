@@ -50,7 +50,7 @@ export default function TableauBord({ teams, scs }) {
             {teams.map((t) => <option key={t.id} value={t.id}>{t.nom}</option>)}
           </select>
         )}
-        <span className="muted">{team.nom} · {m ? `${m.length} membre(s)` : "Chargement…"}</span>
+        <span className="muted">{team.nom} · {m ? `${m.length} inscrit${m.length > 1 ? "s" : ""}` : "Chargement…"}</span>
       </div>
       {err && <p className="err">{err}</p>}
       {m && m.length === 0 && <div className="card">Aucun membre dans cette équipe.</div>}

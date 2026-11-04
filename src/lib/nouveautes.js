@@ -1,3 +1,4 @@
+import { majMenus } from "./menusRoles";
 import { appliquerCharte, initCharte } from "./charte";
 import { collection, doc, onSnapshot, setDoc, addDoc, updateDoc, deleteDoc } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
@@ -91,10 +92,12 @@ export function appliquerMenu(v) {
   if (v === "g") document.documentElement.dataset.menu = "g"; else delete document.documentElement.dataset.menu;
   try { localStorage.setItem("op-menu", v === "g" ? "g" : ""); } catch { /* ignore */ }
 }
-export function apercuLook(v) { if (v === "sp") document.documentElement.dataset.look = "sp"; else delete document.documentElement.dataset.look; initCharte(); }
+// Charte par défaut : « inst » (Institutionnelle) ; « classic » = ancienne apparence.
+const lk = (v) => (v === "sp" ? v : "classic");
+export function apercuLook(v) { document.documentElement.dataset.look = lk(v); initCharte(); }
 export function appliquerLook(v) {
   apercuLook(v);
-  try { localStorage.setItem("op-look", v === "sp" ? "sp" : ""); } catch { /* ignore */ }
+  try { localStorage.setItem("op-look", lk(v)); } catch { /* ignore */ }
 }
 export function appliquerStyle(v) {
   document.documentElement.dataset.style = v === "b" ? "b" : "";
@@ -106,13 +109,13 @@ export function initStyle() {
   try { if (localStorage.getItem("op-barre") === "n") document.documentElement.dataset.barre = "n"; } catch { /* ignore */ }
   try { const e = localStorage.getItem("op-equipes"); if (e === "a" || e === "b") document.documentElement.dataset.equipes = e; } catch { /* ignore */ }
   try { if (localStorage.getItem("op-menu") === "g") document.documentElement.dataset.menu = "g"; } catch { /* ignore */ }
-  try { if (localStorage.getItem("op-look") === "sp") document.documentElement.dataset.look = "sp"; } catch { /* ignore */ }
+  try { document.documentElement.dataset.look = lk(localStorage.getItem("op-look")); } catch { document.documentElement.dataset.look = "classic"; }
   initCharte();
   if (!auth) return () => {};
   let off = () => {};
   const offAuth = onAuthStateChanged(auth, (u) => {
     off();
-    off = u ? onSnapshot(doc(db, "nouveautes", "_reglages"), (d) => { appliquerStyle(d.exists() ? d.data().style : ""); appliquerCartes(d.exists() ? d.data().cartes : ""); appliquerBarre(d.exists() ? d.data().barre : ""); appliquerMenu(d.exists() ? d.data().menu : ""); appliquerEquipes(d.exists() ? d.data().equipes : ""); appliquerLook(d.exists() ? d.data().look : ""); appliquerCharte(d.exists() ? d.data().charte : null); }, () => {}) : () => {};
+    off = u ? onSnapshot(doc(db, "nouveautes", "_reglages"), (d) => { appliquerStyle(d.exists() ? d.data().style : ""); appliquerCartes(d.exists() ? d.data().cartes : ""); appliquerBarre(d.exists() ? d.data().barre : ""); appliquerMenu(d.exists() ? d.data().menu : ""); appliquerEquipes(d.exists() ? d.data().equipes : ""); appliquerLook(d.exists() ? d.data().look : ""); majMenus(d.exists() ? d.data().menus : null); appliquerCharte(d.exists() ? d.data().charte : null); }, () => {}) : () => {};
   });
   return () => { off(); offAuth(); };
 }
@@ -123,6 +126,6 @@ export const setCartes = (v) => setDoc(doc(db, "nouveautes", "_reglages"), { car
 export const setMenu = (v) => setDoc(doc(db, "nouveautes", "_reglages"), { menu: v === "g" ? "g" : "" }, { merge: true });
 export const setBarre = (v) => setDoc(doc(db, "nouveautes", "_reglages"), { barre: v === "n" ? "n" : "" }, { merge: true });
 
-export const setLook = (v) => setDoc(doc(db, "nouveautes", "_reglages"), { look: v === "sp" ? "sp" : "" }, { merge: true });
+export const setLook = (v) => setDoc(doc(db, "nouveautes", "_reglages"), { look: lk(v) }, { merge: true });
 // Bloc « Mes équipes » de la page stagiaire : "" = actuel, "a" = cartes repliables, "b" = onglets par équipe.
 export const setEquipes = (v) => setDoc(doc(db, "nouveautes", "_reglages"), { equipes: v === "a" || v === "b" ? v : "" }, { merge: true });

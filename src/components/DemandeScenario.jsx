@@ -34,7 +34,7 @@ export default function DemandeScenario({ user, profil }) {
   };
   return (
     <form className="card form" onSubmit={envoyer}>
-      <h3>Demander un scénario</h3>
+      <h2 style={{ margin: "0 0 8px" }}>Demander un scénario</h2>
       <p className="muted">Décris le scénario souhaité.</p>
       <label>Thème</label>
       <input value={titre} onChange={(e) => setTitre(e.target.value)} required minLength={3} maxLength={100} placeholder="Ex. Feu de véhicule électrique en parking" />

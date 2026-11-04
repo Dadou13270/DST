@@ -7,7 +7,7 @@ import { Link, useSearchParams } from "react-router-dom";
 import { useDevoirs } from "../lib/useDevoirs";
 import { fmtLimite } from "../lib/devoirs";
 import BarreEquipe from "../components/ProgressionEquipes";
-import { rejoindre, quitterEquipe, equipesDe, MAX_EQUIPES } from "../lib/equipes";
+import { rejoindre, quitterEquipe, equipesDe, nbEquipes, MAX_EQUIPES } from "../lib/equipes";
 import { mesGestionnaires } from "../lib/messages";
 
 // Côté stagiaire : rejoindre / quitter une équipe avec un code d'accès.
@@ -21,6 +21,8 @@ export default function Equipe() {
   const [conf, setConf] = useState(null);
   const [gests, setGests] = useState([]);
   const equipes = equipesDe(profil || {});
+  const [nbs, setNbs] = useState({});
+  useEffect(() => { nbEquipes(equipes.map((t) => t.id)).then(setNbs); }, [equipes.map((t) => t.id).join()]); // eslint-disable-line
   useEffect(() => { mesGestionnaires(profil || {}).then(setGests).catch(() => {}); }, [equipes.map((t) => t.id).join()]); // eslint-disable-line
   const run = async (fn, ok) => {
     setErr(""); setMsg(""); setConf(null);
@@ -84,7 +86,7 @@ export default function Equipe() {
         return (
           <div className="card row between item" key={t.id}>
             <div>
-              <strong>{t.nom}</strong> <span className="tag ok">Membre</span>{equipes.length > 1 && t.id === profil.equipeId && <> <span className="tag">Principale</span></>}
+              <strong>{t.nom}</strong> <span className="tag ok">Membre</span>{nbs[t.id] !== undefined && <> <span className="tag" title="Stagiaires inscrits dans cette équipe">👥 {nbs[t.id]} inscrit{nbs[t.id] > 1 ? "s" : ""}</span></>}{equipes.length > 1 && t.id === profil.equipeId && <> <span className="tag">Principale</span></>}
               <div className="muted">Gestionnaire : {t.gest || g?.nom || "—"}. Il voit ton suivi (exercices terminés, temps, réponses).</div>
               {g && <p style={{ margin: "8px 0 0" }}><Link className="btn primary" to={`/messages?avec=${g.id}`}>✉ Ouvrir la conversation</Link></p>}
             </div>

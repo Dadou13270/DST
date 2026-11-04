@@ -15,7 +15,7 @@ export default function MesQuiz({ user, profil }) {
   return (
     <>
       <div className="row between item">
-        <h3 style={{ margin: 0 }}>Mes quiz et QCM</h3>
+        <h2 style={{ margin: 0 }}>Mes quiz et QCM</h2>
         <Link className="btn primary" to="/editeur/quiz/nouveau">+ Nouveau quiz / QCM</Link>
       </div>
       <p className="muted">Rattachés à ton département{profil?.departement ? ` (${profil.departement})` : ""} et visibles par toi et les membres de tes équipes, une fois publiés. Un quiz publié se choisit comme exercice libre ou s'ajoute à un parcours (Parcours pédagogiques) ou à une échéance.</p>

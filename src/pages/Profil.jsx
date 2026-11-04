@@ -11,7 +11,7 @@ import { useAuth } from "../lib/auth";
 import { logAudit } from "../lib/audit";
 import { exporterTout, effacerTout } from "../lib/mesDonnees";
 import { monGestionnaire } from "../lib/messages";
-import { GRADES, DEPARTEMENTS, CIS_PAR_DEPT } from "../lib/referentiels";
+import { GRADES, CADRES_EMPLOI, DEPARTEMENTS, CIS_PAR_DEPT } from "../lib/referentiels";
 
 const ERR = {
   "auth/wrong-password": "Mot de passe actuel incorrect.",
@@ -28,7 +28,7 @@ export default function Profil() {
   const [bienvenue] = useState(() => { try { const v = sessionStorage.getItem("op-bienvenue") === "1"; sessionStorage.removeItem("op-bienvenue"); return v; } catch { return false; } });
   const { user, profil, isAdmin, refreshProfil } = useAuth();
   const [f, setF] = useState({
-    nom: profil?.nom || "", grade: profil?.grade || "", departement: profil?.departement || "", cis: profil?.cis || "",
+    nom: profil?.nom || "", grade: profil?.grade || "", cadre: profil?.cadre || "", dateNaissance: profil?.dateNaissance || "", fonction: profil?.fonction || "", statutSp: profil?.statutSp || "", departement: profil?.departement || "", cis: profil?.cis || "",
   });
   const [autre, setAutre] = useState(() => Boolean(profil?.cis && !(CIS_PAR_DEPT[profil?.departement] || []).includes(profil.cis)));
   const [msg, setMsg] = useState("");
@@ -66,7 +66,7 @@ export default function Profil() {
     setErr(""); setMsg("");
     if (f.nom.trim().length < 2) return setErr("Indique ton nom.");
     try {
-      await updateDoc(doc(db, "users", user.uid), { nom: f.nom.trim(), grade: f.grade, departement: f.departement, cis: f.cis.trim() });
+      await updateDoc(doc(db, "users", user.uid), { nom: f.nom.trim(), grade: f.grade, cadre: f.cadre, dateNaissance: f.dateNaissance, fonction: f.fonction.trim(), statutSp: f.statutSp, departement: f.departement, cis: f.cis.trim() });
       await refreshProfil();
       setMsg("Profil enregistré.");
     } catch (x) { setErr(x.message); }
@@ -117,7 +117,7 @@ export default function Profil() {
           <strong>Rôle :</strong>{" "}
           {isAdmin && <span className="tag ok">Administrateur</span>}{" "}
           {profil?.gestionnaire && <span className="tag ok">Gestionnaire</span>}{" "}
-          {profil?.adminDept && <span className="tag">Admin de département · {profil.adminDept}</span>}{" "}
+          {profil?.adminDept && <span className="tag ok">Admin de département · {profil.adminDept}</span>}{" "}
           <span className="tag">Stagiaire</span>
           {profil?.equipeNom && <span className="muted"> · équipe {profil.equipeNom}</span>}
         </p>
@@ -126,6 +126,14 @@ export default function Profil() {
         <h3 style={{ marginTop: 0 }}>Informations complémentaires</h3>
         <label>Grade</label>
         <select value={f.grade} onChange={set("grade")}><option value="">— Choisir —</option>{GRADES.map((g) => <option key={g}>{g}</option>)}</select>
+        <label>Cadre d'emploi</label>
+        <select value={f.cadre} onChange={set("cadre")}><option value="">— Choisir —</option>{CADRES_EMPLOI.map((g) => <option key={g}>{g}</option>)}</select>
+        <label>Date de naissance</label>
+        <input type="date" value={f.dateNaissance} max={new Date().toISOString().slice(0, 10)} onChange={set("dateNaissance")} />
+        <label>Fonction</label>
+        <input value={f.fonction} maxLength={80} onChange={set("fonction")} placeholder="Ex. : chef de garde, formateur, chauffeur…" />
+        <label>Statut</label>
+        <select value={f.statutSp} onChange={set("statutSp")}><option value="">— Choisir —</option><option value="SPV">SPV (sapeur-pompier volontaire)</option><option value="SPP">SPP (sapeur-pompier professionnel)</option></select>
         <label>Département</label>
         <select value={f.departement} onChange={(e) => { setF({ ...f, departement: e.target.value, cis: "" }); setAutre(false); }}>
           <option value="">— Choisir —</option>{DEPARTEMENTS.map((x) => <option key={x}>{x}</option>)}

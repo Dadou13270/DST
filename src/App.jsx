@@ -6,6 +6,7 @@ import Home from "./pages/Home";
 import Player from "./pages/Player";
 import AdminGate from "./pages/Admin";
 import AdminDroits from "./pages/AdminDroits";
+import AdminMenus from "./pages/AdminMenus";
 import EditeurGest from "./pages/EditeurGest";
 import Quiz from "./pages/Quiz";
 import AdminQuiz from "./pages/AdminQuiz";
@@ -35,6 +36,7 @@ import Profil from "./pages/Profil";
 import AideEquipes from "./pages/AideEquipes";
 import AideSalle from "./pages/AideSalle";
 import APropos from "./pages/APropos";
+import Presentation from "./pages/Presentation";
 import Nouveautes from "./pages/Nouveautes";
 import Tickets from "./pages/Tickets";
 import AdminTickets from "./pages/AdminTickets";
@@ -52,9 +54,12 @@ import QuizLiveHote from "./pages/QuizLiveHote";
 import QuizLiveJoueur from "./pages/QuizLiveJoueur";
 import SalleProjection from "./pages/SalleProjection";
 import FichesMemo from "./pages/FichesMemo";
+import { MesCartes, CarteVue } from "./pages/Cartes";
 import Suivi from "./pages/Suivi";
 import Decision from "./pages/Decision";
 import Reco from "./pages/Reco";
+import Webinaire from "./pages/Webinaire";
+import Profils, { ProfilsVue } from "./pages/Profils";
 import Roles, { RolesJouer } from "./pages/Roles";
 import RequireUser from "./components/RequireUser";
 
@@ -74,6 +79,9 @@ export default function App() {
         <Route path="/roles/jouer/:code" element={<RequireUser><RolesJouer /></RequireUser>} />
         <Route path="/decision" element={<RequireUser><Decision /></RequireUser>} />
         <Route path="/decision/:id" element={<RequireUser><Decision /></RequireUser>} />
+        <Route path="/profils" element={<RequireUser><Profils /></RequireUser>} />
+        <Route path="/webinaires" element={<RequireUser><Webinaire /></RequireUser>} />
+        <Route path="/webinaire/:code" element={<RequireUser><Webinaire /></RequireUser>} />
         <Route path="/reco" element={<RequireUser><Reco /></RequireUser>} />
         <Route path="/reco/:id" element={<RequireUser><Reco /></RequireUser>} />
         <Route path="/scenarios" element={<RequireUser><Home mode="scenarios" /></RequireUser>} />
@@ -81,6 +89,7 @@ export default function App() {
         <Route path="/aide-salle" element={<AideSalle />} />
         <Route path="/site" element={<Site />} />
         <Route path="/a-propos" element={<APropos />} />
+        <Route path="/presentation" element={<Presentation />} />
         <Route path="/nouveautes" element={<Nouveautes />} />
         <Route path="/demande-scenario" element={<RequireUser><DemanderScenario /></RequireUser>} />
         <Route path="/tickets" element={<RequireUser><Tickets /></RequireUser>} />
@@ -103,6 +112,8 @@ export default function App() {
         <Route path="/profil" element={<RequireUser><Profil /></RequireUser>} />
         <Route path="/messages" element={<RequireUser><Messagerie /></RequireUser>} />
         <Route path="/fiches" element={<RequireUser><FichesMemo /></RequireUser>} />
+        <Route path="/cartes" element={<RequireUser><MesCartes /></RequireUser>} />
+        <Route path="/carte/:id" element={<RequireUser><CarteVue /></RequireUser>} />
         <Route path="/suivi" element={<RequireUser><Suivi /></RequireUser>} />
         <Route path="/scenario/:id" element={<RequireUser><Player /></RequireUser>} />
         <Route path="/editeur/scenario/:id" element={<EditeurGest />} />
@@ -117,6 +128,7 @@ export default function App() {
           <Route path="relation/:id" element={<AdminRelation />} />
           <Route path="quiz/:id" element={<AdminQuiz />} />
           <Route path="utilisateurs" element={<AdminUsers />} />
+          <Route path="profils" element={<ProfilsVue esp="admin" />} />
           <Route path="stats" element={<AdminStats />} />
           <Route path="parametres" element={<Parametres />} />
           <Route path="attribution" element={<Attribution />} />
@@ -126,6 +138,7 @@ export default function App() {
           <Route path="legal" element={<AdminLegal />} />
           <Route path="banque" element={<AdminBanque />} />
           <Route path="droits" element={<AdminDroits />} />
+          <Route path="menus" element={<AdminMenus />} />
           <Route path="tickets" element={<AdminTickets />} />
           <Route path="site" element={<AdminSite />} />
           <Route path="journal" element={<AdminAudit />} />

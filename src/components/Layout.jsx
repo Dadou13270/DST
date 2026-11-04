@@ -16,22 +16,39 @@ import { useAccesJeu } from "../lib/jeuAcces";
 import { profilComplet } from "../lib/model";
 import { useEffect, useState } from "react";
 import { pingStats, compteurs } from "../lib/inscrits";
+import { estMasque, useMenusMasques } from "../lib/menusRoles";
 
 // Bandeau commun : Espace stagiaire / Espace admin (si admin) / nom / déconnexion.
 export default function Layout({ children, extra }) {
   const { user, profil, isAdmin, logout } = useAuth() || {};
+  const menusM = useMenusMasques();
   const accesJeu = useAccesJeu();
   const charte = useCharte();
   const { pathname, search } = useLocation();
   const adm = pathname.startsWith("/admin");
   const espDec = pathname.startsWith("/decision") ? espaceDecision(pathname, search, !!isAdmin, !!profil?.gestionnaire) : pathname.startsWith("/reco") ? espaceReco(pathname, search, !!isAdmin, !!profil?.gestionnaire) : "";
-  const decAdm = espDec === "admin", decGest = espDec === "gestion" || pathname === "/roles";
+  const webG = pathname === "/webinaires" && new URLSearchParams(search).get("esp") === "gestion";
+  const pesp = pathname === "/profils" ? new URLSearchParams(search).get("esp") : "";
+  const decAdm = espDec === "admin", decGest = espDec === "gestion" || pathname === "/roles" || webG || pesp === "gestion";
   const [cnt, setCnt] = useState(null);
   const [avisOpen, setAvisOpen] = useState(false);
   const [menu, setMenu] = useState(false);
   useEffect(() => setMenu(false), [pathname]);
   const uid = user?.uid;
   const nonLus = nbNonLus(useMessages(uid), uid);
+  const [crumb, setCrumb] = useState({ esp: "", titre: "" });
+  useEffect(() => {
+    let tm;
+    const f = () => {
+      const t0 = document.querySelector("main h1")?.textContent?.trim() || "", e = document.querySelector(".top .navbtn.on")?.textContent?.trim() || "";
+      const t = pathname === "/" && /^Bonjour/.test(t0) ? "Tableau de bord" : t0;
+      setCrumb((c) => (c.titre === t && c.esp === e ? c : { esp: e, titre: t }));
+    };
+    f();
+    const mo = new MutationObserver(() => { clearTimeout(tm); tm = setTimeout(f, 80); });
+    mo.observe(document.body, { childList: true, subtree: true, characterData: true });
+    return () => { mo.disconnect(); clearTimeout(tm); };
+  }, [pathname, search]);
   const [acc, setAcc] = useState(false);
   useEffect(() => setAcc(false), [pathname]);
   useEffect(() => {
@@ -63,7 +80,7 @@ export default function Layout({ children, extra }) {
     <>
       <XpToast />
       <header className={"top" + (menu ? " open" : "") + (extra ? " nc" : "")}>
-        <Link to="/" className="brand"><Logo size={36} />{charte.nom}</Link>
+        <Link to="/" className="brand"><Logo size={36} /><span className="bn">{charte.nom}<small className="bt">{charte.slogan}</small></span></Link>
         <button className="burger" aria-label="Menu" aria-expanded={menu} onClick={() => setMenu((v) => !v)}>☰</button>
         <nav>
           {extra}
@@ -81,12 +98,13 @@ export default function Layout({ children, extra }) {
           </span>
           {user && (
             <>
-              <Link to="/" title="Exercices, suivi, équipe et profil" className={adm || pathname.startsWith("/gestion") || pathname.startsWith("/departement") || pathname === "/jeu" || pathname === "/forum" || decAdm || decGest ? "navbtn" : "navbtn on"}>Espace stagiaire</Link>
+              <Link to="/" title="Exercices, suivi, équipe et profil" className={adm || pathname.startsWith("/gestion") || pathname.startsWith("/departement") || pesp === "dept" || pathname === "/jeu" || pathname === "/forum" || pathname === "/presentation" || decAdm || decGest ? "navbtn" : "navbtn on"}>Espace stagiaire</Link>
               {(profil?.gestionnaire || isAdmin) && <Link to="/gestion" className={pathname.startsWith("/gestion") || decGest ? "navbtn on" : "navbtn"}>Espace gestionnaire</Link>}
-              {(profil?.adminDept || isAdmin) && <Link to="/departement" className={pathname.startsWith("/departement") ? "navbtn on" : "navbtn"}>Espace département</Link>}
+              {(profil?.adminDept || isAdmin) && <Link to="/departement" className={pathname.startsWith("/departement") || pesp === "dept" ? "navbtn on" : "navbtn"}>Espace département</Link>}
               {isAdmin && <Link to="/admin" className={adm || decAdm ? "navbtn on" : "navbtn"}>Espace admin</Link>}
-              <Link to="/forum" className={pathname === "/forum" ? "navbtn on" : "navbtn"} title="Forum d'entraide">💬 Forum</Link>
-              {accesJeu && <Link to="/jeu" className={pathname === "/jeu" ? "navbtn on" : "navbtn"} title="Jeu Trivial pompiers">🎲 Jeu</Link>}
+              {(isAdmin || !estMasque(menusM, "stagiaire", "Forum d'entraide")) && <Link to="/forum" className={pathname === "/forum" ? "navbtn on" : "navbtn"} title="Forum d'entraide">💬 Forum</Link>}
+              {accesJeu && (isAdmin || !estMasque(menusM, "stagiaire", "Jeu")) && <Link to="/jeu" className={pathname === "/jeu" ? "navbtn on" : "navbtn"} title="Jeu Trivial pompiers">🎲 Jeu</Link>}
+              {(isAdmin || !estMasque(menusM, "stagiaire", "Présentation de l'application")) && <Link to="/presentation" className={pathname === "/presentation" ? "navbtn on" : "navbtn"} title="Fonctions de chaque profil">📋 Présentation</Link>}
               {profil?.nom && <span className="who">{profil.nom}</span>}
               <button className="navbtn nb-old" onClick={logout}>Déconnexion</button>
               <Link to="/messages" className="nb-msg" title="Messages" aria-label={"Messages" + (nonLus ? " (" + nonLus + " non lu" + (nonLus > 1 ? "s" : "") + ")" : "")}>✉{nonLus > 0 && <span className="nb-badge">{nonLus}</span>}</Link>
@@ -115,6 +133,7 @@ export default function Layout({ children, extra }) {
         </div>
       )}
       <Annonces />
+      <nav className="crumb" aria-label="Fil d'Ariane"><Link to="/">Accueil</Link>{crumb.esp && crumb.esp !== crumb.titre && <><span>›</span><span>{crumb.esp}</span></>}{crumb.titre && <><span>›</span><b>{crumb.titre}</b></>}</nav>
       <div className="lay">
       {user && <aside className="side" aria-label="Menu"><SideMenu isAdmin={isAdmin} profil={profil} accesJeu={accesJeu} nonLus={nonLus} /></aside>}
       <div className="lay-c">

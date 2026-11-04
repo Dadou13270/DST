@@ -52,11 +52,11 @@ export default function Parametres() {
         </select>
       </div>
       <div className="card">
-        <h3>Palette de couleurs</h3>
+        <h3>Charte graphique du site</h3>
         <p className="muted">Choisis la palette de l'application. « Aperçu » change l'affichage pour toi seulement ; « Enregistrer pour tous » l'applique à tous les utilisateurs.</p>
-        <select defaultValue={document.documentElement.dataset.look === "sp" ? "sp" : ""} onChange={(e) => apercuLook(e.target.value)} id="look-sel">
-          <option value="">Actuelle (rouge et gris)</option>
+        <select defaultValue={document.documentElement.dataset.look || "classic"} onChange={(e) => apercuLook(e.target.value)} id="look-sel">
           <option value="sp">Académie SP (bleu marine, rouge, gris clair)</option>
+          <option value="classic">Classique (par défaut : rouge et gris)</option>
         </select>
         <div className="row" style={{ marginTop: 8 }}>
           <button className="btn primary" onClick={() => { const v = document.getElementById("look-sel").value; setLook(v).then(() => { appliquerLook(v); setMsg("Charte enregistrée pour tous."); }).catch((er) => setMsg("Erreur : " + er.message)); }}>Enregistrer pour tous</button>

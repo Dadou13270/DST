@@ -1,6 +1,6 @@
 import { db } from "../firebase";
 import {
-  collection, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc, deleteField, query, where, serverTimestamp, writeBatch, arrayUnion } from "firebase/firestore";
+  collection, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc, deleteField, query, where, serverTimestamp, writeBatch, arrayUnion, increment } from "firebase/firestore";
 
 const ALPHA = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // sans 0/O/1/I
 const genCode = () => Array.from({ length: 6 }, () => ALPHA[Math.floor(Math.random() * ALPHA.length)]).join("");
@@ -126,9 +126,18 @@ export async function rejoindre(uid, codeSaisi, profil) {
   if (l.length >= MAX_EQUIPES) throw new Error(`Tu peux appartenir à ${MAX_EQUIPES} équipes au maximum : quitte-en une d'abord.`);
   const n = [...l, { id: c.data().teamId, nom, code, gest: c.data().ownerNom || "", le: Date.now() }];
   await updateDoc(doc(db, "users", uid), { ...champsEquipes(n), equipeCodeAjout: code });
+  majNb(c.data().teamId, 1);
   return { equipeId: c.data().teamId, equipeNom: nom };
 }
-export const quitterEquipe = (uid, profil, teamId) => updateDoc(doc(db, "users", uid), champsEquipes(equipesDe(profil).filter((t) => t.id !== teamId)));
+// Compteur d'inscrits stocké sur l'équipe (lisible par les membres, qui ne peuvent pas lister les autres comptes).
+export const majNb = (teamId, d) => updateDoc(doc(db, "teams", teamId), { nb: increment(d) }).catch(() => {});
+export const syncNb = (team, n) => { if (team?.id && team.nb !== n) updateDoc(doc(db, "teams", team.id), { nb: n }).catch(() => {}); };
+export const nbEquipes = async (ids) => {
+  const r = {};
+  await Promise.all(ids.map((id) => getDoc(doc(db, "teams", id)).then((d) => { if (d.exists() && typeof d.data().nb === "number") r[id] = Math.max(0, d.data().nb); }).catch(() => {})));
+  return r;
+};
+export const quitterEquipe = async (uid, profil, teamId) => { await majNb(teamId, -1); return updateDoc(doc(db, "users", uid), champsEquipes(equipesDe(profil).filter((t) => t.id !== teamId))); };
 
 // Le gestionnaire ajoute un membre à l'une de ses équipes (les autres équipes du stagiaire sont conservées)
 export const affecterMembre = (u, team) => {

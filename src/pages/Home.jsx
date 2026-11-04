@@ -9,7 +9,7 @@ import { configured } from "../firebase";
 import { listScenarios } from "../lib/db";
 import { useAuth } from "../lib/auth";
 import { useDevoirs } from "../lib/useDevoirs";
-import { Tuiles, EquipesCartes, AccesRapide, Echeances } from "../components/AccueilTableau";
+import { Tuiles, EquipesCartes, ParcoursFormation, AccesRapide, Echeances } from "../components/AccueilTableau";
 import { etatExercice } from "../lib/etat";
 import { rubriquesDe, RI, NIVEAUX, nivNorm } from "../lib/model";
 import { listCalculs } from "../lib/calculs";
@@ -36,6 +36,7 @@ export function StagiaireNav() {
         <Link to="/suivi" className="tablink" title="Mon suivi, ma séance en salle et mon équipe"><button className={tdb ? "on" : ""}>Tableau de bord</button></Link>
         <Link to="/scenarios" className="tablink" title="Tous les scénarios"><button className={pathname === "/scenarios" || pathname.startsWith("/calculs") || pathname.startsWith("/reco") ? "on" : ""}>Scénarios</button></Link>
         <Link to="/fiches" className="tablink" title="Rappels courts : SOIEC, formules, messages"><button className={pathname === "/fiches" ? "on" : ""}>Fiches mémo</button></Link>
+        <Link to="/cartes" className="tablink" title="Cartes mentales proposées par ton gestionnaire"><button className={pathname === "/cartes" || pathname.startsWith("/carte/") ? "on" : ""}>Cartes mentales</button></Link>
         <Link to="/messages" className="tablink" title="Messages privés avec ton gestionnaire"><button className={pathname === "/messages" ? "on" : ""}>Messages{nonLus > 0 && <span className="tabbadge">{nonLus}</span>}</button></Link>
         <Link to="/profil" className="tablink" title="Tes informations, e-mail et mot de passe"><button className={pathname === "/profil" ? "on" : ""}>Mon profil</button></Link>
       </div>
@@ -154,6 +155,7 @@ export default function Home({ mode = "scenarios" }) {
         <div className="ac-grid">
           <div>
             <EquipesCartes devoirs={devoirs} />
+            <ParcoursFormation devoirs={devoirs} />
         {!devoirs.length && <div className="card"><strong>Exercices à réaliser</strong><p className="muted" style={{ margin: "4px 0 0" }}>Aucun exercice à rendre pour le moment.</p></div>}
         {favs.length > 0 && (
           <div className="card">
