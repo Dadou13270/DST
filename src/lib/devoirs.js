@@ -28,17 +28,19 @@ export const assignerParcours = (team, pc, scs, limite) => {
     const x = scs.find((y) => y.id === scId);
     if (x && !have.has(scId)) add.push({ scId, titre: x.titre, limite, ajout: Date.now(), pc: pc.id, pcT: pc.titre, rg: i, pcO: pc.ordre ? 1 : 0, ...(pc.diag && pc.diagId && i === 0 ? { dg: 1 } : {}), ...(pc.objectif ? { pcJ: pc.objectif } : {}), ...(pc.prerequis ? { pcP: pc.prerequis } : {}), ...(pc.objectifs && pc.objectifs.length ? { pcI: pc.objectifs } : {}), ...(pc.objLiens && pc.objLiens[scId] !== undefined ? { oi: pc.objLiens[scId] } : {}), ...(x.kind && x.kind !== "sc" ? { k: x.kind } : {}) });
   });
-  if (!add.length) return Promise.resolve(0);
-  return updateDoc(doc(db, "teams", team.id), { devoirs: [...(team.devoirs || []), ...add] }).then(() => add.length);
+  const cl = pc.cours || [];
+  const addC = cl.filter((c) => !(team.cours || []).some((x) => x.id === c.id && x.pc === pc.id)).map((c) => ({ id: c.id, titre: c.titre, type: "devoir", lim: limite || null, pc: pc.id, pcT: pc.titre }));
+  if (!add.length && !addC.length) return Promise.resolve(0);
+  return updateDoc(doc(db, "teams", team.id), { devoirs: [...(team.devoirs || []), ...add], ...(addC.length ? { cours: [...(team.cours || []).filter((x) => !cl.some((c) => c.id === x.id)), ...addC] } : {}) }).then(() => add.length + addC.length);
 };
 export const retirerParcours = (team, pcId) =>
-  updateDoc(doc(db, "teams", team.id), { devoirs: (team.devoirs || []).filter((x) => x.pc !== pcId) });
+  updateDoc(doc(db, "teams", team.id), { devoirs: (team.devoirs || []).filter((x) => x.pc !== pcId), ...((team.cours || []).some((x) => x.pc === pcId) ? { cours: (team.cours || []).filter((x) => x.pc !== pcId) } : {}) });
 
 // Modifier l'échéance d'un exercice à rendre, ou décaler tout un parcours (nouvelle date commune).
 export const modifierLimite = (team, scId, limite) =>
   updateDoc(doc(db, "teams", team.id), { devoirs: (team.devoirs || []).map((x) => (x.scId === scId ? { ...x, limite } : x)) });
 export const modifierLimiteParcours = (team, pcId, limite) =>
-  updateDoc(doc(db, "teams", team.id), { devoirs: (team.devoirs || []).map((x) => (x.pc === pcId ? { ...x, limite } : x)) });
+  updateDoc(doc(db, "teams", team.id), { devoirs: (team.devoirs || []).map((x) => (x.pc === pcId ? { ...x, limite } : x)), ...((team.cours || []).some((x) => x.pc === pcId) ? { cours: (team.cours || []).map((x) => (x.pc === pcId ? { ...x, lim: limite || null } : x)) } : {}) });
 // Date -> valeur d'un <input type="date">
 export const inputDepuisLimite = (ms) => (ms ? new Date(ms - new Date(ms).getTimezoneOffset() * 60000).toISOString().slice(0, 10) : "");
 

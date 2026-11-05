@@ -7,6 +7,7 @@ import { db, auth } from "../firebase";
 import Layout from "../components/Layout";
 import { StagiaireNav } from "./Home";
 import DemandeGestionnaire from "../components/DemandeGestionnaire";
+import SdisInscription from "../components/SdisInscription";
 import { useAuth } from "../lib/auth";
 import { logAudit } from "../lib/audit";
 import { exporterTout, effacerTout } from "../lib/mesDonnees";
@@ -31,6 +32,7 @@ export default function Profil() {
     nom: profil?.nom || "", grade: profil?.grade || "", cadre: profil?.cadre || "", dateNaissance: profil?.dateNaissance || "", fonction: profil?.fonction || "", statutSp: profil?.statutSp || "", departement: profil?.departement || "", cis: profil?.cis || "",
   });
   const [autre, setAutre] = useState(() => Boolean(profil?.cis && !(CIS_PAR_DEPT[profil?.departement] || []).includes(profil.cis)));
+  const [onglet, setOnglet] = useState("infos");
   const [msg, setMsg] = useState("");
   const [err, setErr] = useState("");
   const [cx, setCx] = useState({ actuel: "", email: "", nouveau: "", confirm: "" });
@@ -104,16 +106,15 @@ export default function Profil() {
       <div className="pgrid etroit">
       <h1>Mon profil</h1>
       {bienvenue && <div className="card alerte span"><strong>Bienvenue !</strong> Dernière étape : renseigne ton grade, ton département et ton CIS, puis enregistre. Ton gestionnaire pourra ainsi t'affecter à son équipe.</div>}
-      {profil?.mdpProvisoire && <div className="card alerte span"><strong>Mot de passe provisoire.</strong> Il t'a été fourni par ton gestionnaire : change-le dans la section « Connexion » ci-dessous.</div>}
-      <form className="dc" onSubmit={save}>
-      <div className="card form">
-        <h3 style={{ marginTop: 0 }}>Inscription</h3>
-        <label>Nom / prénom</label>
-        <input value={f.nom} onChange={set("nom")} required />
-        <label>E-mail</label>
-        <input value={user?.email || profil?.email || ""} disabled />
-        <p className="muted">Inscrit : {d(profil?.creeLe)} · Dernière connexion : {d(profil?.derniereConnexion)}</p>
-        <p>
+      {profil?.mdpProvisoire && <div className="card alerte span"><strong>Mot de passe provisoire.</strong> Il t'a été fourni par ton gestionnaire : change-le dans l'onglet « Connexion et données ».</div>}
+      <div className="tabs span">
+        {[["infos", "Mes informations"], ["equipe", "Équipe et rôles"], ["secu", "Connexion et données"]].map(([k, l]) => <button key={k} type="button" className={onglet === k ? "on" : ""} onClick={() => setOnglet(k)}>{l}</button>)}
+      </div>
+      {onglet === "infos" && (
+<>
+      <div className="card form span">
+        <h3 style={{ marginTop: 0 }}>{profil?.nom || "Mon profil"}</h3>
+        <p style={{ margin: "0 0 6px" }}>
           <strong>Rôle :</strong>{" "}
           {isAdmin && <span className="tag ok">Administrateur</span>}{" "}
           {profil?.gestionnaire && <span className="tag ok">Gestionnaire</span>}{" "}
@@ -121,15 +122,24 @@ export default function Profil() {
           <span className="tag">Stagiaire</span>
           {profil?.equipeNom && <span className="muted"> · équipe {profil.equipeNom}</span>}
         </p>
+        <p className="muted" style={{ margin: 0 }}>{user?.email || profil?.email || ""} · Inscrit : {d(profil?.creeLe)} · Dernière connexion : {d(profil?.derniereConnexion)}</p>
+      </div>
+      <form className="dc" onSubmit={save}>
+      <div className="card form">
+        <h3 style={{ marginTop: 0 }}>Identité</h3>
+        <label>Nom / prénom</label>
+        <input value={f.nom} onChange={set("nom")} required />
+        <label>E-mail</label>
+        <input value={user?.email || profil?.email || ""} disabled />
+        <label>Date de naissance</label>
+        <input type="date" style={{ maxWidth: "100%", boxSizing: "border-box", width: "100%" }} value={f.dateNaissance} max={new Date().toISOString().slice(0, 10)} onChange={set("dateNaissance")} />
       </div>
       <div className="card form">
-        <h3 style={{ marginTop: 0 }}>Informations complémentaires</h3>
+        <h3 style={{ marginTop: 0 }}>Mon service</h3>
         <label>Grade</label>
         <select value={f.grade} onChange={set("grade")}><option value="">— Choisir —</option>{GRADES.map((g) => <option key={g}>{g}</option>)}</select>
         <label>Cadre d'emploi</label>
         <select value={f.cadre} onChange={set("cadre")}><option value="">— Choisir —</option>{CADRES_EMPLOI.map((g) => <option key={g}>{g}</option>)}</select>
-        <label>Date de naissance</label>
-        <input type="date" value={f.dateNaissance} max={new Date().toISOString().slice(0, 10)} onChange={set("dateNaissance")} />
         <label>Fonction</label>
         <input value={f.fonction} maxLength={80} onChange={set("fonction")} placeholder="Ex. : chef de garde, formateur, chauffeur…" />
         <label>Statut</label>
@@ -146,12 +156,39 @@ export default function Profil() {
         ) : (
           <input value={f.cis} onChange={set("cis")} placeholder="Nom du CIS" />
         )}
+      </div>
+      <div className="span">
         {err && <p className="err">{err}</p>}
         {msg && <p className="ok-txt">{msg}</p>}
         <button className="btn primary big">Enregistrer</button>
       </div>
       </form>
+</>
+      )}
+      {onglet === "equipe" && (
+<>
+      <div className="card row between item">
+        <div>
+          <h3 style={{ margin: 0 }}>Affectation</h3>
+          {profil?.equipeId ? (
+            <>
+              {equipesDe(profil).map((t) => <p key={t.id} style={{ margin: "6px 0 0" }}>Équipe : <strong>{t.nom}</strong><br />Gestionnaire : <strong>{t.gest || "—"}</strong></p>)}
+              <p style={{ margin: "8px 0 0" }}>
+                {gestId ? <Link className="btn" to={`/messages?avec=${gestId}`}>✉ Envoyer un message au gestionnaire</Link> : <span className="muted">Messagerie indisponible.</span>}
+              </p>
+            </>
+          ) : (
+            <p className="muted" style={{ margin: "6px 0 0" }}>Aucune équipe.</p>
+          )}
+        </div>
+        <Link className="btn" to="/equipe">{profil?.equipeId ? "Gérer mes équipes" : "Rejoindre une équipe"}</Link>
+      </div>
       <DemandeGestionnaire />
+      <SdisInscription />
+</>
+      )}
+      {onglet === "secu" && (
+<>
       <div className="card form">
         <h3>Connexion</h3>
         <p className="muted">E-mail actuel : <strong>{user?.email}</strong>. Le mot de passe actuel est demandé pour toute modification.</p>
@@ -192,22 +229,8 @@ export default function Profil() {
           </form>
         )}
       </div>
-      <div className="card row between item">
-        <div>
-          <h3 style={{ margin: 0 }}>Affectation</h3>
-          {profil?.equipeId ? (
-            <>
-              {equipesDe(profil).map((t) => <p key={t.id} style={{ margin: "6px 0 0" }}>Équipe : <strong>{t.nom}</strong><br />Gestionnaire : <strong>{t.gest || "—"}</strong></p>)}
-              <p style={{ margin: "8px 0 0" }}>
-                {gestId ? <Link className="btn" to={`/messages?avec=${gestId}`}>✉ Envoyer un message au gestionnaire</Link> : <span className="muted">Messagerie indisponible.</span>}
-              </p>
-            </>
-          ) : (
-            <p className="muted" style={{ margin: "6px 0 0" }}>Aucune équipe.</p>
-          )}
-        </div>
-        <Link className="btn" to="/equipe">{profil?.equipeId ? "Gérer mes équipes" : "Rejoindre une équipe"}</Link>
-      </div>
+</>
+      )}
       </div>
     </Layout>
   );

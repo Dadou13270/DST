@@ -20,7 +20,6 @@ import { useMessages, nbNonLus } from "../lib/messages";
 import { nouveautes, useLu } from "../lib/competences";
 import { evaluationsDe } from "../lib/fiche";
 import { useAccesJeu } from "../lib/jeuAcces";
-import ForumActivite from "../components/ForumActivite";
 import EvenementBloc from "../components/EvenementBloc";
 import ForumSuivis from "../components/ForumSuivis";
 
@@ -36,6 +35,7 @@ export function StagiaireNav() {
         <Link to="/suivi" className="tablink" title="Mon suivi, ma séance en salle et mon équipe"><button className={tdb ? "on" : ""}>Tableau de bord</button></Link>
         <Link to="/scenarios" className="tablink" title="Tous les scénarios"><button className={pathname === "/scenarios" || pathname.startsWith("/calculs") || pathname.startsWith("/reco") ? "on" : ""}>Scénarios</button></Link>
         <Link to="/fiches" className="tablink" title="Rappels courts : SOIEC, formules, messages"><button className={pathname === "/fiches" ? "on" : ""}>Fiches mémo</button></Link>
+        <Link to="/cours" className="tablink" title="Cours PDF proposés par ton gestionnaire"><button className={pathname.startsWith("/cours") ? "on" : ""}>Cours en ligne</button></Link>
         <Link to="/cartes" className="tablink" title="Cartes mentales proposées par ton gestionnaire"><button className={pathname === "/cartes" || pathname.startsWith("/carte/") ? "on" : ""}>Cartes mentales</button></Link>
         <Link to="/messages" className="tablink" title="Messages privés avec ton gestionnaire"><button className={pathname === "/messages" ? "on" : ""}>Messages{nonLus > 0 && <span className="tabbadge">{nonLus}</span>}</button></Link>
         <Link to="/profil" className="tablink" title="Tes informations, e-mail et mot de passe"><button className={pathname === "/profil" ? "on" : ""}>Mon profil</button></Link>
@@ -145,7 +145,7 @@ export default function Home({ mode = "scenarios" }) {
       >
         <StagiaireNav />
         {profil?.mdpProvisoire && <div className="card alerte"><strong>Mot de passe provisoire.</strong> Change-le dans <Link to="/profil">Mon profil</Link>.</div>}
-        <h1 style={{ marginBottom: 2 }}>Bonjour {(profil?.nom || "").split(" ")[0]}</h1>
+        <div className="dj"><h1 style={{ marginBottom: 2 }}>Bonjour {(profil?.nom || "").split(" ")[0]}</h1><span className="dj-d">{new Date().toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}</span></div>
         <p className="muted" style={{ margin: "0 0 4px" }}>{charte.accueil}</p>
         {!configured && <div className="card warn">Firebase n'est pas configuré. Renseigne le fichier .env (voir README).</div>}
         {devoirs.erreurs?.length > 0 && <p className="err">Impossible de lire les exercices de {devoirs.erreurs.length} équipe(s) ({devoirs.erreurs[0]}). Les règles Firestore (firestore.rules) ne sont probablement pas publiées.</p>}
@@ -174,7 +174,6 @@ export default function Home({ mode = "scenarios" }) {
         )}
             <Echeances devoirs={devoirs} />
             <ForumSuivis uid={user?.uid} />
-            <ForumActivite uid={user?.uid} />
           </div>
         </div>
       </Layout>

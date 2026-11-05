@@ -98,13 +98,14 @@ export default function Layout({ children, extra }) {
           </span>
           {user && (
             <>
-              <Link to="/" title="Exercices, suivi, équipe et profil" className={adm || pathname.startsWith("/gestion") || pathname.startsWith("/departement") || pesp === "dept" || pathname === "/jeu" || pathname === "/forum" || pathname === "/presentation" || decAdm || decGest ? "navbtn" : "navbtn on"}>Espace stagiaire</Link>
+              <Link to="/" title="Exercices, suivi, équipe et profil" className={adm || pathname.startsWith("/gestion") || pathname.startsWith("/departement") || pesp === "dept" || pathname === "/jeu" || pathname === "/forum" || pathname === "/presentation" || pathname === "/collaboratif" || decAdm || decGest ? "navbtn" : "navbtn on"}>Espace stagiaire</Link>
               {(profil?.gestionnaire || isAdmin) && <Link to="/gestion" className={pathname.startsWith("/gestion") || decGest ? "navbtn on" : "navbtn"}>Espace gestionnaire</Link>}
               {(profil?.adminDept || isAdmin) && <Link to="/departement" className={pathname.startsWith("/departement") || pesp === "dept" ? "navbtn on" : "navbtn"}>Espace département</Link>}
               {isAdmin && <Link to="/admin" className={adm || decAdm ? "navbtn on" : "navbtn"}>Espace admin</Link>}
               {(isAdmin || !estMasque(menusM, "stagiaire", "Forum d'entraide")) && <Link to="/forum" className={pathname === "/forum" ? "navbtn on" : "navbtn"} title="Forum d'entraide">💬 Forum</Link>}
               {accesJeu && (isAdmin || !estMasque(menusM, "stagiaire", "Jeu")) && <Link to="/jeu" className={pathname === "/jeu" ? "navbtn on" : "navbtn"} title="Jeu Trivial pompiers">🎲 Jeu</Link>}
               {(isAdmin || !estMasque(menusM, "stagiaire", "Présentation de l'application")) && <Link to="/presentation" className={pathname === "/presentation" ? "navbtn on" : "navbtn"} title="Fonctions de chaque profil">📋 Présentation</Link>}
+              {(isAdmin || !estMasque(menusM, "stagiaire", "Collaboratif")) && <Link to="/collaboratif" className={pathname === "/collaboratif" ? "navbtn on" : "navbtn"} title="Esprit collaboratif et soutien">🤝 Collaboratif</Link>}
               {profil?.nom && <span className="who">{profil.nom}</span>}
               <button className="navbtn nb-old" onClick={logout}>Déconnexion</button>
               <Link to="/messages" className="nb-msg" title="Messages" aria-label={"Messages" + (nonLus ? " (" + nonLus + " non lu" + (nonLus > 1 ? "s" : "") + ")" : "")}>✉{nonLus > 0 && <span className="nb-badge">{nonLus}</span>}</Link>

@@ -9,6 +9,7 @@ import { fmtLimite } from "../lib/devoirs";
 import BarreEquipe from "../components/ProgressionEquipes";
 import { rejoindre, quitterEquipe, equipesDe, nbEquipes, MAX_EQUIPES } from "../lib/equipes";
 import { mesGestionnaires } from "../lib/messages";
+import { coursDuStagiaire, progresCours } from "../lib/cours";
 
 // Côté stagiaire : rejoindre / quitter une équipe avec un code d'accès.
 export default function Equipe() {
@@ -22,6 +23,9 @@ export default function Equipe() {
   const [gests, setGests] = useState([]);
   const equipes = equipesDe(profil || {});
   const [nbs, setNbs] = useState({});
+  const [crs, setCrs] = useState([]);
+  const [pgc, setPgc] = useState({});
+  useEffect(() => { if (!user || !profil) return; coursDuStagiaire(profil).then(setCrs); progresCours(user.uid).then(setPgc).catch(() => {}); }, [user?.uid, equipes.map((t) => t.id).join()]); // eslint-disable-line
   useEffect(() => { nbEquipes(equipes.map((t) => t.id)).then(setNbs); }, [equipes.map((t) => t.id).join()]); // eslint-disable-line
   useEffect(() => { mesGestionnaires(profil || {}).then(setGests).catch(() => {}); }, [equipes.map((t) => t.id).join()]); // eslint-disable-line
   const run = async (fn, ok) => {
@@ -71,6 +75,16 @@ export default function Equipe() {
                         <div className="muted">Avant le {fmtLimite(d.limite)}</div>
                       </div>
                       <Link className={d.statut === "ok" ? "btn" : "btn primary"} to={`/scenario/${d.scId}`}>{d.statut === "ok" ? "Revoir" : "Faire l'exercice"}</Link>
+                    </div>
+                  ))}
+                  {k && crs.filter((c) => c.pc === k).map((c) => (
+                    <div className="row between item" key={"c" + c.id} style={{ marginTop: 8 }}>
+                      <div>
+                        <strong>📖 {c.titre}</strong> <span className="tag">Cours en ligne</span>{" "}
+                        <span className={pgc[c.id]?.fait ? "tag ok" : c.lim && c.lim < Date.now() ? "tag late" : "tag"}>{pgc[c.id]?.fait ? "Lu" : c.lim && c.lim < Date.now() ? "En retard" : "À lire"}</span>
+                        <div className="muted">Avant le {fmtLimite(c.lim)}</div>
+                      </div>
+                      <Link className={pgc[c.id]?.fait ? "btn" : "btn primary"} to={"/cours/" + c.id}>{pgc[c.id]?.fait ? "Relire" : "Lire le cours"}</Link>
                     </div>
                   ))}
                 </div>

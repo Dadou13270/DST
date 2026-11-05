@@ -6,11 +6,11 @@ import { TYPES, STATUTS, aVenir, majPart, participer, quitter, resumeBilan, rouv
 const OUV = 600000; // connexion aux webinaires 10 min avant le début
 const hh = (t) => new Date(t).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
 const quand = (t) => new Date(t).toLocaleString("fr-FR", { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
-// Compte à rebours compact : « J-2 · 05 h » au-delà d'un jour, sinon hh:mm:ss.
+// Compte à rebours : « 2 j 05:12:09 » au-delà d'un jour, sinon hh:mm:ss.
 const cdc = (ms) => {
   if (ms <= 0) return "En cours";
   const s = Math.floor(ms / 1000), j = Math.floor(s / 86400), h = Math.floor((s % 86400) / 3600), m = Math.floor((s % 3600) / 60), p = (n) => String(n).padStart(2, "0");
-  return j ? `J-${j} · ${p(h)} h` : `${p(h)}:${p(m)}:${p(s % 60)}`;
+  return (j ? `${j} j ` : "") + `${p(h)}:${p(m)}:${p(s % 60)}`;
 };
 
 // Bloc d'accueil (stagiaire et gestionnaire) : évènements et webinaires à venir ou en direct, en lignes compactes.
@@ -35,6 +35,7 @@ export default function EvenementBloc() {
     <div className="card ev-bloc evc">
       <h3>📅 Évènements et webinaires</h3>
       {err && <p className="err">{err}</p>}
+      <div className="evc-grid">
       {items.map((it) => {
         if (it.k === "wb") {
           const w = it.w, live = w.etat === "direct", reste = (w.debut || 0) - now, ouvert = live || !w.debut || reste <= OUV;
@@ -75,6 +76,7 @@ export default function EvenementBloc() {
           </div>
         );
       })}
+      </div>
     </div>
   );
 }

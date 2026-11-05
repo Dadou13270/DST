@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import CarteMentale from "../components/CarteMentale";
-import { COULEURS, arbreVide, modifier, ajouter, retirer, bouger, aplatir, listMesCartes, sauverCarte, supprimerCarte, attribuer, retirerAttribution } from "../lib/cartes";
+import { COULEURS, arbreVide, modifier, ajouter, retirer, bouger, aplatir, masquees, juste, scoreCarte, listMesCartes, sauverCarte, supprimerCarte, attribuer, retirerAttribution, prevenirEquipe } from "../lib/cartes";
 import { listMembres } from "../lib/equipes";
 import { fmtLimite, limiteDepuisInput, inputDepuisLimite } from "../lib/devoirs";
 
@@ -36,6 +36,7 @@ function Editeur({ init, user, profil, onFin }) {
           <div className="cm-ed" key={n.id} style={{ marginLeft: niv * 22 }}>
             <input type="text" value={n.t} onChange={(e) => set((a) => modifier(a, n.id, { t: e.target.value }))} aria-label="Texte de la branche" style={niv === 0 ? { fontWeight: 600 } : undefined} />
             {niv === 1 && COULEURS.map((k) => <button key={k} type="button" className={"cm-dot" + (n.c === k ? " on" : "")} style={{ background: k }} title="Couleur" onClick={() => set((a) => modifier(a, n.id, { c: k }))} />)}
+            {exo && niv > 0 && n.m && <input type="text" value={n.alt || ""} onChange={(e) => set((a) => modifier(a, n.id, { alt: e.target.value }))} placeholder="Autres réponses valides (séparées par /)" aria-label="Autres réponses valides" style={{ maxWidth: 230 }} />}
             {exo && niv > 0 && <button type="button" className="btn" title={n.m ? "Branche masquée (à compléter)" : "Masquer cette branche"} style={n.m ? { background: "var(--warn)" } : undefined} onClick={() => set((a) => modifier(a, n.id, { m: !n.m }))}>🙈</button>}
             <button type="button" className="btn" title="Ajouter une sous-branche" onClick={() => set((a) => ajouter(a, n.id))}>＋</button>
             {niv > 0 && <><button type="button" className="btn" title="Monter" onClick={() => set((a) => bouger(a, n.id, -1))}>↑</button><button type="button" className="btn" title="Descendre" onClick={() => set((a) => bouger(a, n.id, 1))}>↓</button><button type="button" className="btn danger" title="Supprimer la branche" onClick={() => set((a) => retirer(a, n.id))}>✕</button></>}
@@ -48,12 +49,14 @@ function Editeur({ init, user, profil, onFin }) {
   );
 }
 
-function Attribution({ carte, teams, onChange }) {
+function Attribution({ carte, teams, onChange, user, profil }) {
   const [val, setVal] = useState({});
   const [stat, setStat] = useState({});
+  const [mem, setMem] = useState({});
+  const [vue, setVue] = useState("");
   const [msg, setMsg] = useState("");
   useEffect(() => {
-    teams.filter((t) => (t.cartes || []).some((x) => x.id === carte.id)).forEach((t) => listMembres(t.id).then((m) => setStat((s) => ({ ...s, [t.id]: { n: m.length, ok: m.filter((u) => u.cartes?.[carte.id]?.fait).length } }))).catch(() => {}));
+    teams.filter((t) => (t.cartes || []).some((x) => x.id === carte.id)).forEach((t) => listMembres(t.id).then((m) => { setMem((s) => ({ ...s, [t.id]: m })); setStat((s) => ({ ...s, [t.id]: { n: m.length, ok: m.filter((u) => u.cartes?.[carte.id]?.fait).length } })); }).catch(() => {}));
   }, [carte.id, teams.length]); // eslint-disable-line
   const cur = (t) => (t.cartes || []).find((x) => x.id === carte.id);
   const v = (t) => val[t.id] || (cur(t) ? { type: cur(t).type, lim: inputDepuisLimite(cur(t).lim) } : { type: "devoir", lim: "" });
@@ -72,12 +75,35 @@ function Attribution({ carte, teams, onChange }) {
               <option value="biblio">Bibliothèque (sans échéance)</option>
             </select>
             {x.type === "devoir" && <input type="date" value={x.lim} onChange={(e) => setVal({ ...val, [t.id]: { ...x, lim: e.target.value } })} aria-label="Date limite" />}
-            <button className="btn primary" disabled={x.type === "devoir" && !x.lim} title={x.type === "devoir" && !x.lim ? "Choisis une date limite" : ""} onClick={() => go(() => attribuer(t, carte, x.type, limiteDepuisInput(x.lim)))}>{a ? "Mettre à jour" : "Proposer"}</button>
+            <button className="btn primary" disabled={x.type === "devoir" && !x.lim} title={x.type === "devoir" && !x.lim ? "Choisis une date limite" : ""} onClick={() => go(async () => { const lim = limiteDepuisInput(x.lim); await attribuer(t, carte, x.type, lim); if (!a || a.type !== x.type || (a.lim || 0) !== (x.type === "devoir" ? lim : 0)) await prevenirEquipe(t, carte, x.type, lim, user, profil).catch(() => {}); })}>{a ? "Mettre à jour" : "Proposer"}</button>
             {a && <button className="btn" onClick={() => go(() => retirerAttribution(t, carte.id))}>Retirer</button>}
+            {a && <button className="btn" onClick={() => { const o = vue === t.id; setVue(o ? "" : t.id); if (!o) listMembres(t.id).then((m) => setMem((z) => ({ ...z, [t.id]: m }))).catch(() => {}); }}>{vue === t.id ? "Masquer les résultats" : "Résultats"}</button>}
             {a && <span className="muted">{a.type === "devoir" ? `À rendre avant le ${fmtLimite(a.lim)}` : "Bibliothèque"}{s ? ` · ${s.ok}/${s.n} terminée${s.ok > 1 ? "s" : ""}` : ""}</span>}
           </div>
         );
       })}
+      {teams.filter((t) => vue === t.id).map((t) => (
+        <div key={"r" + t.id} className="item" style={{ marginTop: 10 }}>
+          <strong>Résultats — {t.nom}</strong>
+          {!mem[t.id] && <p className="muted">Chargement…</p>}
+          {mem[t.id] && mem[t.id].length === 0 && <p className="muted">Aucun inscrit.</p>}
+          {(mem[t.id] || []).map((u) => {
+            const p = u.cartes?.[carte.id], sc = p ? scoreCarte(carte.arbre, p.rep) : null, lm = masquees(carte.arbre);
+            return (
+              <details key={u.id} style={{ margin: "6px 0" }}>
+                <summary><strong>{u.nom || "—"}</strong> {p?.fait ? <span className="tag ok">Terminée le {fmtLimite(p.fait)}</span> : p ? <span className="tag">Brouillon</span> : <span className="tag late">Pas commencée</span>}{carte.mode === "exo" && sc && sc.n > 0 && <span className="tag">{sc.ok}/{sc.n} juste{sc.ok > 1 ? "s" : ""}</span>}</summary>
+                {carte.mode === "exo" && p && lm.length > 0 && (
+                  <table className="cmp" style={{ minWidth: 0, margin: "6px 0 6px 16px" }}>
+                    <thead><tr><th>Branche attendue</th><th>Réponse du stagiaire</th><th></th></tr></thead>
+                    <tbody>{lm.map((n) => { const r = p.rep?.[n.id] || "", ok = juste(n, r); return <tr key={n.id}><td>{n.t}{n.alt ? <small className="muted"> ({n.alt})</small> : null}</td><td>{r || "—"}</td><td>{ok ? "✅" : "❌"}</td></tr>; })}</tbody>
+                  </table>
+                )}
+                {carte.mode !== "exo" && <p className="muted" style={{ margin: "4px 0 4px 16px" }}>{p?.fait ? "A terminé la révision." : "Révision non terminée."}</p>}
+              </details>
+            );
+          })}
+        </div>
+      ))}
       {msg && <p className="muted">{msg}</p>}
     </div>
   );
@@ -116,7 +142,7 @@ export default function CartesGestion({ user, profil, teams, onChange }) {
               {conf === x.id ? <button className="btn danger" onClick={() => supprimerCarte(x.id).then(() => { setConf(""); charger(); }).catch((e) => setErr(e.message))}>Confirmer ?</button> : <button className="btn danger" onClick={() => setConf(x.id)}>Supprimer</button>}
             </div>
           </div>
-          {att === x.id && <Attribution carte={x} teams={teams} onChange={() => onChange?.()} />}
+          {att === x.id && <Attribution user={user} profil={profil} carte={x} teams={teams} onChange={() => onChange?.()} />}
         </div>
       ))}
     </>

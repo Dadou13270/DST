@@ -1,8 +1,11 @@
 import { useEffect, useState } from "react";
+import { collection, getDocs } from "firebase/firestore";
+import { db } from "../firebase";
+import { listMesCours } from "../lib/cours";
 import { listMesQuiz, listQuiz } from "../lib/quiz";
 import { lignesObjectifs, sequenceParcours, listParcours, saveParcours, supprimerParcours, dupliquerParcours } from "../lib/parcours";
 
-const vide = { id: null, titre: "", objectif: "", prerequis: "", description: "", ordre: false, partage: false, diag: false, diagId: "", scIds: [] };
+const vide = { id: null, titre: "", objectif: "", prerequis: "", description: "", ordre: false, partage: false, diag: false, diagId: "", scIds: [], cours: [] };
 
 export default function Parcours({ user, profil, isAdmin, scs, pcs, onChange }) {
   const [ed, setEd] = useState(null);
@@ -10,6 +13,9 @@ export default function Parcours({ user, profil, isAdmin, scs, pcs, onChange }) 
   const [msg, setMsg] = useState("");
   const [conf, setConf] = useState(null);
   const [vus, setVus] = useState({});
+  const [addC, setAddC] = useState("");
+  const [coursDispo, setCoursDispo] = useState([]);
+  useEffect(() => { (isAdmin ? getDocs(collection(db, "cours")).then((s) => s.docs.map((d) => ({ id: d.id, ...d.data() }))) : listMesCours(user.uid)).then(setCoursDispo).catch(() => {}); }, [user.uid, isAdmin]);
   const [brouillons, setBrouillons] = useState([]); // quiz / QCM pas encore publiés (les miens, ou tous pour l'admin)
   useEffect(() => { (isAdmin ? listQuiz(true) : listMesQuiz(user.uid)).then((l) => setBrouillons(l.filter((x) => !x.publie))).catch(() => {}); }, [user.uid, isAdmin]);
   const diagChoix = [...scs, ...brouillons.filter((b) => !scs.some((x) => x.id === b.id))];
@@ -78,6 +84,28 @@ export default function Parcours({ user, profil, isAdmin, scs, pcs, onChange }) 
             </select>
             <button type="button" className="btn" onClick={() => { if (add) { setEd({ ...ed, scIds: [...ed.scIds, add] }); setAdd(""); } }}>Ajouter</button>
           </div>
+          {(
+            <>
+              <label>Cours en ligne du parcours</label>
+              {(ed.cours || []).length === 0 && <p className="muted">{coursDispo.length ? "Aucun cours en ligne dans ce parcours. Le stagiaire devra lire le PDF et valider sa lecture." : "Tu n'as pas encore de cours en ligne : crée-en un dans Contenus → Cours en ligne (droit accordé par l'admin), il apparaîtra ici."}</p>}
+              <ol>
+                {(ed.cours || []).map((c, i) => (
+                  <li key={c.id}>📖 {coursDispo.find((x) => x.id === c.id)?.titre || c.titre}{" "}
+                    <button type="button" className="btn" disabled={!i} onClick={() => setEd((e) => { const a = [...e.cours]; [a[i - 1], a[i]] = [a[i], a[i - 1]]; return { ...e, cours: a }; })}>↑</button>{" "}
+                    <button type="button" className="btn" disabled={i === ed.cours.length - 1} onClick={() => setEd((e) => { const a = [...e.cours]; [a[i + 1], a[i]] = [a[i], a[i + 1]]; return { ...e, cours: a }; })}>↓</button>{" "}
+                    <button type="button" className="btn danger" onClick={() => setEd({ ...ed, cours: ed.cours.filter((_, k) => k !== i) })}>✕</button>
+                  </li>
+                ))}
+              </ol>
+              <div className="row item">
+                <select className="grow" value={addC} onChange={(e) => setAddC(e.target.value)}>
+                  <option value="">Ajouter un cours en ligne…</option>
+                  {coursDispo.filter((x) => !(ed.cours || []).some((c) => c.id === x.id)).map((x) => <option key={x.id} value={x.id}>{x.titre}</option>)}
+                </select>
+                <button type="button" className="btn" onClick={() => { const x = coursDispo.find((y) => y.id === addC); if (x) { setEd({ ...ed, cours: [...(ed.cours || []), { id: x.id, titre: x.titre }] }); setAddC(""); } }}>Ajouter</button>
+              </div>
+            </>
+          )}
           <div className="row item" style={{ marginTop: 12 }}>
             <button className="btn primary">Enregistrer le parcours</button>
             <button type="button" className="btn" onClick={() => { setEd(null); setMsg(""); }}>Annuler</button>
@@ -94,7 +122,7 @@ export default function Parcours({ user, profil, isAdmin, scs, pcs, onChange }) 
                   <div>
                     <strong>{p.titre}</strong> {p.ordre && <span className="tag">Ordre imposé</span>} {p.partage && <span className="tag">Partagé</span>}
                     {p.diag && p.diagId && <> <span className="tag">Diagnostic</span></>}
-                    <div className="muted">{(p.scIds || []).length + (p.diag && p.diagId ? 1 : 0)} exercice(s){p.owner !== user.uid ? ` · par ${p.ownerNom || "un gestionnaire"}` : ""}</div>
+                    <div className="muted">{(p.scIds || []).length + (p.diag && p.diagId ? 1 : 0)} exercice(s){(p.cours || []).length > 0 ? ` · ${p.cours.length} cours en ligne` : ""}{p.owner !== user.uid ? ` · par ${p.ownerNom || "un gestionnaire"}` : ""}</div>
                     {p.prerequis && <div style={{ margin: "4px 0" }}><strong>Prérequis :</strong> {p.prerequis}</div>}
                     {p.objectif && <div style={{ margin: "4px 0" }}><strong>Objectif :</strong> {p.objectif}</div>}
                     {(p.objectifs || []).length > 0 && <ol style={{ margin: "2px 0 4px", paddingLeft: 20 }}>{p.objectifs.map((o, k) => { const n = Object.values(p.objLiens || {}).filter((v) => v === k).length; return <li key={k}>{o} {n ? <span className="tag ok">{n} exercice{n > 1 ? "s" : ""}</span> : <span className="tag" style={{ color: "#c42a1c" }} title="Aucun exercice n'est rattaché à cet objectif">aucun exercice</span>}</li>; })}</ol>}

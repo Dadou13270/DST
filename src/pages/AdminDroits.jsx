@@ -40,10 +40,10 @@ export default function AdminDroits() {
   const [d, setD] = useState(null);
   const [deps, setDeps] = useState([]);
   const [msg, setMsg] = useState("");
-  useEffect(() => { if (src && !d) setD({ mode: src.mode, deps: [...(src.deps || [])], quiz: { mode: src.quiz.mode, deps: [...(src.quiz.deps || [])] }, evt: { mode: src.evt.mode, deps: [...(src.evt.deps || [])] }, web: { mode: src.web.mode, deps: [...(src.web.deps || [])] } }); }, [src]); // eslint-disable-line
+  useEffect(() => { if (src && !d) setD({ mode: src.mode, deps: [...(src.deps || [])], quiz: { mode: src.quiz.mode, deps: [...(src.quiz.deps || [])] }, evt: { mode: src.evt.mode, deps: [...(src.evt.deps || [])] }, web: { mode: src.web.mode, deps: [...(src.web.deps || [])] }, cours: { mode: src.cours.mode, deps: [...(src.cours.deps || [])] } }); }, [src]); // eslint-disable-line
   useEffect(() => { departementsGest().then(setDeps).catch(() => {}); }, []);
   if (!d) return <p>Chargement…</p>;
-  const liste = [...new Set([...deps.map((x) => x[0]), ...d.deps, ...d.quiz.deps, ...d.evt.deps, ...d.web.deps])].sort((a, b) => a.localeCompare(b, "fr", { numeric: true }));
+  const liste = [...new Set([...deps.map((x) => x[0]), ...d.deps, ...d.quiz.deps, ...d.evt.deps, ...d.web.deps, ...d.cours.deps])].sort((a, b) => a.localeCompare(b, "fr", { numeric: true }));
   const nb = (dep) => deps.find((x) => x[0] === dep)?.[1] || 0;
   const sauver = async () => { setMsg(""); try { await sauverDroits(d); setMsg("Droits enregistrés."); } catch (e) { setMsg("Erreur : " + (e.code || e.message)); } };
   return (
@@ -57,6 +57,8 @@ export default function AdminDroits() {
         v={d.evt} onChange={(v) => setD({ ...d, evt: v })} liste={liste} nb={nb} />
       <BlocDroit titre="Webinaires" texte="Un gestionnaire autorisé voit « Webinaires » dans Séances : il crée des salles de webinaire en direct (lien de la salle, visio, inscrits, lever de main, messages en direct) et les anime."
         v={d.web} onChange={(v) => setD({ ...d, web: v })} liste={liste} nb={nb} />
+      <BlocDroit titre="Cours en ligne" texte="Un gestionnaire autorisé voit « Cours en ligne » dans Contenus : il dépose un cours au format PDF et le propose à ses équipes. Le stagiaire fait défiler le PDF et valide sa lecture ; le suivi apparaît dans l'équipe."
+        v={d.cours} onChange={(v) => setD({ ...d, cours: v })} liste={liste} nb={nb} />
       <div className="row" style={{ justifyContent: "flex-end" }}>
         {msg && <span className={msg.startsWith("Erreur") ? "err" : "ok-txt"}>{msg}</span>}
         <button className="btn primary" onClick={sauver}>Enregistrer</button>

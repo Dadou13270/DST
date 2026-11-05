@@ -194,7 +194,7 @@ function vueAdmin() {
   ${S.mods.map((m) => `<div class="row bw" style="padding:4px 0"><span>🛡️ ${esc(m.nom || m.id)}</span><button class="b s d" data-f="moddel" data-k="${esc(m.id)}">Retirer</button></div>`).join("") || '<p class="m">Aucun modérateur désigné.</p>'}
   <div class="row" style="margin-top:8px">${S.users === null ? '<button class="b" data-f="usersload">Choisir un inscrit…</button>' : `<select class="grow" data-f="modsel"><option value="">Désigner un modérateur…</option>${dispo.sort((a, b) => String(a.nom).localeCompare(String(b.nom))).map((u) => `<option value="${esc(u.id)}">${esc(u.nom || u.id)}</option>`).join("")}</select><button class="b p" data-f="modadd">Désigner</button>`}</div></div>
   <div class="box"><b>Rubriques</b>${S.cats.map((c, i) => `<div class="row" style="padding:6px 0;border-top:1px solid var(--line,#d8dde1)"><input data-f="cico" data-k="${esc(c.id)}" value="${esc(c.ico || "")}" maxlength="4" style="width:60px" aria-label="Icône"><input class="grow" data-f="cnom" data-k="${esc(c.id)}" value="${esc(c.nom)}" maxlength="60" aria-label="Nom"><button class="b s" data-f="cup" data-k="${esc(c.id)}" ${i ? "" : "disabled"}>↑</button><button class="b s" data-f="cdn" data-k="${esc(c.id)}" ${i < S.cats.length - 1 ? "" : "disabled"}>↓</button>
-  <button class="b s" data-f="cferme" data-k="${esc(c.id)}" title="Seuls les modérateurs peuvent y créer des sujets">${c.ferme ? "🔒 Modérateurs seuls" : "Ouverte à tous"}</button><button class="b s" data-f="cmasque" data-k="${esc(c.id)}">${c.masque ? "Masquée" : "Visible"}</button><button class="b s d" data-f="cdel" data-k="${esc(c.id)}">Supprimer</button></div><input data-f="cdesc" data-k="${esc(c.id)}" value="${esc(c.desc || "")}" maxlength="140" placeholder="Description" style="margin-bottom:4px"><div class="m" style="margin-bottom:4px">${S.sujets.filter((s) => s.cat === c.id).length} sujet(s)</div>`).join("")}
+  <button class="b s" data-f="cferme" data-k="${esc(c.id)}" title="Seuls les modérateurs peuvent y créer des sujets">${c.ferme ? "🔒 Modérateurs seuls" : "Ouverte à tous"}</button><button class="b s" data-f="cmasque" data-k="${esc(c.id)}">${c.masque ? "Masquée" : "Visible"}</button><button class="b s d" data-f="cdel" data-k="${esc(c.id)}">${S.cf && S.cf.cle === "c" + c.id ? "Confirmer la suppression" : "Supprimer"}</button></div><input data-f="cdesc" data-k="${esc(c.id)}" value="${esc(c.desc || "")}" maxlength="140" placeholder="Description" style="margin-bottom:4px"><div class="m" style="margin-bottom:4px">${S.sujets.filter((s) => s.cat === c.id).length} sujet(s)</div>`).join("")}
   <div class="row" style="margin-top:8px"><input class="grow" data-f="draft" data-k="cn" value="${esc(S.draft.cn || "")}" maxlength="60" placeholder="Nom de la nouvelle rubrique"><button class="b p" data-f="cadd">+ Ajouter</button></div></div>`;
 }
 function dessiner() {
@@ -231,6 +231,11 @@ async function maj(coll, id, patch, apres) {
   try { await S.o.put(coll, id, patch); if (apres) await apres(); } catch (e) { S.msg = "Erreur : " + (e.message || e.code); }
   try { await charger(S.vue === "sujet" ? S.sujet : null); } catch { /* ignore */ }
   dessiner();
+}
+// Confirmation en deux clics (window.confirm est bloqué dans la page hébergée)
+function sur(cle, msg) {
+  if (S.cf && S.cf.cle === cle && Date.now() - S.cf.t < 10000) { S.cf = null; return true; }
+  S.cf = { cle, t: Date.now() }; S.msg = msg + " Clique une seconde fois sur « Supprimer » pour confirmer."; dessiner(); return false;
 }
 async function clic(f, b, e) {
   const k = b.dataset.k, s = sj(S.sujet), o = S.o;
@@ -277,7 +282,7 @@ async function clic(f, b, e) {
     S.edit = ""; S.draft = {}; return maj("forumMsgs", k, { texte: x.slice(0, MAXM), ed: maintenant() });
   }
   if (f === "msgdel") {
-    if (!window.confirm("Supprimer ce message ?")) return;
+    if (!sur("m" + k, "Supprimer ce message ?")) return;
     try { await o.del("forumMsgs", k); await o.put("forumSujets", s.id, { nb: Math.max(0, (s.nb || 1) - 1), bonne: s.bonne === k ? "" : s.bonne || "" }); } catch (er) { S.msg = "Erreur : " + (er.message || er.code); }
     await charger(s.id); return dessiner();
   }
@@ -287,7 +292,7 @@ async function clic(f, b, e) {
   if (f === "resolu") return maj("forumSujets", s.id, { resolu: !s.resolu });
   if (f === "masque") return maj("forumSujets", s.id, { etat: s.etat === "masque" ? "ok" : "masque" });
   if (f === "sjdel") {
-    if (!window.confirm("Supprimer ce sujet et toutes ses réponses ?")) return;
+    if (!sur("s" + s.id, "Supprimer ce sujet et toutes ses réponses ?")) return;
     try { for (const m of S.msgs) await o.del("forumMsgs", m.id); await o.del("forumSujets", s.id); } catch (er) { S.msg = "Erreur : " + (er.message || er.code); return dessiner(); }
     S.msg = "Sujet supprimé."; return aller("cat", { cat: s.cat });
   }
@@ -307,7 +312,16 @@ async function clic(f, b, e) {
   if (f === "modadd") { const id = S.draft.modsel; const u = (S.users || []).find((x) => x.id === id); if (!u) return; return maj("forumMods", id, { nom: u.nom || "" }, () => { S.draft.modsel = ""; S.msg = "Modérateur désigné : " + (u.nom || id); }); }
   if (f === "moddel") return maj("forumMods", k, null, () => { S.msg = "Modérateur retiré."; });
   if (f === "cadd") { const n = (S.draft.cn || "").trim(); if (!n) return; return maj("forumCats", null, { nom: n, desc: "", ico: "💬", ordre: S.cats.length + 1 }, () => { S.draft.cn = ""; }); }
-  if (f === "cdel") { const c = cat(k); if (S.sujets.some((x) => x.cat === k)) { S.msg = "Déplace ou supprime d'abord les sujets de cette rubrique."; return dessiner(); } if (!window.confirm("Supprimer la rubrique « " + (c && c.nom) + " » ?")) return; return maj("forumCats", k, null); }
+  if (f === "cdel") {
+    const c = cat(k), sj0 = S.sujets.filter((x) => x.cat === k);
+    if (!sur("c" + k, "Supprimer la rubrique « " + (c && c.nom) + " »" + (sj0.length ? " ainsi que ses " + sj0.length + " sujet(s) et toutes leurs réponses" : "") + " ? Action définitive.")) return;
+    try {
+      if (sj0.length) { const ids = new Set(sj0.map((x) => x.id)); for (const m of (await S.o.ls("forumMsgs")).filter((m) => ids.has(m.sujet))) await S.o.del("forumMsgs", m.id); for (const x of sj0) await S.o.del("forumSujets", x.id); }
+      await S.o.del("forumCats", k); S.msg = "Rubrique supprimée.";
+    } catch (er) { S.msg = "Erreur : " + (er.message || er.code); }
+    try { await charger(null); } catch { /* ignore */ }
+    return dessiner();
+  }
   if (f === "cferme" || f === "cmasque") { const c = cat(k); return maj("forumCats", k, f === "cferme" ? { ferme: !c.ferme } : { masque: !c.masque }); }
   if (f === "cup" || f === "cdn") {
     const i = S.cats.findIndex((c) => c.id === k), j = f === "cup" ? i - 1 : i + 1; if (j < 0 || j >= S.cats.length) return;

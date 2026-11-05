@@ -1,6 +1,8 @@
+import { useEffect, useState } from "react";
 import { db } from "../firebase";
 import { collection, doc, getDoc, getDocs, addDoc, setDoc, deleteDoc, updateDoc, query, where } from "firebase/firestore";
-import { idsEquipes } from "./equipes";
+import { idsEquipes, listMembres } from "./equipes";
+import { envoyer } from "./messages";
 
 // Cartes mentales : collection « cartes » (contenu) ; attribution = teams/{id}.cartes [{id,titre,mode,type,lim}] ; progression = users/{uid}.cartes[id].
 export const COULEURS = ["#1d6fb8", "#16794a", "#b8791d", "#7b3fa0", "#c42a1c", "#4a5560"];
@@ -49,3 +51,30 @@ export async function cartesDuStagiaire(profil) {
 }
 export const progresCarte = async (uid) => { const d = await getDoc(doc(db, "users", uid)); return d.exists() ? d.data().cartes || {} : {}; };
 export const sauverProgres = (uid, cid, v) => updateDoc(doc(db, "users", uid), { ["cartes." + cid]: v });
+
+// Prévient chaque membre de l'équipe par un message privé du gestionnaire.
+export async function prevenirEquipe(team, carte, type, lim, user, profil) {
+  const dt = lim ? new Date(lim).toLocaleDateString("fr-FR") : "";
+  const texte = `Nouvelle carte mentale « ${carte.titre} » (${carte.mode === "exo" ? "à compléter" : "à consulter"})${type === "devoir" && dt ? `, à rendre avant le ${dt}` : ""}. Ouvre « Cartes mentales » dans le menu.`;
+  const m = await listMembres(team.id);
+  const r = await Promise.allSettled(m.map((u) => envoyer({ stagId: u.id, stagNom: u.nom || "", gestId: user.uid, gestNom: profil?.nom || "", de: user.uid, texte })));
+  return r.filter((x) => x.status === "fulfilled").length;
+}
+
+// Nombre de cartes « à rendre » non terminées (badge du menu)
+export function useCartesAFaire(user, profil, dep) {
+  const [n, setN] = useState(0);
+  const k = idsEquipes(profil).join();
+  useEffect(() => {
+    if (!user || !k) { setN(0); return; }
+    let ok = true;
+    Promise.all([cartesDuStagiaire(profil), progresCarte(user.uid)]).then(([l, p]) => { if (ok) setN(l.filter((c) => c.type === "devoir" && !p[c.id]?.fait).length); }).catch(() => {});
+    return () => { ok = false; };
+  }, [user?.uid, k, dep]); // eslint-disable-line
+  return n;
+}
+
+// Comparaison tolérante : ignore casse, accents, espaces, tirets et ponctuation ; « alt » liste d'autres réponses valides (séparées par / ; ou ,).
+export const norm = (s) => String(s || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]/g, "");
+export const juste = (n, r) => { const x = norm(r); return !!x && [n.t, ...String(n.alt || "").split(/[\/;,]/)].some((a) => norm(a) === x); };
+export const scoreCarte = (arbre, rep) => { const l = masquees(arbre); return { ok: l.filter((n) => juste(n, (rep || {})[n.id])).length, n: l.length }; };

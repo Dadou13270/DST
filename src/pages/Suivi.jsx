@@ -22,6 +22,7 @@ import FilMessages from "../components/FilMessages";
 import { repondreFormateur } from "../lib/equipes";
 import { lienExercice, listExercices, typeExercice } from "../lib/relation";
 import AttestationsCard from "../components/AttestationsCard";
+import CoursSuivi from "../components/CoursSuivi";
 
 function Repliable({ titre, children }) {
   const [ouvert, setOuvert] = useState(false);
@@ -139,6 +140,7 @@ export default function Suivi() {
       <div className="row between item"><h1>Mon suivi</h1><span className="row"><button className="btn" onClick={() => pdfSuivi(profil, bs, equipesDe(profil || {}).map((t) => t.nom).join(", "))}>Exporter en PDF</button> <button className="btn primary" title="Bilans, auto-évaluations, commentaires et notes personnelles" onClick={() => dossier()}>Mon dossier PDF</button></span></div>
       {recup && recup !== "sync" && <p className={recup.startsWith("Récup") ? "err" : "ok-txt"}>{recup}</p>}
       {list && <AttestationsCard profil={profil} devoirs={devoirs} catalogue={[...list, ...exs]} equipe={equipesDe(profil || {}).map((t) => t.nom).join(", ")} gest={profil?.equipeGest} />}
+      <CoursSuivi />
       {!list && <p>Chargement…</p>}
       {list && (() => {
         const dvIds = new Set((devoirs || []).map((d) => d.scId));

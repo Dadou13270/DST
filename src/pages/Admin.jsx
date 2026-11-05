@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { listDemandesGest } from "../lib/gestionnaires";
+import { listSdis } from "../lib/sdis";
 import { Link, Outlet, useLocation } from "react-router-dom";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import Layout from "../components/Layout";
@@ -13,7 +14,8 @@ export default function AdminGate() {
   const [pwd, setPwd] = useState("");
   const [err, setErr] = useState("");
   const [nbDem, setNbDem] = useState(0);
-  useEffect(() => { if (isAdmin) listDemandesGest().then((l) => setNbDem(l.filter((d) => d.statut === "attente").length)).catch(() => {}); }, [isAdmin, pathname]);
+  const [nbSdis, setNbSdis] = useState(0);
+  useEffect(() => { if (isAdmin) listDemandesGest().then((l) => setNbDem(l.filter((d) => d.statut === "attente").length)).catch(() => {}); if (isAdmin) listSdis().then((l) => setNbSdis(l.filter((s) => s.statut === "attente").length)).catch(() => {}); }, [isAdmin, pathname]);
 
   if (!configured)
     return (
@@ -68,7 +70,7 @@ export default function AdminGate() {
 
   const groupes = [
     { k: "sc", t: "Scénarios", subs: [["/admin", "Scénarios"], ["/decision?esp=admin", "Scénarios à décisions"], ["/reco?esp=admin", "Situations en images"]], tst: (p) => p === "/admin" || /^\/admin\/(scenario|calcul|relation)/.test(p) },
-    { k: "in", t: `Inscrits${nbDem > 0 ? ` (${nbDem})` : ""}`, subs: [["/admin/utilisateurs", "Utilisateurs"], ["/admin/gestionnaires", `Gestionnaires${nbDem > 0 ? ` (${nbDem})` : ""}`], ["/admin/droits", "Droits"], ["/admin/menus", "Menus par rôle"], ["/admin/profils", "Profils"]] },
+    { k: "in", t: `Inscrits${nbDem + nbSdis > 0 ? ` (${nbDem + nbSdis})` : ""}`, subs: [["/admin/utilisateurs", "Utilisateurs"], ["/admin/gestionnaires", `Gestionnaires${nbDem > 0 ? ` (${nbDem})` : ""}`], ["/admin/sdis", `SDIS inscrits${nbSdis > 0 ? ` (${nbSdis})` : ""}`], ["/admin/droits", "Droits"], ["/admin/menus", "Menus par rôle"], ["/admin/profils", "Profils"]] },
     { k: "ge", t: "Gestion", subs: [["/admin/stats", "Statistiques"], ["/admin/attribution", "Attribution"], ["/admin/journal", "Journal"]] },
     { k: "ap", t: "Application", subs: [["/admin/annonces", "Annonces"], ["/admin/evenements", "Évènements"], ["/admin/parametres", "Paramètres"], ["/admin/legal", "Pages légales"], ["/admin/tickets", "Tickets"], ["/admin/banque", "Commentaires types"]] },
     { k: "si", t: "Site", subs: [["/admin/site", "Site"]] },

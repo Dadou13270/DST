@@ -5,10 +5,10 @@ import { db } from "../firebase";
 // Pages du menu, par rôle. Réglage admin « Menus par rôle » : liste des pages MASQUÉES (nouveautes/_reglages.menus).
 // L'administrateur voit toujours tout. Les clés sont les libellés du menu de gauche.
 export const MENUS_ROLES = [
-  { k: "stagiaire", t: "Stagiaire", note: "Tous les inscrits. « Forum d'entraide », « Jeu » et « Présentation de l'application » s'appliquent à tous les rôles.",
-    pages: ["Accueil", "Scénarios", "Séance en salle", "Jeu de rôle", "Situations en images", "Mon suivi", "Mon équipe", "Messages", "Mon profil", "Fiches mémo", "Cartes mentales", "Webinaires", "Forum d'entraide", "Jeu", "Présentation de l'application"] },
+  { k: "stagiaire", t: "Stagiaire", note: "Tous les inscrits. « Forum d'entraide », « Jeu » et « Présentation de l'application » et « Collaboratif » s'appliquent à tous les rôles.",
+    pages: ["Accueil", "Scénarios", "Séance en salle", "Jeu de rôle", "Situations en images", "Cours en ligne", "Mon suivi", "Mon équipe", "Messages", "Mon profil", "Fiches mémo", "Cartes mentales", "Webinaires", "Forum d'entraide", "Jeu", "Présentation de l'application", "Collaboratif"] },
   { k: "gestionnaire", t: "Gestionnaire", note: "Les pages de contenu restent soumises aux droits d'édition accordés dans « Droits ».",
-    pages: ["Accueil", "Création de l'équipe", "Gestion de l'équipe", "Tableau de bord", "Profils du CIS", "Séance en salle", "Jeu de rôle", "Webinaires", "Calendrier", "Historique des séances", "Parcours pédagogiques", "Mes scénarios", "Mes quiz", "Cartes mentales", "Évènements", "Scénarios à décisions", "Situations en images", "Demande de scénario"] },
+    pages: ["Accueil", "Création de l'équipe", "Gestion de l'équipe", "Tableau de bord", "Profils du CIS", "Séance en salle", "Jeu de rôle", "Webinaires", "Calendrier", "Historique des séances", "Parcours pédagogiques", "Mes scénarios", "Mes quiz", "Cartes mentales", "Cours en ligne", "Évènements", "Scénarios à décisions", "Situations en images", "Demande de scénario"] },
   { k: "dept", t: "Admin de département", note: "",
     pages: ["Statistiques du département", "Profils du département"] },
 ];

@@ -1,4 +1,5 @@
 import { memo } from "react";
+import { juste } from "../lib/cartes";
 
 // Affichage d'une carte mentale (arbre horizontal). exo : les branches masquées sont à compléter (rep / setRep) ; corrige : montre les réponses attendues.
 function Noeud({ n, niv, col, exo, rep, setRep, corrige }) {
@@ -9,7 +10,7 @@ function Noeud({ n, niv, col, exo, rep, setRep, corrige }) {
     <div className="cm-n" style={{ "--cl": c }}>
       <div className={"cm-b" + (niv === 0 ? " root" : niv === 1 ? " l1" : "") + (cache ? " vide" : "")}>
         {cache && !corrige ? <input value={r} onChange={(e) => setRep && setRep({ ...(rep || {}), [n.id]: e.target.value })} placeholder="À compléter…" aria-label="Branche à compléter" disabled={!setRep} />
-          : cache && corrige ? <span><span className={"cm-r " + (r.trim().toLowerCase() === (n.t || "").trim().toLowerCase() ? "ok" : "ko")}>{r || "—"}</span><small className="cm-att">Attendu : {n.t}</small></span>
+          : cache && corrige ? <span><span className={"cm-r " + (juste(n, r) ? "ok" : "ko")}>{r || "—"}</span><small className="cm-att">Attendu : {n.t}</small></span>
           : <span>{n.t}</span>}
       </div>
       {fils.length > 0 && <div className="cm-f">{fils.map((f) => <Noeud key={f.id} n={f} niv={niv + 1} col={c} exo={exo} rep={rep} setRep={setRep} corrige={corrige} />)}</div>}

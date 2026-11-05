@@ -4,7 +4,7 @@ import Layout from "../components/Layout";
 import CarteMentale from "../components/CarteMentale";
 import { StagiaireNav } from "./Home";
 import { useAuth } from "../lib/auth";
-import { cartesDuStagiaire, progresCarte, getCarte, sauverProgres, masquees } from "../lib/cartes";
+import { cartesDuStagiaire, progresCarte, getCarte, sauverProgres, masquees, scoreCarte } from "../lib/cartes";
 import { fmtLimite } from "../lib/devoirs";
 
 // Stagiaire : cartes mentales proposées par le gestionnaire de ses équipes.
@@ -54,7 +54,7 @@ export function CarteVue() {
   }, [id, user?.uid]); // eslint-disable-line
   const exo = c?.mode === "exo";
   const save = (fin) => sauverProgres(user.uid, id, { rep, fait: fin ? Date.now() : 0, le: Date.now() }).then(() => { if (fin) { setFait(true); setCorr(true); } }).catch((e) => setErr(e.message));
-  const nbOk = c ? masquees(c.arbre).filter((n) => (rep[n.id] || "").trim().toLowerCase() === (n.t || "").trim().toLowerCase()).length : 0;
+  const nbOk = c ? scoreCarte(c.arbre, rep).ok : 0;
   return (
     <Layout>
       <StagiaireNav />

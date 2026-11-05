@@ -102,7 +102,7 @@ service cloud.firestore {
         || (deptOk(resource.data.get("departement", "")) && request.auth.uid != uid
             && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["gestionnaire"]))
         || (request.auth.uid == uid
-            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["derniereConnexion", "email", "nom", "bilans", "encours", "equipeId", "equipeNom", "equipeCode", "equipeGest", "equipeId2", "equipeId3", "equipeId4", "equipes", "equipeCodeAjout", "grade", "cadre", "dateNaissance", "fonction", "statutSp", "cis", "departement", "mdpProvisoire", "reponses", "calculs", "xp", "cartes"])
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["derniereConnexion", "email", "nom", "bilans", "encours", "equipeId", "equipeNom", "equipeCode", "equipeGest", "equipeId2", "equipeId3", "equipeId4", "equipes", "equipeCodeAjout", "grade", "cadre", "dateNaissance", "fonction", "statutSp", "cis", "departement", "mdpProvisoire", "reponses", "calculs", "xp", "cartes", "cours"])
             && slotsAjoutOk(request.resource.data, resource.data))
         // le gestionnaire peut commenter les exercices d'un membre de son équipe
         || (gestAny(resource.data)
@@ -245,6 +245,14 @@ service cloud.firestore {
     }
 
     // Demandes pour devenir gestionnaire : une par utilisateur, traitée par l'admin
+    match /sdis/{uid} {
+      allow read: if isAdmin() || (request.auth != null && request.auth.uid == uid);
+      allow create: if request.auth != null && request.auth.uid == uid && userActif()
+        && request.resource.data.uid == uid && request.resource.data.statut == "attente";
+      allow update: if isAdmin() || (request.auth != null && request.auth.uid == uid
+        && resource.data.statut != "valide" && request.resource.data.uid == uid && request.resource.data.statut == "attente");
+      allow delete: if isAdmin();
+    }
     match /demandesGest/{uid} {
       allow read: if isAdmin() || (request.auth != null && request.auth.uid == uid) || deptOk(resource.data.get("departement", ""));
       allow create, update: if request.auth != null && request.auth.uid == uid && userActif()
@@ -535,6 +543,17 @@ service cloud.firestore {
       allow read: if request.auth != null;
       allow create: if isGest() && request.resource.data.auteur == request.auth.uid;
       allow update, delete: if isAdmin() || (isGest() && resource.data.get("auteur", "") == request.auth.uid);
+    }
+
+    // Cours en ligne (PDF découpé en blocs) : lisibles par tout compte connecté, écrits par les gestionnaires
+    match /cours/{id} {
+      allow read: if request.auth != null;
+      allow create: if isGest() && request.resource.data.auteur == request.auth.uid;
+      allow update, delete: if isAdmin() || (isGest() && resource.data.get("auteur", "") == request.auth.uid);
+    }
+    match /coursPdf/{id} {
+      allow read: if request.auth != null;
+      allow create, update, delete: if isGest();
     }
 
     match /scenarios/{id} {

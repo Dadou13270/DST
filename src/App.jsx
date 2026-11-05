@@ -21,6 +21,7 @@ import AdminEvenements from "./pages/AdminEvenements";
 import Attribution from "./pages/Attribution";
 import Departement from "./pages/Departement";
 import AdminGestionnaires from "./pages/AdminGestionnaires";
+import AdminSdis from "./pages/AdminSdis";
 import AdminAnnonces from "./pages/AdminAnnonces";
 import DemanderScenario from "./pages/DemanderScenario";
 import AdminStats from "./pages/AdminStats";
@@ -37,6 +38,7 @@ import AideEquipes from "./pages/AideEquipes";
 import AideSalle from "./pages/AideSalle";
 import APropos from "./pages/APropos";
 import Presentation from "./pages/Presentation";
+import Collaboratif from "./pages/Collaboratif";
 import Nouveautes from "./pages/Nouveautes";
 import Tickets from "./pages/Tickets";
 import AdminTickets from "./pages/AdminTickets";
@@ -55,6 +57,7 @@ import QuizLiveJoueur from "./pages/QuizLiveJoueur";
 import SalleProjection from "./pages/SalleProjection";
 import FichesMemo from "./pages/FichesMemo";
 import { MesCartes, CarteVue } from "./pages/Cartes";
+import { MesCours, CoursVue } from "./pages/Cours";
 import Suivi from "./pages/Suivi";
 import Decision from "./pages/Decision";
 import Reco from "./pages/Reco";
@@ -90,6 +93,7 @@ export default function App() {
         <Route path="/site" element={<Site />} />
         <Route path="/a-propos" element={<APropos />} />
         <Route path="/presentation" element={<Presentation />} />
+        <Route path="/collaboratif" element={<Collaboratif />} />
         <Route path="/nouveautes" element={<Nouveautes />} />
         <Route path="/demande-scenario" element={<RequireUser><DemanderScenario /></RequireUser>} />
         <Route path="/tickets" element={<RequireUser><Tickets /></RequireUser>} />
@@ -112,6 +116,8 @@ export default function App() {
         <Route path="/profil" element={<RequireUser><Profil /></RequireUser>} />
         <Route path="/messages" element={<RequireUser><Messagerie /></RequireUser>} />
         <Route path="/fiches" element={<RequireUser><FichesMemo /></RequireUser>} />
+        <Route path="/cours" element={<RequireUser><MesCours /></RequireUser>} />
+        <Route path="/cours/:id" element={<RequireUser><CoursVue /></RequireUser>} />
         <Route path="/cartes" element={<RequireUser><MesCartes /></RequireUser>} />
         <Route path="/carte/:id" element={<RequireUser><CarteVue /></RequireUser>} />
         <Route path="/suivi" element={<RequireUser><Suivi /></RequireUser>} />
@@ -133,6 +139,7 @@ export default function App() {
           <Route path="parametres" element={<Parametres />} />
           <Route path="attribution" element={<Attribution />} />
           <Route path="gestionnaires" element={<AdminGestionnaires />} />
+          <Route path="sdis" element={<AdminSdis />} />
           <Route path="annonces" element={<AdminAnnonces />} />
           <Route path="evenements" element={<AdminEvenements />} />
           <Route path="legal" element={<AdminLegal />} />

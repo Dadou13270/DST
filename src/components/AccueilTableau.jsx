@@ -59,7 +59,7 @@ export function EquipesCartes({ devoirs }) {
 
 // Accès rapide + prochaines échéances (colonne de droite).
 export function AccesRapide({ jeu }) {
-  const it = [["🎯", "Scénarios", "/scenarios"], ["🏫", "Séance en salle", "/seance"], ...(jeu ? [["🎲", "Jeu", "/jeu"]] : []), ["📚", "Fiches mémo", "/fiches"]];
+  const it = [["🎯", "Scénarios", "/scenarios"], ["🏫", "Séance en salle", "/seance"], ...(jeu ? [["🎲", "Jeu", "/jeu"]] : []), ["📚", "Fiches mémo", "/fiches"], ["📈", "Mon suivi", "/suivi"], ["👥", "Mon équipe", "/equipe"]];
   return (
     <div className="card">
       <h3 style={{ margin: "0 0 8px" }}>Accès rapide</h3>

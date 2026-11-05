@@ -16,6 +16,7 @@ import { editeurAutorise, useDroits } from "../lib/droits";
 import MesScenarios from "./MesScenarios";
 import MesQuiz from "./MesQuiz";
 import CartesGestion from "./CartesGestion";
+import CoursGestion from "./CoursGestion";
 import CoFormateurs from "../components/CoFormateurs";
 import HistoriqueSeances from "../components/HistoriqueSeances";
 import CalendrierSeances from "../components/CalendrierSeances";
@@ -275,7 +276,7 @@ function Equipe({ team, autres, scs, pcs, onChange, cible, replie }) {
       {m && m.length === 0 && <p className="muted">Aucun membre. Donne le code aux stagiaires : ils le saisissent dans « Mon équipe ».</p>}
       {m && m.length > 0 && (
         <table className="cmp tmem" style={{ marginTop: 10 }}>
-          <thead><tr><th>Stagiaire</th><th>Terminés</th><th>Temps moyen</th><th>Essentielles</th><th>Dernière connexion</th><th></th></tr></thead>
+          <thead><tr><th>Stagiaire</th><th>Terminés</th><th>Temps moyen</th><th>Essentielles</th><th>Dernière connexion</th>{(team.cours || []).length > 0 && <th title="Cours en ligne lus / proposés">Cours</th>}<th></th></tr></thead>
           <tbody>
             {m.map((u) => {
               const st = statsOf(u.bilans);
@@ -283,6 +284,7 @@ function Equipe({ team, autres, scs, pcs, onChange, cible, replie }) {
                 <tr key={u.id}>
                   <td><strong>{u.nom}</strong>{nonLusMembre(u) > 0 && <> <span className="tag late" title="Réponses non lues">💬 {nonLusMembre(u)}</span></>}<div className="muted">{[u.grade, u.cis].filter(Boolean).join(" · ") || u.email}</div></td>
                   <td>{st.n}</td><td>{st.n ? fmtDuree(st.tmoy) : "—"}</td><td>{st.ess === null ? "—" : st.ess + " %"}</td><td>{d(u.derniereConnexion)}</td>
+                  {(team.cours || []).length > 0 && <td>{(team.cours || []).filter((c) => u.cours?.[c.id]?.fait).length}/{(team.cours || []).length}</td>}
                   <td>
                     <div className="row">
                       <button className="btn" onClick={() => setOpen(open === u.id ? null : u.id)}>{open === u.id ? "Masquer" : "Suivi"}</button>
@@ -300,8 +302,9 @@ function Equipe({ team, autres, scs, pcs, onChange, cible, replie }) {
                   </td>
                 </tr>,
                 open === u.id && (
-                  <tr key={u.id + "d"}><td colSpan={6}>
+                  <tr key={u.id + "d"}><td colSpan={7}>
                     <CourbeStag u={u} user={user} />
+                    {(team.cours || []).length > 0 && <div className="card" style={{ margin: "6px 0" }}><strong>Cours en ligne</strong>{(team.cours || []).map((c) => <div key={c.id} className="row" style={{ gap: 8, marginTop: 4 }}><span>{c.titre}</span>{u.cours?.[c.id]?.fait ? <span className="tag ok">✅ Lu le {new Date(u.cours[c.id].fait).toLocaleDateString("fr-FR")}</span> : c.type === "devoir" && c.lim && c.lim < Date.now() ? <span className="tag late">En retard</span> : <span className="tag">Pas encore lu</span>}</div>)}</div>}
                     <AttestationsCard compact profil={u} devoirs={team.devoirs} catalogue={scs} equipe={team.nom} gest={profil?.nom} />
                     {Object.keys(u.bilans || {}).length === 0 ? (Object.keys(u.calculs || {}).length === 0 ? <span className="muted">Aucun exercice terminé.</span> : null) : (
                       <div className="ex-liste">
@@ -480,6 +483,7 @@ export default function Gestion() {
   const edOk = isAdmin || editeurAutorise(droits, profil);
   const quizOk = isAdmin || editeurAutorise(droits, profil, "quiz");
   const evtOk = isAdmin || editeurAutorise(droits, profil, "evt");
+  const coursOk = isAdmin || editeurAutorise(droits, profil, "cours");
   const webOk = isAdmin || editeurAutorise(droits, profil, "web");
   const [cible, setCible] = useState(null);
   const [sousEq, setSousEq] = useState(() => new URLSearchParams(window.location.search).get("sub") || "ge");
@@ -523,7 +527,7 @@ export default function Gestion() {
     ["ac", "Accueil", [["ac", "Accueil"]]],
     ["eq", "Équipes", [["cr", "Création de l'équipe"], ["ge", "Gestion de l'équipe"], ["tb", "Tableau de bord"], ["pf", "Profils du CIS"]]],
     ["se", "Séances", [["sa", "Séance en salle"], ["rl", "Jeu de rôle"], ...(webOk ? [["wb", "Webinaires"]] : []), ["ca", "Calendrier"], ["hs", "Historique des séances"]]],
-    ["co", "Contenus", [["pc", "Parcours pédagogiques"], ...(edOk ? [["ms", "Mes scénarios"]] : []), ...(quizOk ? [["mq", "Mes quiz"]] : []), ["cm", "Cartes mentales"], ...(evtOk ? [["ev", "Évènements"]] : []), ["dec", "Scénarios à décisions"], ["rec", "Situations en images"], ["dm", "Demande de scénario"]]],
+    ["co", "Contenus", [["pc", "Parcours pédagogiques"], ...(edOk ? [["ms", "Mes scénarios"]] : []), ...(quizOk ? [["mq", "Mes quiz"]] : []), ["cm", "Cartes mentales"], ...(coursOk ? [["cl", "Cours en ligne"]] : []), ...(evtOk ? [["ev", "Évènements"]] : []), ["dec", "Scénarios à décisions"], ["rec", "Situations en images"], ["dm", "Demande de scénario"]]],
   ];
   const groupeDe = (o) => (o === "eq" || o === "tb" ? "eq" : groupes.find((g) => g[2].some(([k]) => k === o))?.[0] || "ac");
   const gActif = groupes.find((g) => g[0] === groupeDe(onglet));
@@ -579,6 +583,7 @@ export default function Gestion() {
       {onglet === "pc" && <Parcours user={user} profil={profil} isAdmin={isAdmin} scs={scs} pcs={pcs} onChange={loadPcs} />}
       {onglet === "sa" && <><SalleCard scs={scs.filter((x) => x.kind === "sc")} /><QuizLiveCard quizs={scs.filter((x) => x.kind === "quiz")} /></>}
       {onglet === "ev" && evtOk && <EvenementsGestion user={user} profil={profil} />}
+      {onglet === "cl" && coursOk && <CoursGestion user={user} profil={profil} teams={actives} onChange={load} />}
       {onglet === "cm" && <CartesGestion user={user} profil={profil} teams={actives} onChange={load} />}
       {onglet === "mq" && quizOk && <MesQuiz user={user} profil={profil} />}
       {onglet === "ms" && edOk && <MesScenarios user={user} profil={profil} />}

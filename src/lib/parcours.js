@@ -25,6 +25,7 @@ export async function saveParcours(id, data, uid, nom) {
   const ref = id ? doc(db, "parcours", id) : doc(col());
   await setDoc(ref, {
     titre: data.titre.trim(), objectif: (data.objectif || "").trim(), prerequis: (data.prerequis || "").trim().slice(0, 400), objLiens: liens, objectifs: lignesObjectifs(data.objTxt !== undefined ? data.objTxt : (data.objectifs || []).join("\n")), description: (data.description || "").trim(), scIds: data.scIds,
+    cours: (data.cours || []).slice(0, 20).map((c) => ({ id: c.id, titre: String(c.titre || "").slice(0, 120) })),
     ordre: !!data.ordre, partage: !!data.partage, diag: !!(data.diag && data.diagId), diagId: data.diag && data.diagId ? data.diagId : "",
     owner: data.owner || uid, ownerNom: data.ownerNom || nom || "", maj: Date.now(),
   });
